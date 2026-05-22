@@ -1,0 +1,149 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Property {
+  id                String        @id @default(cuid())
+  name              String
+  establishmentCode String?
+  address           String?
+  municipality      String?
+  municipalityCode  String?
+  postalCode        String?
+  province          String?
+  countryIso3       String?       @default("ESP")
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  reservations      Reservation[]
+}
+
+model Reservation {
+  id                    String            @id @default(cuid())
+  propertyId            String?
+  property              Property?         @relation(fields: [propertyId], references: [id], onDelete: SetNull)
+  reference             String?
+  channel               String?
+  checkIn               DateTime?
+  checkOut              DateTime?
+  contractDate          DateTime?
+  guestCount            Int?
+  roomCount             Int?
+  internet              Boolean?
+  paymentType           String?
+  paymentMethod         String?
+  paymentHolder         String?
+  status                ReservationStatus @default(DRAFT)
+  validationStatus      ValidationStatus  @default(PENDING)
+  sourceExcelFileId     String?
+  generatedXmlFileId    String?
+  validationReportJson  Json?
+  normalizedPayloadJson Json?
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+  generatedAt           DateTime?
+  downloadedAt          DateTime?
+  deletedAt             DateTime?
+  guests                Guest[]
+  files                 StoredFile[]
+  auditEvents           AuditEvent[]
+
+  @@index([reference])
+  @@index([checkIn])
+  @@index([checkOut])
+  @@index([status])
+  @@index([deletedAt])
+}
+
+model Guest {
+  id                 String           @id @default(cuid())
+  reservationId      String
+  reservation        Reservation      @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  sourceRow          Int?
+  role               String?          @default("VI")
+  firstName          String
+  surname1           String
+  surname2           String?
+  birthDate          DateTime?
+  nationalityIso3    String?
+  documentType       String?
+  documentNumber     String?
+  documentSupport    String?
+  sex                String?
+  address            String?
+  addressComplement  String?
+  municipality       String?
+  municipalityCode   String?
+  postalCode         String?
+  countryIso3        String?
+  phone              String?
+  phone2             String?
+  email              String?
+  relationship       String?
+  validationStatus   ValidationStatus @default(PENDING)
+  validationErrors   Json?
+  validationWarnings Json?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  @@index([reservationId])
+  @@index([documentNumber])
+  @@index([email])
+}
+
+model StoredFile {
+  id                String         @id @default(cuid())
+  reservationId     String?
+  reservation       Reservation?   @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  type              StoredFileType
+  originalFileName  String
+  safeFileName      String
+  mimeType          String
+  sizeBytes         Int
+  blobUrl           String?
+  blobPath          String?
+  encrypted         Boolean        @default(true)
+  encryptionIv      String?
+  encryptionAuthTag String?
+  sha256            String?
+  createdAt         DateTime       @default(now())
+  deletedAt         DateTime?
+}
+
+model AuditEvent {
+  id            String       @id @default(cuid())
+  reservationId String?
+  reservation   Reservation? @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  eventType     String
+  message       String?
+  metadata      Json?
+  createdAt     DateTime     @default(now())
+}
+
+enum ReservationStatus {
+  DRAFT
+  IMPORTED
+  VALIDATED
+  XML_GENERATED
+  CONSOLIDATED
+  DOWNLOADED
+  DELETED
+}
+
+enum ValidationStatus {
+  PENDING
+  VALID
+  WARNING
+  ERROR
+}
+
+enum StoredFileType {
+  SOURCE_EXCEL
+  GENERATED_XML
+  VALIDATION_REPORT
+}
