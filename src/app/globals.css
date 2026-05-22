@@ -161,6 +161,47 @@ label:has(input[type="file"]:disabled) {
 
 .input::placeholder { color: var(--muted); }
 
+.upload-zone {
+  display: flex;
+  min-height: 17rem;
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  border-radius: 8px;
+  border: 1px dashed color-mix(in srgb, var(--accent) 42%, var(--border));
+  background:
+    radial-gradient(circle at top, color-mix(in srgb, var(--accent) 12%, transparent), transparent 22rem),
+    color-mix(in srgb, var(--surface-elevated) 72%, transparent);
+  padding: 2rem;
+  text-align: center;
+  color: var(--fg);
+  transition: border-color 160ms ease, background 160ms ease, transform 160ms ease;
+}
+
+.upload-zone:not(:disabled):hover,
+.upload-zone.is-dragging {
+  border-color: var(--accent);
+  background:
+    radial-gradient(circle at top, color-mix(in srgb, var(--accent) 18%, transparent), transparent 22rem),
+    color-mix(in srgb, var(--surface-elevated) 84%, transparent);
+  transform: translateY(-1px);
+}
+
+.upload-file {
+  margin-top: 0.4rem;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: 0.45rem 0.75rem;
+  color: var(--secondary);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
 .process-panel {
   border: 1px solid var(--border);
   border-radius: 8px;
