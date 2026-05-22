@@ -170,6 +170,28 @@ body {
   vertical-align: top;
 }
 
+.guest-table-wrap {
+  width: 100%;
+  overflow: hidden;
+}
+
+.guest-table {
+  table-layout: fixed;
+  font-size: clamp(0.68rem, 0.58rem + 0.28vw, 0.82rem);
+}
+
+.guest-table th,
+.guest-table td {
+  padding: 0.72rem 0.65rem;
+  overflow-wrap: anywhere;
+  word-break: normal;
+  line-height: 1.45;
+}
+
+.break-anywhere {
+  overflow-wrap: anywhere;
+}
+
 .status-pill {
   display: inline-flex;
   align-items: center;

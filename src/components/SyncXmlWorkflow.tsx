@@ -124,22 +124,30 @@ export function SyncXmlWorkflow() {
               <h2 className="font-heading text-xl font-bold">{t.guests}: {parsed.guests.length}</h2>
               <button disabled={Boolean(parsed.validation.errors.length) || busy} onClick={generate} className="btn-primary disabled:cursor-not-allowed disabled:opacity-45">{t.generateXml}</button>
             </div>
-            <div className="overflow-x-auto">
-              <table className="data-table">
-                <thead><tr><th>{t.status}</th><th>{t.row}</th><th>{t.name}</th><th>{t.document}</th><th>{t.nationality}</th><th>{t.birthDate}</th><th>{t.email}</th><th>{t.phone}</th><th>{t.address}</th><th>{t.warnings}</th></tr></thead>
+            <div className="guest-table-wrap">
+              <table className="data-table guest-table">
+                <colgroup>
+                  <col className="w-[7%]" />
+                  <col className="w-[4%]" />
+                  <col className="w-[15%]" />
+                  <col className="w-[11%]" />
+                  <col className="w-[10%]" />
+                  <col className="w-[18%]" />
+                  <col className="w-[22%]" />
+                  <col className="w-[13%]" />
+                </colgroup>
+                <thead><tr><th>Est.</th><th>#</th><th>{t.name}</th><th>Doc.</th><th>Datos</th><th>Contacto</th><th>Dir.</th><th>Avisos</th></tr></thead>
                 <tbody>
                   {parsed.guests.map((guest) => (
                     <tr key={guest.sourceRow}>
                       <td><StatusPill status={guest.validationStatus} /></td>
                       <td>{guest.sourceRow}</td>
-                      <td className="font-semibold">{guest.firstName} {guest.surname1} {guest.surname2}</td>
-                      <td>{guest.documentType} {guest.documentNumber}</td>
-                      <td>{guest.nationalityIso3}</td>
-                      <td>{guest.birthDate}</td>
-                      <td>{guest.email}</td>
-                      <td>{guest.phone}</td>
-                      <td className="min-w-64">{guest.address}</td>
-                      <td className="min-w-56">{guest.errors.concat(guest.warnings).map((issue) => <p key={issue.code + issue.field} className={issue.severity === "error" ? "text-error" : "text-warning"}>{issue.message}</p>)}</td>
+                      <td className="font-semibold">{guest.firstName}<br />{guest.surname1} {guest.surname2}</td>
+                      <td><span className="text-muted">{guest.documentType}</span><br />{guest.documentNumber}</td>
+                      <td><span className="text-muted">Nac.</span> {guest.birthDate}<br /><span className="text-muted">Pais</span> {guest.nationalityIso3}</td>
+                      <td className="break-anywhere">{guest.email || "-"}<br /><span className="text-muted">{guest.phone || "-"}</span></td>
+                      <td className="break-anywhere">{guest.address}</td>
+                      <td><CompactIssueList issues={guest.errors.concat(guest.warnings)} /></td>
                     </tr>
                   ))}
                 </tbody>
@@ -190,9 +198,24 @@ function InfoCard({ title, rows }: { title: string; rows: Array<[string, string 
 }
 
 function StatusPill({ status }: { status: string }) {
-  return <span className={`status-pill ${status === "ERROR" ? "is-error" : status === "WARNING" ? "is-warning" : "is-valid"}`}>{status}</span>;
+  const label = status === "ERROR" ? "ERR" : status === "WARNING" ? "WARN" : "OK";
+  return <span className={`status-pill ${status === "ERROR" ? "is-error" : status === "WARNING" ? "is-warning" : "is-valid"}`}>{label}</span>;
 }
 
 function IssuePanel({ title, issues }: { title: string; issues: Array<{ code: string; message: string; severity: string; sourceRow?: number }> }) {
   return <div className="panel p-5"><h3 className="font-heading font-bold">{title}</h3>{issues.length ? <ul className="mt-3 space-y-2 text-sm">{issues.map((issue, index) => <li key={`${issue.code}-${index}`} className="flex gap-2 text-secondary"><AlertTriangle className={issue.severity === "error" ? "h-4 w-4 text-error" : "h-4 w-4 text-warning"} />{issue.sourceRow ? `Fila ${issue.sourceRow}: ` : ""}{issue.message}</li>)}</ul> : <p className="mt-3 text-sm text-muted">OK</p>}</div>;
+}
+
+function CompactIssueList({ issues }: { issues: Array<{ code: string; message: string; severity: string; field?: string }> }) {
+  if (!issues.length) return <span className="text-muted">OK</span>;
+  return (
+    <div className="space-y-1">
+      {issues.slice(0, 3).map((issue) => (
+        <p key={issue.code + issue.field} className={issue.severity === "error" ? "text-error" : "text-warning"}>
+          {issue.message.replace(" no informado", "").replace("Telefono", "Tel.").replace("Codigo de municipio", "Cod. mun.").replace("Soporte de documento", "Soporte doc.")}
+        </p>
+      ))}
+      {issues.length > 3 && <p className="text-muted">+{issues.length - 3}</p>}
+    </div>
+  );
 }
