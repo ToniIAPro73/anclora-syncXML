@@ -1,55 +1,106 @@
 const MONTHS: Record<string, string> = {
-  'ene': '01', 'feb': '02', 'mar': '03', 'abr': '04', 'may': '05', 'jun': '06',
-  'jul': '07', 'ago': '08', 'sep': '09', 'sept': '09', 'oct': '10', 'nov': '11', 'dic': '12'
+  ene: "01",
+  enero: "01",
+  feb: "02",
+  febrero: "02",
+  mar: "03",
+  marzo: "03",
+  abr: "04",
+  abril: "04",
+  may: "05",
+  mayo: "05",
+  jun: "06",
+  junio: "06",
+  jul: "07",
+  julio: "07",
+  ago: "08",
+  agosto: "08",
+  sep: "09",
+  sept: "09",
+  septiembre: "09",
+  oct: "10",
+  octubre: "10",
+  nov: "11",
+  noviembre: "11",
+  dic: "12",
+  diciembre: "12",
 };
 
-export const parseSpanishDate = (dateStr: string | any): string | null => {
-  if (!dateStr) return null;
-  if (dateStr instanceof Date) return dateStr.toISOString().split('T')[0];
-  
-  const str = String(dateStr).toLowerCase().trim();
-  
-  // Format: "abr 27, 2026"
-  const match = str.match(/([a-z]+)\s+(\d+),\s+(\d{4})/);
-  if (match) {
-    const month = MONTHS[match[1]];
-    if (month) {
-      const day = match[2].padStart(2, '0');
-      const year = match[3];
-      return `${year}-${month}-${day}`;
-    }
+export function cleanText(value: unknown): string {
+  return String(value ?? "").replace(/\s+/g, " ").trim();
+}
+
+export function parseDate(value: unknown): string | undefined {
+  if (!value) return undefined;
+  if (value instanceof Date && !Number.isNaN(value.getTime())) return value.toISOString().slice(0, 10);
+  const raw = cleanText(value).toLowerCase();
+  const monthName = raw.match(/^([a-záéíóúñ]+)\s+(\d{1,2}),\s*(\d{4})$/i);
+  if (monthName) {
+    const month = MONTHS[monthName[1]];
+    if (month) return `${monthName[3]}-${month}-${monthName[2].padStart(2, "0")}`;
   }
+  const dotted = raw.match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{4})$/);
+  if (dotted) return `${dotted[3]}-${dotted[2].padStart(2, "0")}-${dotted[1].padStart(2, "0")}`;
+  const iso = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (iso) return `${iso[1]}-${iso[2]}-${iso[3]}`;
+  return undefined;
+}
 
-  // ISO format or simple YYYY-MM-DD
-  if (/^\d{4}-\d{2}-\d{2}/.test(str)) {
-    return str.split('T')[0];
-  }
+export function normalizeTime(value: unknown): string | undefined {
+  const raw = cleanText(value).replace(",", ".");
+  if (!raw) return undefined;
+  const match = raw.match(/^(\d{1,2})(?:[.:](\d{1,2}))?$/);
+  if (!match) return undefined;
+  return `${match[1].padStart(2, "0")}:${(match[2] ?? "00").padStart(2, "0")}:00`;
+}
 
-  return null;
-};
+export function toXmlDateTime(date?: string, time?: string): string | undefined {
+  if (!date) return undefined;
+  return `${date}T${time ?? "00:00:00"}+02:00`;
+}
 
-export const normalizeDocumentType = (type: string): 'NIF' | 'NIE' | 'PAS' | 'OTRO' => {
-  const t = type.toUpperCase().trim();
-  if (t === 'DNI' || t === 'NIF') return 'NIF';
-  if (t === 'NIE') return 'NIE';
-  if (t === 'PASAPORTE' || t === 'PAS') return 'PAS';
-  return 'OTRO';
-};
+export function toXmlDate(date?: string): string | undefined {
+  return date ? `${date}+02:00` : undefined;
+}
 
-export const normalizeNationality = (nat: string): string => {
-  const n = nat.toUpperCase().trim();
-  if (n === 'ESPAÑA' || n === 'SPAIN' || n === 'ES' || n === 'ESP') return 'ESP';
-  return n;
-};
+export function normalizeDocumentType(value: unknown): "NIF" | "NIE" | "PAS" | "OTRO" | undefined {
+  const raw = cleanText(value).toUpperCase();
+  if (!raw) return undefined;
+  if (raw === "DNI" || raw === "NIF") return "NIF";
+  if (raw === "NIE") return "NIE";
+  if (raw === "PASAPORTE" || raw === "PASSPORT" || raw === "PAS") return "PAS";
+  return "OTRO";
+}
 
-export const normalizePhone = (phone: string): string => {
-  if (!phone) return '';
-  // Remove everything except digits and +
-  return String(phone).replace(/[^\d+]/g, '');
-};
+export function normalizeNationality(value: unknown): string | undefined {
+  const raw = cleanText(value).toUpperCase();
+  if (!raw) return undefined;
+  if (["ESPAÑA", "ESPANA", "SPAIN", "ES", "ESP"].includes(raw)) return "ESP";
+  if (raw.length === 2) return raw === "DE" ? "DEU" : raw;
+  return raw.slice(0, 3);
+}
 
-export const extractPostalCode = (address: string): string | undefined => {
-  if (!address) return undefined;
-  const match = address.match(/\b\d{5}\b/);
-  return match ? match[0] : undefined;
-};
+export function normalizePaymentType(value: unknown): string | undefined {
+  const raw = cleanText(value).toUpperCase();
+  if (!raw) return undefined;
+  if (raw.includes("PLATAFORMA") || raw.includes("PLATFORM")) return "PLATF";
+  if (raw.includes("EFECT")) return "EFECT";
+  if (raw.includes("TARJ")) return "TARJT";
+  if (raw.includes("TRANSFER")) return "TRANS";
+  if (raw.includes("MOVIL") || raw.includes("MOBILE")) return "MOVIL";
+  return raw;
+}
+
+export function normalizePhone(value: unknown): string | undefined {
+  const raw = cleanText(value).replace(/[^\d+]/g, "");
+  return raw || undefined;
+}
+
+export function extractPostalCode(value: unknown): string | undefined {
+  return cleanText(value).match(/\b\d{5}\b/)?.[0];
+}
+
+export function sanitizeFileName(name: string): string {
+  const base = name.split(/[\\/]/).pop() ?? "archivo";
+  return base.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9._-]+/g, "-").replace(/-+/g, "-").slice(0, 120);
+}

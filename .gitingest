@@ -1,0 +1,42 @@
+# Dependencies
+node_modules/
+
+# Build output and framework caches
+dist/
+.next/
+out/
+coverage/
+
+# Local caches
+.turbo/
+.vite/
+node_modules/.vite/
+node_modules/.tmp/
+*.tsbuildinfo
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Local/editor files
+.DS_Store
+.idea/
+.vscode/
+
+# Generated package manager noise
+.npm/
+
+# Local database and private exports
+*.db
+*.sqlite
+*.sqlite3
+exports/
+tmp/
