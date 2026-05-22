@@ -1,0 +1,97 @@
+"use client";
+
+import { useCallback, useEffect, useState } from "react";
+import { Download, Search, Trash2 } from "lucide-react";
+import { usePreferences } from "./AppPreferencesProvider";
+
+export function ReservationDashboard() {
+  const { dictionary: t } = usePreferences();
+  const [query, setQuery] = useState("");
+  const [reservations, setReservations] = useState<any[]>([]);
+  const [selected, setSelected] = useState<any | null>(null);
+
+  const load = useCallback(async (q = query) => {
+    const response = await fetch(`/api/reservations${q ? `?q=${encodeURIComponent(q)}` : ""}`);
+    const data = await response.json();
+    setReservations(data.reservations ?? []);
+  }, [query]);
+
+  async function remove(id: string) {
+    if (!window.confirm(t.deleteNotice)) return;
+    await fetch(`/api/reservations/${id}`, { method: "DELETE" });
+    setSelected(null);
+    await load();
+  }
+
+  useEffect(() => { void load(""); }, [load]);
+
+  return (
+    <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
+      <section className="panel overflow-hidden">
+        <div className="border-b border-app p-5">
+          <h1 className="font-heading text-2xl font-black">{t.dashboard}</h1>
+          <div className="mt-4 flex gap-2">
+            <div className="relative flex-1">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+              <input className="input pl-9" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t.search} />
+            </div>
+            <button className="btn-secondary" onClick={() => load()}>{t.dashboard}</button>
+          </div>
+        </div>
+        <div className="divide-y divide-app">
+          {reservations.length ? reservations.map((reservation) => (
+            <button key={reservation.id} className="block w-full p-4 text-left transition hover:bg-surface-elevated" onClick={() => setSelected(reservation)}>
+              <div className="flex justify-between gap-3">
+                <div>
+                  <p className="font-heading font-bold">{reservation.reference ?? reservation.payload?.reservation?.reference ?? reservation.id}</p>
+                  <p className="text-sm text-muted">{reservation.property?.name ?? reservation.payload?.property?.name ?? "-"}</p>
+                </div>
+                <span className="status-pill is-valid">{reservation.status}</span>
+              </div>
+            </button>
+          )) : <p className="p-5 text-sm text-muted">{t.empty}</p>}
+        </div>
+      </section>
+      <section className="panel p-5">
+        {selected ? (
+          <div className="space-y-5">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h2 className="font-heading text-xl font-bold">{selected.reference ?? selected.payload?.reservation?.reference}</h2>
+                <p className="text-sm text-muted">{selected.property?.name ?? selected.payload?.property?.name}</p>
+              </div>
+              <div className="flex gap-2">
+                <a className="btn-secondary" href={`/api/reservations/${selected.id}/download/xml`}><Download className="h-4 w-4" />XML</a>
+                <button className="btn-danger" onClick={() => remove(selected.id)}><Trash2 className="h-4 w-4" />{t.delete}</button>
+              </div>
+            </div>
+            <div className="grid gap-3 md:grid-cols-3">
+              <Metric label={t.checkIn} value={selected.checkIn ?? selected.payload?.reservation?.checkInDate} />
+              <Metric label={t.checkOut} value={selected.checkOut ?? selected.payload?.reservation?.checkOutDate} />
+              <Metric label={t.guestCount} value={String(selected.guestCount ?? selected.payload?.guests?.length ?? 0)} />
+            </div>
+            <div className="overflow-x-auto rounded-lg border border-app">
+              <table className="data-table">
+                <thead><tr><th>{t.name}</th><th>{t.document}</th><th>{t.email}</th><th>{t.phone}</th></tr></thead>
+                <tbody>
+                  {(selected.guests ?? selected.payload?.guests ?? []).map((guest: any) => (
+                    <tr key={guest.id ?? guest.sourceRow}>
+                      <td>{guest.firstName} {guest.surname1}</td>
+                      <td>{guest.documentType} {guest.documentNumber}</td>
+                      <td>{guest.email}</td>
+                      <td>{guest.phone}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        ) : <p className="text-sm text-muted">{t.empty}</p>}
+      </section>
+    </div>
+  );
+}
+
+function Metric({ label, value }: { label: string; value?: string }) {
+  return <div className="rounded-lg border border-app bg-surface-elevated p-4"><p className="text-xs font-bold uppercase text-muted">{label}</p><p className="mt-1 font-heading text-lg font-bold">{value ?? "-"}</p></div>;
+}

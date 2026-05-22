@@ -1,21 +1,35 @@
 {
-  "name": "anclora-xls-to-xml",
+  "name": "anclora-syncxml",
   "private": true,
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
+    "dev": "next dev",
+    "build": "prisma generate && next build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "preview": "next start",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev"
   },
   "dependencies": {
+    "@prisma/client": "^6.19.0",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@vercel/blob": "^2.4.0",
     "clsx": "^2.1.1",
+    "fast-xml-parser": "^5.8.0",
+    "jsdom": "^29.1.1",
     "lucide-react": "^1.16.0",
+    "next": "^16.2.2",
+    "prisma": "^6.19.0",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "tailwind-merge": "^3.6.0",
-    "xlsx": "^0.18.5"
+    "vitest": "^4.1.7",
+    "xlsx": "^0.18.5",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
