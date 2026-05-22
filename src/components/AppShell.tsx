@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { AppLogo } from "./AppLogo";
+import { AuthGate } from "./AuthGate";
 import { LanguageToggle } from "./LanguageToggle";
 import { ThemeToggle } from "./ThemeToggle";
 import { usePreferences } from "./AppPreferencesProvider";
@@ -21,7 +22,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </nav>
       </header>
-      <main className="mx-auto max-w-7xl px-4 py-8">{children}</main>
+      <main className="mx-auto max-w-7xl px-4 py-8">
+        <AuthGate>{children}</AuthGate>
+      </main>
     </div>
   );
 }
