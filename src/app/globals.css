@@ -142,6 +142,10 @@ body {
   color: var(--fg);
 }
 
+.input.pl-9 {
+  padding-left: 2.25rem;
+}
+
 .input::placeholder { color: var(--muted); }
 
 .data-table {
