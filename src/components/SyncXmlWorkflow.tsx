@@ -1,70 +1,145 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
+import type { ComponentType } from "react";
 import { AlertTriangle, CheckCircle2, Download, FileSpreadsheet, FileText, SearchCheck, ShieldCheck, UploadCloud } from "lucide-react";
 import type { GeneratedXmlResult, ParsedExcel } from "@/lib/domain";
 import { usePreferences } from "./AppPreferencesProvider";
 
+type BusyAction = "upload" | "generate" | "consolidate" | null;
+type WorkflowStep = 1 | 2 | 3 | 4;
+
+async function fetchJson(url: string, init: RequestInit, timeoutMs = 25000) {
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(url, { ...init, signal: controller.signal });
+    const data = await response.json().catch(() => ({}));
+    return { response, data };
+  } finally {
+    window.clearTimeout(timeout);
+  }
+}
+
 export function SyncXmlWorkflow() {
   const { dictionary: t } = usePreferences();
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [parsed, setParsed] = useState<ParsedExcel | null>(null);
   const [generated, setGenerated] = useState<GeneratedXmlResult | null>(null);
   const [activeView, setActiveView] = useState<"visual" | "xml">("visual");
-  const [busyAction, setBusyAction] = useState<"upload" | "generate" | "consolidate" | null>(null);
+  const [activeStep, setActiveStep] = useState<WorkflowStep>(1);
+  const [busyAction, setBusyAction] = useState<BusyAction>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [consolidated, setConsolidated] = useState(false);
+  const [dragActive, setDragActive] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const validGuests = useMemo(() => parsed?.guests.filter((guest) => guest.errors.length === 0) ?? [], [parsed]);
   const busy = Boolean(busyAction);
 
-  async function upload(file: File) {
+  function chooseFile(file?: File | null) {
+    if (!file) return;
+    setSelectedFile(file);
+    setMessage(null);
+  }
+
+  async function upload(file = selectedFile) {
+    if (!file) return;
     setBusyAction("upload");
     setMessage(null);
-    const form = new FormData();
-    form.append("file", file);
-    const response = await fetch("/api/upload/excel", { method: "POST", body: form });
-    const data = await response.json();
-    setBusyAction(null);
-    if (!response.ok) {
-      setMessage(data.error ?? "Error");
-      return;
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      const { response, data } = await fetchJson("/api/upload/excel", { method: "POST", body: form });
+      if (!response.ok) {
+        setMessage(data.error ?? t.actionFailed);
+        return;
+      }
+      setParsed(data.parsed);
+      setGenerated(null);
+      setConsolidated(false);
+      setActiveStep(2);
+      setMessage(t.uploadComplete);
+    } catch {
+      setMessage(t.actionFailed);
+    } finally {
+      setBusyAction(null);
     }
-    setParsed(data.parsed);
-    setGenerated(null);
-    setConsolidated(false);
-    setMessage(t.uploadComplete);
   }
 
   async function generate() {
-    if (!parsed) return;
-    setBusyAction("generate");
-    setMessage(null);
-    const response = await fetch("/api/generate/xml", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ parsed }) });
-    const data = await response.json();
-    setBusyAction(null);
-    if (!response.ok) {
-      setMessage(data.error ?? "Error");
+    if (!parsed) {
+      setActiveStep(1);
       return;
     }
-    setGenerated(data.generated);
-    setConsolidated(false);
-    setActiveView("visual");
-    setMessage(t.xmlGeneratedOk);
+    setBusyAction("generate");
+    setMessage(null);
+    try {
+      const { response, data } = await fetchJson("/api/generate/xml", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ parsed }),
+      });
+      if (!response.ok) {
+        setMessage(data.error ?? t.actionFailed);
+        return;
+      }
+      setGenerated(data.generated);
+      setConsolidated(false);
+      setActiveView("visual");
+      setActiveStep(3);
+      setMessage(t.xmlGeneratedOk);
+    } catch {
+      setMessage(t.actionFailed);
+    } finally {
+      setBusyAction(null);
+    }
   }
 
   async function consolidate() {
-    if (!parsed || !generated) return;
-    setBusyAction("consolidate");
-    setMessage(null);
-    const response = await fetch("/api/reservations", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ parsed, generated }) });
-    const data = await response.json();
-    setBusyAction(null);
-    if (!response.ok) {
-      setMessage(data.error ?? "Error");
+    if (!parsed || !generated) {
+      setActiveStep(generated ? 3 : parsed ? 2 : 1);
       return;
     }
-    setConsolidated(true);
-    setMessage(`${t.consolidatedOk} ${data.reservation.reference ?? data.reservation.id}`);
+    setBusyAction("consolidate");
+    setMessage(null);
+    try {
+      const { response, data } = await fetchJson("/api/reservations", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ parsed, generated }),
+      });
+      if (!response.ok) {
+        setMessage(data.error ?? t.actionFailed);
+        return;
+      }
+      setConsolidated(true);
+      setActiveStep(4);
+      setMessage(`${t.consolidatedOk} ${data.reservation.reference ?? data.reservation.id}`);
+    } catch {
+      setMessage(t.actionFailed);
+    } finally {
+      setBusyAction(null);
+    }
+  }
+
+  function handleStepClick(step: WorkflowStep) {
+    if (busy) return;
+    if (step === 1) {
+      setActiveStep(1);
+      return;
+    }
+    if (step === 2) {
+      setActiveStep(parsed ? 2 : 1);
+      return;
+    }
+    if (step === 3) {
+      if (generated) setActiveStep(3);
+      else void generate();
+      return;
+    }
+    if (generated) void consolidate();
+    else setActiveStep(parsed ? 2 : 1);
   }
 
   function downloadXml() {
@@ -80,141 +155,204 @@ export function SyncXmlWorkflow() {
 
   return (
     <div className="space-y-6">
-      <section className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-        <div className="panel p-6">
-          <div className="flex items-start gap-4">
-            <div className="icon-tile"><FileSpreadsheet className="h-5 w-5" /></div>
-            <div>
-              <h1 className="font-heading text-3xl font-black">{t.uploadTitle}</h1>
-              <p className="mt-2 max-w-2xl text-sm text-muted">{t.uploadCopy}</p>
-            </div>
-          </div>
-          <label className={`mt-6 inline-flex items-center gap-2 rounded-full bg-accent px-5 py-3 text-sm font-bold text-accent-contrast transition hover:brightness-110 ${busy ? "cursor-wait opacity-75" : "cursor-pointer"}`}>
-            <input className="hidden" type="file" accept=".xlsx" disabled={busy} onChange={(event) => event.target.files?.[0] && upload(event.target.files[0])} />
-            {busyAction === "upload" ? <WorkingLabel label={t.processing} /> : t.selectExcel}
-          </label>
-        </div>
-        <div className="panel border-accent/30 p-6">
-          <div className="flex gap-3">
-            <ShieldCheck className="mt-1 h-5 w-5 shrink-0 text-accent" />
-            <p className="text-sm leading-6 text-secondary">{t.privacyNotice}</p>
-          </div>
-        </div>
-      </section>
-
-      <ProcessRail parsed={parsed} generated={generated} consolidated={consolidated} busyAction={busyAction} />
+      <ProcessRail
+        activeStep={activeStep}
+        parsed={parsed}
+        generated={generated}
+        consolidated={consolidated}
+        busyAction={busyAction}
+        onStepClick={handleStepClick}
+      />
 
       {message && <div className="process-message" role="status">{message}</div>}
       {busy && <div className="process-message is-working" role="status">{t.processing}</div>}
 
-      {parsed && (
-        <>
-          <section className="grid gap-4 md:grid-cols-3">
-            <InfoCard title={t.reservationSummary} rows={[
-              [t.reference, parsed.reservation.reference],
-              [t.checkIn, `${parsed.reservation.checkInDate ?? ""} ${parsed.reservation.checkInTime ?? ""}`],
-              [t.checkOut, `${parsed.reservation.checkOutDate ?? ""} ${parsed.reservation.checkOutTime ?? ""}`],
-              [t.guestCount, String(parsed.reservation.guestCount ?? validGuests.length)],
-            ]} />
-            <InfoCard title={t.property} rows={[
-              ["Codigo", parsed.property.establishmentCode],
-              ["Nombre", parsed.property.name],
-              ["Direccion", parsed.property.address],
-              ["Municipio", `${parsed.property.postalCode ?? ""} ${parsed.property.municipality ?? ""}`],
-              ["Provincia", parsed.property.province],
-            ]} />
-            <InfoCard title={t.contractPayment} rows={[
-              ["Contrato", parsed.reservation.contractDate],
-              [t.paymentType, parsed.payment.paymentType],
-              ["Internet", String(parsed.reservation.internet ?? true)],
-            ]} />
-          </section>
-
-          <section className="panel overflow-hidden">
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-app p-5">
-              <h2 className="font-heading text-xl font-bold">{t.guests}: {parsed.guests.length}</h2>
-              <button disabled={Boolean(parsed.validation.errors.length) || busy} onClick={generate} className="btn-primary disabled:cursor-not-allowed disabled:opacity-45">
-                {busyAction === "generate" ? <WorkingLabel label={t.processing} /> : t.generateXml}
+      {activeStep === 1 && (
+        <section className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
+          <div className="panel p-6">
+            <div className="flex items-start gap-4">
+              <div className="icon-tile"><FileSpreadsheet className="h-5 w-5" /></div>
+              <div>
+                <h1 className="font-heading text-3xl font-black">{t.uploadTitle}</h1>
+                <p className="mt-2 max-w-2xl text-sm text-muted">{t.uploadCopy}</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              className={`upload-zone mt-6 ${dragActive ? "is-dragging" : ""}`}
+              disabled={busy}
+              onClick={() => fileInputRef.current?.click()}
+              onDragEnter={(event) => {
+                event.preventDefault();
+                setDragActive(true);
+              }}
+              onDragOver={(event) => {
+                event.preventDefault();
+                setDragActive(true);
+              }}
+              onDragLeave={() => setDragActive(false)}
+              onDrop={(event) => {
+                event.preventDefault();
+                setDragActive(false);
+                chooseFile(event.dataTransfer.files.item(0));
+              }}
+            >
+              <UploadCloud className="h-9 w-9 text-accent" />
+              <span className="font-heading text-lg font-bold">{dragActive ? t.dropExcel : t.selectExcel}</span>
+              <span className="text-sm text-muted">{t.clickOrDrop}</span>
+              {selectedFile && <span className="upload-file">{t.fileSelected}: {selectedFile.name}</span>}
+            </button>
+            <input ref={fileInputRef} className="hidden" type="file" accept=".xlsx" disabled={busy} onChange={(event) => chooseFile(event.target.files?.[0])} />
+            <div className="mt-5 flex justify-end">
+              <button className="btn-primary" disabled={!selectedFile || busy} onClick={() => upload()}>
+                {busyAction === "upload" ? <WorkingLabel label={t.processing} /> : t.importAction}
               </button>
             </div>
-            <div className="guest-table-wrap">
-              <table className="data-table guest-table">
-                <colgroup>
-                  <col className="w-[7%]" />
-                  <col className="w-[4%]" />
-                  <col className="w-[15%]" />
-                  <col className="w-[11%]" />
-                  <col className="w-[10%]" />
-                  <col className="w-[18%]" />
-                  <col className="w-[22%]" />
-                  <col className="w-[13%]" />
-                </colgroup>
-                <thead><tr><th>Est.</th><th>#</th><th>{t.name}</th><th>Doc.</th><th>Datos</th><th>Contacto</th><th>Dir.</th><th>Avisos</th></tr></thead>
-                <tbody>
-                  {parsed.guests.map((guest) => (
-                    <tr key={guest.sourceRow}>
-                      <td><StatusPill status={guest.validationStatus} /></td>
-                      <td>{guest.sourceRow}</td>
-                      <td className="font-semibold">{guest.firstName}<br />{guest.surname1} {guest.surname2}</td>
-                      <td><span className="text-muted">{guest.documentType}</span><br />{guest.documentNumber}</td>
-                      <td><span className="text-muted">Nac.</span> {guest.birthDate}<br /><span className="text-muted">Pais</span> {guest.nationalityIso3}</td>
-                      <td className="break-anywhere">{guest.email || "-"}<br /><span className="text-muted">{guest.phone || "-"}</span></td>
-                      <td className="break-anywhere">{guest.address}</td>
-                      <td><CompactIssueList issues={guest.errors.concat(guest.warnings)} /></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          </div>
+          <div className="panel border-accent/30 p-6">
+            <div className="flex gap-3">
+              <ShieldCheck className="mt-1 h-5 w-5 shrink-0 text-accent" />
+              <p className="text-sm leading-6 text-secondary">{t.privacyNotice}</p>
             </div>
-          </section>
-
-          <section className="grid gap-4 lg:grid-cols-2">
-            <IssuePanel title={t.errors} issues={parsed.validation.errors} />
-            <IssuePanel title={t.warnings} issues={parsed.validation.warnings} />
-          </section>
-        </>
+          </div>
+        </section>
       )}
 
-      {generated && (
-        <section className="panel p-5">
-          <div className="flex flex-wrap items-center justify-between gap-3">
+      {activeStep === 2 && parsed && (
+        <ExcelReview parsed={parsed} validGuests={validGuests.length} busy={busy} busyAction={busyAction} onGenerate={generate} />
+      )}
+
+      {activeStep === 3 && generated && parsed && (
+        <XmlViewer
+          generated={generated}
+          activeView={activeView}
+          busy={busy}
+          busyAction={busyAction}
+          onViewChange={setActiveView}
+          onDownload={downloadXml}
+          onConsolidate={consolidate}
+        />
+      )}
+
+      {activeStep === 4 && (
+        <section className="panel p-6">
+          <div className="flex items-start gap-4">
+            <div className="icon-tile"><CheckCircle2 className="h-5 w-5" /></div>
             <div>
-              <h2 className="font-heading text-xl font-bold">XML</h2>
-              <p className="mt-1 text-sm text-muted">{t.xmlNote}</p>
-            </div>
-            <div className="flex gap-2">
-              <button className={`tab ${activeView === "visual" ? "is-active" : ""}`} onClick={() => setActiveView("visual")}>{t.visualView}</button>
-              <button className={`tab ${activeView === "xml" ? "is-active" : ""}`} onClick={() => setActiveView("xml")}>{t.rawXml}</button>
+              <h2 className="font-heading text-2xl font-black">{t.processConsolidate}</h2>
+              <p className="mt-2 text-sm text-secondary">{message ?? t.consolidatedOk}</p>
             </div>
           </div>
-          {activeView === "visual" ? (
-            <div className="mt-5 grid gap-4 md:grid-cols-2">
-              <InfoCard title={t.reservationSummary} rows={[[t.reference, generated.visual.reservation.reference], [t.checkIn, generated.visual.reservation.checkInDate], [t.checkOut, generated.visual.reservation.checkOutDate], [t.guestCount, String(generated.visual.guests.length)], [t.paymentType, generated.visual.payment.paymentType]]} />
-              <InfoCard title={t.property} rows={[["Codigo", generated.visual.property.establishmentCode], ["Nombre", generated.visual.property.name], ["Direccion", generated.visual.property.address]]} />
-              {generated.visual.guests.map((guest) => <InfoCard key={guest.sourceRow} title={`${guest.firstName} ${guest.surname1}`} rows={[[t.document, `${guest.documentType} ${guest.documentNumber}`], [t.nationality, guest.nationalityIso3], [t.birthDate, guest.birthDate], [t.address, guest.address], [t.email, guest.email], [t.phone, guest.phone]]} />)}
+          {generated && (
+            <div className="mt-5">
+              <button className="btn-secondary" onClick={downloadXml}><Download className="h-4 w-4" />{t.downloadXml}</button>
             </div>
-          ) : (
-            <pre className="mt-5 max-h-[520px] overflow-auto rounded-lg bg-black/45 p-4 text-xs text-emerald-200"><code>{generated.xml}</code></pre>
           )}
-          <div className="mt-5 flex flex-wrap gap-3">
-            <button className="btn-secondary" onClick={downloadXml}><Download className="h-4 w-4" />{t.downloadXml}</button>
-            <button className="btn-primary" onClick={consolidate} disabled={busy || Boolean(generated.validation.errors.length)}>
-              {busyAction === "consolidate" ? <WorkingLabel label={t.processing} /> : <><CheckCircle2 className="h-4 w-4" />{t.consolidate}</>}
-            </button>
-          </div>
         </section>
       )}
     </div>
   );
 }
 
-function ProcessRail({ parsed, generated, consolidated, busyAction }: { parsed: ParsedExcel | null; generated: GeneratedXmlResult | null; consolidated: boolean; busyAction: "upload" | "generate" | "consolidate" | null }) {
+function ExcelReview({ parsed, validGuests, busy, busyAction, onGenerate }: { parsed: ParsedExcel; validGuests: number; busy: boolean; busyAction: BusyAction; onGenerate: () => void }) {
   const { dictionary: t } = usePreferences();
-  const steps = [
-    { key: "import", label: t.processImport, icon: UploadCloud, done: Boolean(parsed), active: busyAction === "upload" },
-    { key: "review", label: t.processReview, icon: SearchCheck, done: Boolean(generated), active: Boolean(parsed && !generated && busyAction !== "generate") },
-    { key: "xml", label: t.processXml, icon: FileText, done: Boolean(generated), active: busyAction === "generate" },
-    { key: "consolidate", label: t.processConsolidate, icon: CheckCircle2, done: consolidated, active: busyAction === "consolidate" },
+  return (
+    <>
+      <section className="grid gap-4 md:grid-cols-3">
+        <InfoCard title={t.reservationSummary} rows={[
+          [t.reference, parsed.reservation.reference],
+          [t.checkIn, `${parsed.reservation.checkInDate ?? ""} ${parsed.reservation.checkInTime ?? ""}`],
+          [t.checkOut, `${parsed.reservation.checkOutDate ?? ""} ${parsed.reservation.checkOutTime ?? ""}`],
+          [t.guestCount, String(parsed.reservation.guestCount ?? validGuests)],
+        ]} />
+        <InfoCard title={t.property} rows={[
+          ["Codigo", parsed.property.establishmentCode],
+          ["Nombre", parsed.property.name],
+          ["Direccion", parsed.property.address],
+          ["Municipio", `${parsed.property.postalCode ?? ""} ${parsed.property.municipality ?? ""}`],
+          ["Provincia", parsed.property.province],
+        ]} />
+        <InfoCard title={t.contractPayment} rows={[
+          ["Contrato", parsed.reservation.contractDate],
+          [t.paymentType, parsed.payment.paymentType],
+          ["Internet", String(parsed.reservation.internet ?? true)],
+        ]} />
+      </section>
+
+      <section className="panel overflow-hidden">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-app p-5">
+          <h2 className="font-heading text-xl font-bold">{t.guests}: {parsed.guests.length}</h2>
+          <button disabled={Boolean(parsed.validation.errors.length) || busy} onClick={onGenerate} className="btn-primary disabled:opacity-45">
+            {busyAction === "generate" ? <WorkingLabel label={t.processing} /> : t.generateXml}
+          </button>
+        </div>
+        <GuestTable guests={parsed.guests} />
+      </section>
+
+      <section className="grid gap-4 lg:grid-cols-2">
+        <IssuePanel title={t.errors} issues={parsed.validation.errors} />
+        <IssuePanel title={t.warnings} issues={parsed.validation.warnings} />
+      </section>
+    </>
+  );
+}
+
+function XmlViewer({
+  generated,
+  activeView,
+  busy,
+  busyAction,
+  onViewChange,
+  onDownload,
+  onConsolidate,
+}: {
+  generated: GeneratedXmlResult;
+  activeView: "visual" | "xml";
+  busy: boolean;
+  busyAction: BusyAction;
+  onViewChange: (view: "visual" | "xml") => void;
+  onDownload: () => void;
+  onConsolidate: () => void;
+}) {
+  const { dictionary: t } = usePreferences();
+  return (
+    <section className="panel p-5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 className="font-heading text-xl font-bold">XML</h2>
+          <p className="mt-1 text-sm text-muted">{t.xmlNote}</p>
+        </div>
+        <div className="flex gap-2">
+          <button className={`tab ${activeView === "visual" ? "is-active" : ""}`} onClick={() => onViewChange("visual")}>{t.visualView}</button>
+          <button className={`tab ${activeView === "xml" ? "is-active" : ""}`} onClick={() => onViewChange("xml")}>{t.rawXml}</button>
+        </div>
+      </div>
+      {activeView === "visual" ? (
+        <div className="mt-5 grid gap-4 md:grid-cols-2">
+          <InfoCard title={t.reservationSummary} rows={[[t.reference, generated.visual.reservation.reference], [t.checkIn, generated.visual.reservation.checkInDate], [t.checkOut, generated.visual.reservation.checkOutDate], [t.guestCount, String(generated.visual.guests.length)], [t.paymentType, generated.visual.payment.paymentType]]} />
+          <InfoCard title={t.property} rows={[["Codigo", generated.visual.property.establishmentCode], ["Nombre", generated.visual.property.name], ["Direccion", generated.visual.property.address]]} />
+          {generated.visual.guests.map((guest) => <InfoCard key={guest.sourceRow} title={`${guest.firstName} ${guest.surname1}`} rows={[[t.document, `${guest.documentType} ${guest.documentNumber}`], [t.nationality, guest.nationalityIso3], [t.birthDate, guest.birthDate], [t.address, guest.address], [t.email, guest.email], [t.phone, guest.phone]]} />)}
+        </div>
+      ) : (
+        <pre className="mt-5 max-h-[520px] overflow-auto rounded-lg bg-black/45 p-4 text-xs text-emerald-200"><code>{generated.xml}</code></pre>
+      )}
+      <div className="mt-5 flex flex-wrap gap-3">
+        <button className="btn-secondary" onClick={onDownload}><Download className="h-4 w-4" />{t.downloadXml}</button>
+        <button className="btn-primary" onClick={onConsolidate} disabled={busy || Boolean(generated.validation.errors.length)}>
+          {busyAction === "consolidate" ? <WorkingLabel label={t.processing} /> : <><CheckCircle2 className="h-4 w-4" />{t.consolidate}</>}
+        </button>
+      </div>
+    </section>
+  );
+}
+
+function ProcessRail({ activeStep, parsed, generated, consolidated, busyAction, onStepClick }: { activeStep: WorkflowStep; parsed: ParsedExcel | null; generated: GeneratedXmlResult | null; consolidated: boolean; busyAction: BusyAction; onStepClick: (step: WorkflowStep) => void }) {
+  const { dictionary: t } = usePreferences();
+  const steps: Array<{ step: WorkflowStep; label: string; icon: ComponentType<{ className?: string }>; done: boolean; busy: boolean }> = [
+    { step: 1, label: t.processImport, icon: UploadCloud, done: Boolean(parsed), busy: busyAction === "upload" },
+    { step: 2, label: t.processReview, icon: SearchCheck, done: Boolean(generated), busy: false },
+    { step: 3, label: t.processXml, icon: FileText, done: Boolean(generated), busy: busyAction === "generate" },
+    { step: 4, label: t.processConsolidate, icon: CheckCircle2, done: consolidated, busy: busyAction === "consolidate" },
   ];
   return (
     <section className="process-panel">
@@ -222,22 +360,57 @@ function ProcessRail({ parsed, generated, consolidated, busyAction }: { parsed: 
         <h2 className="font-heading text-sm font-black uppercase tracking-[0.18em] text-muted">{t.processTitle}</h2>
       </div>
       <div className="process-rail">
-        {steps.map((step, index) => {
-          const Icon = step.icon;
-          const state = step.active ? "active" : step.done ? "done" : "pending";
+        {steps.map((item) => {
+          const Icon = item.icon;
+          const state = item.busy ? "active" : item.done ? "done" : activeStep === item.step ? "active" : "pending";
           return (
-            <div key={step.key} className={`process-step is-${state}`}>
-              <div className="process-step-index">{index + 1}</div>
+            <button key={item.step} type="button" className={`process-step is-${state}`} onClick={() => onStepClick(item.step)} disabled={Boolean(busyAction)}>
+              <div className="process-step-index">{item.step}</div>
               <div className="process-step-icon"><Icon className="h-4 w-4" /></div>
-              <div className="min-w-0">
-                <p className="truncate font-heading text-sm font-bold">{step.label}</p>
+              <div className="min-w-0 text-left">
+                <p className="truncate font-heading text-sm font-bold">{item.label}</p>
                 <p className="text-xs text-muted">{state === "active" ? t.processActive : state === "done" ? t.processDone : t.processPending}</p>
               </div>
-            </div>
+            </button>
           );
         })}
       </div>
     </section>
+  );
+}
+
+function GuestTable({ guests }: { guests: ParsedExcel["guests"] }) {
+  const { dictionary: t } = usePreferences();
+  return (
+    <div className="guest-table-wrap">
+      <table className="data-table guest-table">
+        <colgroup>
+          <col className="w-[7%]" />
+          <col className="w-[4%]" />
+          <col className="w-[15%]" />
+          <col className="w-[11%]" />
+          <col className="w-[10%]" />
+          <col className="w-[18%]" />
+          <col className="w-[22%]" />
+          <col className="w-[13%]" />
+        </colgroup>
+        <thead><tr><th>Est.</th><th>#</th><th>{t.name}</th><th>Doc.</th><th>Datos</th><th>Contacto</th><th>Dir.</th><th>Avisos</th></tr></thead>
+        <tbody>
+          {guests.map((guest) => (
+            <tr key={guest.sourceRow}>
+              <td><StatusPill status={guest.validationStatus} /></td>
+              <td>{guest.sourceRow}</td>
+              <td className="font-semibold">{guest.firstName}<br />{guest.surname1} {guest.surname2}</td>
+              <td><span className="text-muted">{guest.documentType}</span><br />{guest.documentNumber}</td>
+              <td><span className="text-muted">Nac.</span> {guest.birthDate}<br /><span className="text-muted">Pais</span> {guest.nationalityIso3}</td>
+              <td className="break-anywhere">{guest.email || "-"}<br /><span className="text-muted">{guest.phone || "-"}</span></td>
+              <td className="break-anywhere">{guest.address}</td>
+              <td><CompactIssueList issues={guest.errors.concat(guest.warnings)} /></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
 
