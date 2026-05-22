@@ -128,6 +128,19 @@ body {
   font-weight: 800;
 }
 
+button:not(:disabled),
+label:has(input[type="file"]:not(:disabled)),
+a.btn-secondary,
+a.btn-primary,
+a.btn-danger {
+  cursor: pointer;
+}
+
+button:disabled,
+label:has(input[type="file"]:disabled) {
+  cursor: wait;
+}
+
 .btn-primary { background: var(--accent); color: var(--accent-contrast); }
 .btn-secondary { border: 1px solid var(--border); background: var(--surface-elevated); color: var(--fg); }
 .btn-danger { background: color-mix(in srgb, var(--error) 18%, transparent); color: var(--error); border: 1px solid color-mix(in srgb, var(--error) 35%, transparent); }
@@ -142,7 +155,120 @@ body {
   color: var(--fg);
 }
 
+.input.pl-9 {
+  padding-left: 2.25rem;
+}
+
 .input::placeholder { color: var(--muted); }
+
+.process-panel {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--surface) 92%, transparent), color-mix(in srgb, var(--surface-elevated) 90%, transparent));
+  padding: 1rem;
+}
+
+.process-rail {
+  margin-top: 0.9rem;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.process-step {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 4.25rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface-elevated) 74%, transparent);
+  padding: 0.85rem;
+}
+
+.process-step::after {
+  content: "";
+  position: absolute;
+  left: calc(100% + 0.15rem);
+  top: 50%;
+  width: 0.45rem;
+  height: 1px;
+  background: var(--border);
+}
+
+.process-step:last-child::after {
+  display: none;
+}
+
+.process-step-index,
+.process-step-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+}
+
+.process-step-index {
+  width: 1.45rem;
+  height: 1.45rem;
+  background: color-mix(in srgb, var(--fg) 9%, transparent);
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+.process-step-icon {
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+
+.process-step.is-active {
+  border-color: color-mix(in srgb, var(--accent) 58%, var(--border));
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+}
+
+.process-step.is-active .process-step-icon,
+.process-step.is-done .process-step-icon {
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  color: var(--accent);
+}
+
+.process-step.is-done .process-step-index {
+  background: var(--accent);
+  color: var(--accent-contrast);
+}
+
+.process-message {
+  border: 1px solid color-mix(in srgb, var(--success) 32%, var(--border));
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--success) 11%, var(--surface));
+  padding: 0.9rem 1rem;
+  color: var(--secondary);
+  font-size: 0.9rem;
+}
+
+.process-message.is-working {
+  border-color: color-mix(in srgb, var(--accent) 34%, var(--border));
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface));
+}
+
+.spinner {
+  width: 1rem;
+  height: 1rem;
+  border-radius: 999px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  animation: spin 720ms linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
 
 .data-table {
   width: 100%;
@@ -164,6 +290,28 @@ body {
   padding: 0.8rem;
   color: var(--secondary);
   vertical-align: top;
+}
+
+.guest-table-wrap {
+  width: 100%;
+  overflow: hidden;
+}
+
+.guest-table {
+  table-layout: fixed;
+  font-size: clamp(0.68rem, 0.58rem + 0.28vw, 0.82rem);
+}
+
+.guest-table th,
+.guest-table td {
+  padding: 0.72rem 0.65rem;
+  overflow-wrap: anywhere;
+  word-break: normal;
+  line-height: 1.45;
+}
+
+.break-anywhere {
+  overflow-wrap: anywhere;
 }
 
 .status-pill {
@@ -189,3 +337,19 @@ body {
 }
 
 .tab.is-active { background: var(--accent); color: var(--accent-contrast); }
+
+@media (max-width: 900px) {
+  .process-rail {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .process-step::after {
+    display: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .process-rail {
+    grid-template-columns: 1fr;
+  }
+}
