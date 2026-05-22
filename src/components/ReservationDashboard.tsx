@@ -9,18 +9,28 @@ export function ReservationDashboard() {
   const [query, setQuery] = useState("");
   const [reservations, setReservations] = useState<any[]>([]);
   const [selected, setSelected] = useState<any | null>(null);
+  const [busyAction, setBusyAction] = useState<"load" | "delete" | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
 
-  const load = useCallback(async (q = query) => {
+  const load = useCallback(async (q = query, showMessage = true) => {
+    setBusyAction("load");
+    if (showMessage) setMessage(null);
     const response = await fetch(`/api/reservations${q ? `?q=${encodeURIComponent(q)}` : ""}`);
     const data = await response.json();
     setReservations(data.reservations ?? []);
-  }, [query]);
+    setBusyAction(null);
+    if (showMessage) setMessage(t.dashboardLoaded);
+  }, [query, t.dashboardLoaded]);
 
   async function remove(id: string) {
     if (!window.confirm(t.deleteNotice)) return;
+    setBusyAction("delete");
+    setMessage(null);
     await fetch(`/api/reservations/${id}`, { method: "DELETE" });
     setSelected(null);
-    await load();
+    setBusyAction(null);
+    setMessage(t.reservationDeleted);
+    await load(query, false);
   }
 
   useEffect(() => { void load(""); }, [load]);
@@ -35,8 +45,11 @@ export function ReservationDashboard() {
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
               <input className="input pl-9" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t.search} />
             </div>
-            <button className="btn-secondary" onClick={() => load()}>{t.dashboard}</button>
+            <button className="btn-secondary" disabled={Boolean(busyAction)} onClick={() => load()}>
+              {busyAction === "load" ? <><span className="spinner" aria-hidden="true" />{t.processing}</> : t.dashboard}
+            </button>
           </div>
+          {message && <div className="mt-3 text-sm text-secondary" role="status">{message}</div>}
         </div>
         <div className="divide-y divide-app">
           {reservations.length ? reservations.map((reservation) => (
@@ -62,7 +75,9 @@ export function ReservationDashboard() {
               </div>
               <div className="flex gap-2">
                 <a className="btn-secondary" href={`/api/reservations/${selected.id}/download/xml`}><Download className="h-4 w-4" />XML</a>
-                <button className="btn-danger" onClick={() => remove(selected.id)}><Trash2 className="h-4 w-4" />{t.delete}</button>
+                <button className="btn-danger" disabled={Boolean(busyAction)} onClick={() => remove(selected.id)}>
+                  {busyAction === "delete" ? <><span className="spinner" aria-hidden="true" />{t.processing}</> : <><Trash2 className="h-4 w-4" />{t.delete}</>}
+                </button>
               </div>
             </div>
             <div className="grid gap-3 md:grid-cols-3">
