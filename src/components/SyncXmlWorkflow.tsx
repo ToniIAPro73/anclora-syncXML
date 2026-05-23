@@ -419,11 +419,12 @@ function ExcelReview({
         <GuestTable guests={parsed.guests} smartValidated={smartValidated} showFullData={showFullData} />
       </section>
 
-      <section className="grid gap-4 lg:grid-cols-2">
+      <IssuePanel title={t.warnings} issues={parsed.validation.warnings} />
+
+      <section className="grid items-start gap-4 lg:grid-cols-2">
         <IssuePanel title={t.errors} issues={parsed.validation.errors} />
-        <IssuePanel title={t.warnings} issues={parsed.validation.warnings} />
+        <DuplicatePanel duplicates={parsed.duplicates ?? []} onResolve={onDuplicateResolution} />
       </section>
-      <DuplicatePanel duplicates={parsed.duplicates ?? []} onResolve={onDuplicateResolution} />
     </>
   );
 }
