@@ -29,10 +29,10 @@ export async function POST(request: Request) {
     if (unauthorized) return unauthorized;
     const body = await request.json();
     const payload = z.object({ parsed: z.any(), generated: z.any().optional() }).safeParse(body);
-    if (!payload.success) return NextResponse.json({ error: "Payload invalido" }, { status: 400 });
+    if (!payload.success) return NextResponse.json({ error: "Payload inválido" }, { status: 400 });
     const parsed = smartValidateParsedExcel(payload.data.parsed);
     const generated = generateHospitalityXml(parsed, await readReferenceTemplate());
-    if (generated.validation.errors.length) return NextResponse.json({ error: "La reserva contiene errores criticos", validation: generated.validation }, { status: 422 });
+    if (generated.validation.errors.length) return NextResponse.json({ error: "La reserva contiene errores críticos", validation: generated.validation }, { status: 422 });
     if (unresolvedDuplicates(parsed).length) return NextResponse.json({ error: "Existen duplicados sin resolver" }, { status: 422 });
     const reservation = await createReservation({ parsed, generated });
     recordAuditEvent({

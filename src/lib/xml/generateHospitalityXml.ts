@@ -20,7 +20,7 @@ export function generateHospitalityXml(parsed: ParsedExcel, templateXml = TEMPLA
   const validGuests = parsed.guests.filter((guest) => guest.errors.length === 0);
   const root = parser.parse(templateXml);
   const peticion = root["ns2:peticion"] ?? root.peticion;
-  if (!peticion?.solicitud?.comunicacion) throw new Error("XML plantilla invalido");
+  if (!peticion?.solicitud?.comunicacion) throw new Error("XML plantilla inválido");
   const comunicacion = peticion.solicitud.comunicacion;
   const contrato = comunicacion.contrato ?? {};
   comunicacion.persona = validGuests.map((guest) => ({

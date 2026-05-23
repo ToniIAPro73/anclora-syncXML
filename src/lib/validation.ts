@@ -95,12 +95,12 @@ export function validateGuest(guest: Omit<GuestRecord, "validationStatus" | "err
   if (!guest.documentNumber) errors.push(issue("error", "guest.documentNumber.required", "Documento obligatorio", "documentNumber", guest.sourceRow));
   if (!guest.birthDate) errors.push(issue("error", "guest.birthDate.invalid", "Fecha de nacimiento invalida", "birthDate", guest.sourceRow));
   if (!guest.nationalityIso3) errors.push(issue("error", "guest.nationality.required", "Nacionalidad obligatoria", "nationalityIso3", guest.sourceRow));
-  if (!guest.phone) warnings.push(issue("warning", "guest.phone.missing", "Telefono no informado", "phone", guest.sourceRow));
+  if (!guest.phone) warnings.push(issue("warning", "guest.phone.missing", "Teléfono no informado", "phone", guest.sourceRow));
   if (!guest.email) warnings.push(issue("warning", "guest.email.missing", "Email no informado", "email", guest.sourceRow));
   if (!guest.relationship) warnings.push(issue("warning", "guest.relationship.missing", "Parentesco no informado", "relationship", guest.sourceRow));
   if (!guest.sex) warnings.push(issue("warning", "guest.sex.missing", "Sexo no informado", "sex", guest.sourceRow));
   if (!guest.documentSupport) warnings.push(issue("warning", "guest.documentSupport.missing", "Soporte de documento no informado", "documentSupport", guest.sourceRow));
-  if (guest.countryIso3 === "ESP" && !guest.municipalityCode) warnings.push(issue("warning", "guest.municipalityCode.missing", "Codigo de municipio no informado", "municipalityCode", guest.sourceRow));
+  if (guest.countryIso3 === "ESP" && !guest.municipalityCode) warnings.push(issue("warning", "guest.municipalityCode.missing", "Código de municipio no informado", "municipalityCode", guest.sourceRow));
   return { ...guest, validationStatus: statusFrom(errors, warnings), errors, warnings };
 }
 
@@ -109,10 +109,10 @@ export function validateParsedExcel(parsed: Omit<ParsedExcel, "validation">): Pa
   const warnings: ValidationIssue[] = [];
   if (!parsed.reservation.reference) errors.push(issue("error", "reservation.reference.required", "Referencia de reserva ausente", "reference"));
   if (!parsed.reservation.checkInDate || !parsed.reservation.checkOutDate) errors.push(issue("error", "reservation.dates.invalid", "Fechas de entrada/salida invalidas", "dates"));
-  if (!parsed.property.establishmentCode) errors.push(issue("error", "property.establishmentCode.required", "Codigo de establecimiento ausente", "establishmentCode"));
+  if (!parsed.property.establishmentCode) errors.push(issue("error", "property.establishmentCode.required", "Código de establecimiento ausente", "establishmentCode"));
   const validGuests = parsed.guests.filter((guest) => guest.errors.length === 0);
   if (parsed.reservation.guestCount && parsed.reservation.guestCount !== validGuests.length) {
-    errors.push(issue("error", "reservation.guestCount.mismatch", "El numero de personas no coincide con los huespedes validos", "guestCount"));
+    errors.push(issue("error", "reservation.guestCount.mismatch", "El número de personas no coincide con los huéspedes válidos", "guestCount"));
   }
   if (parsed.payment.paymentType && !ALLOWED_PAYMENT_TYPES.has(parsed.payment.paymentType)) {
     errors.push(issue("error", "payment.type.invalid", "Tipo de pago no permitido", "paymentType"));
@@ -228,26 +228,26 @@ export function smartValidateParsedExcel(parsed: ParsedExcel): ParsedExcel {
     }
 
     if (guest.email && !isValidEmail(guest.email)) {
-      errors.push(issue("error", "guest.email.invalid", "Email con formato invalido", "email", guest.sourceRow));
+      errors.push(issue("error", "guest.email.invalid", "Email con formato inválido", "email", guest.sourceRow));
     }
     if (guest.phone) {
       const digits = normalizedDigits(guest.phone);
       if (digits.length < 7 || digits.length > 15) {
-        warnings.push(issue("warning", "guest.phone.format.suspicious", "Telefono con longitud poco probable", "phone", guest.sourceRow));
+        warnings.push(issue("warning", "guest.phone.format.suspicious", "Teléfono con longitud poco probable", "phone", guest.sourceRow));
       }
     }
     if (!isValidIso3(guest.nationalityIso3)) {
       errors.push(issue("error", "guest.nationality.iso.invalid", "Nacionalidad no normalizada como ISO3", "nationalityIso3", guest.sourceRow));
     }
     if (guest.countryIso3 === "ESP" && guest.postalCode && !isValidSpanishPostalCode(guest.postalCode)) {
-      warnings.push(issue("warning", "guest.postalCode.invalid", "Codigo postal espanol no valido", "postalCode", guest.sourceRow));
+      warnings.push(issue("warning", "guest.postalCode.invalid", "Código postal español no válido", "postalCode", guest.sourceRow));
     }
     if (guest.birthDate && isValidIsoDate(guest.birthDate)) {
       const age = getAge(guest.birthDate);
       if (age !== undefined && age < 0) errors.push(issue("error", "guest.birthDate.future", "Fecha de nacimiento futura", "birthDate", guest.sourceRow));
-      else if (age !== undefined && age > 120) warnings.push(issue("warning", "guest.birthDate.unlikely", "Edad superior a 120 anos", "birthDate", guest.sourceRow));
+      else if (age !== undefined && age > 120) warnings.push(issue("warning", "guest.birthDate.unlikely", "Edad superior a 120 años", "birthDate", guest.sourceRow));
     } else if (guest.birthDate) {
-      errors.push(issue("error", "guest.birthDate.format.invalid", "Fecha de nacimiento con formato invalido", "birthDate", guest.sourceRow));
+      errors.push(issue("error", "guest.birthDate.format.invalid", "Fecha de nacimiento con formato inválido", "birthDate", guest.sourceRow));
     }
 
     return { ...guest, errors, warnings, validationStatus: statusFrom(errors, warnings) };
@@ -267,14 +267,14 @@ export function smartValidateParsedExcel(parsed: ParsedExcel): ParsedExcel {
     errors.push(issue("error", "reservation.checkOutTime.invalid", "Hora de salida invalida", "checkOutTime"));
   }
   if (base.property.countryIso3 && !isValidIso3(base.property.countryIso3)) {
-    errors.push(issue("error", "property.country.iso.invalid", "Pais del establecimiento no normalizado como ISO3", "countryIso3"));
+    errors.push(issue("error", "property.country.iso.invalid", "País del establecimiento no normalizado como ISO3", "countryIso3"));
   }
   if (base.property.countryIso3 === "ESP" && base.property.postalCode && !isValidSpanishPostalCode(base.property.postalCode)) {
-    errors.push(issue("error", "property.postalCode.invalid", "Codigo postal del establecimiento no valido", "postalCode"));
+    errors.push(issue("error", "property.postalCode.invalid", "Código postal del establecimiento no válido", "postalCode"));
   }
   for (const candidate of findIbans(base)) {
     if (!isValidIban(candidate.value)) {
-      pushIfMissing(errors, issue("error", "payment.iban.invalid", "IBAN con formato o checksum invalido", "iban", candidate.row));
+      pushIfMissing(errors, issue("error", "payment.iban.invalid", "IBAN con formato o checksum inválido", "iban", candidate.row));
     }
   }
 
@@ -297,5 +297,5 @@ export function validateNoCriticalPlaceholders(xml: string): ValidationIssue[] {
   ];
   return checks
     .filter(([, pattern]) => pattern.test(xml))
-    .map(([placeholder]) => issue("error", "xml.placeholder.critical", `Placeholder critico presente: ${placeholder}`));
+    .map(([placeholder]) => issue("error", "xml.placeholder.critical", `Placeholder crítico presente: ${placeholder}`));
 }

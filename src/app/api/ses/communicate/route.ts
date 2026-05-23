@@ -19,10 +19,10 @@ export async function POST(request: Request) {
       environment: z.enum(["pre", "prod"]).optional(),
       dryRun: z.boolean().optional(),
     }).safeParse(body);
-    if (!parsed.success) return NextResponse.json({ error: "Payload invalido" }, { status: 400 });
+    if (!parsed.success) return NextResponse.json({ error: "Payload inválido" }, { status: 400 });
 
     const validation = validateSesHospedajesXml(parsed.data.xml, "altaParteHospedaje");
-    if (!validation.ok) return NextResponse.json({ error: "XML no valido contra validacion SES local", validation }, { status: 422 });
+    if (!validation.ok) return NextResponse.json({ error: "XML no válido contra validación SES local", validation }, { status: 422 });
 
     const result = await sendReservaHospedajeXml(parsed.data.xml, {
       environment: parsed.data.environment,
@@ -36,7 +36,7 @@ export async function POST(request: Request) {
         environment: result.environment,
         endpoint: result.endpoint,
         xmlHash,
-        message: "Peticion SES preparada en modo simulacion. No se ha enviado informacion al Ministerio.",
+        message: "Petición SES preparada en modo simulación. No se ha enviado información al Ministerio.",
       });
     }
 
