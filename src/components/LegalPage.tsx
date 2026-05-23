@@ -93,7 +93,6 @@ export function LegalPage({ type }: { type: "privacy" | "terms" }) {
   const page = content[type][language];
   return (
     <div className="space-y-6">
-      <ProductClassification />
       <section className="panel p-6">
         <h1 className="font-heading text-3xl font-black">{page.title}</h1>
         <div className="mt-6 grid gap-4">
@@ -105,6 +104,7 @@ export function LegalPage({ type }: { type: "privacy" | "terms" }) {
           ))}
         </div>
       </section>
+      <ProductClassification />
     </div>
   );
 }

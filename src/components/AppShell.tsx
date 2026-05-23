@@ -20,8 +20,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <div className="flex flex-wrap items-center gap-3">
             <Link className="nav-link" href="/">{t.newBooking}</Link>
             <Link className="nav-link" href="/dashboard">{t.dashboard}</Link>
-            <Link className="nav-link" href="/privacy">{t.privacy}</Link>
-            <Link className="nav-link" href="/terms">{t.terms}</Link>
             <ThemeToggle />
             <LanguageToggle />
           </div>
