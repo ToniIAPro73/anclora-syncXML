@@ -1019,6 +1019,7 @@ function translateIssueMessage(code: string, fallback: string, t: ReturnType<typ
   if (code === "guest.sex.missing") return t.issueSexMissing;
   if (code === "guest.documentSupport.missing") return t.issueDocumentSupportMissing;
   if (code === "guest.municipalityCode.missing") return t.issueMunicipalityCodeMissing;
+  if (code === "ses.readiness.municipalityCode.required") return t.issueSesMunicipalityCodeRequired;
   return fallback;
 }
 
