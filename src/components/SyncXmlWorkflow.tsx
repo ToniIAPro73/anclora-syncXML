@@ -48,6 +48,14 @@ export function SyncXmlWorkflow() {
   const consentAccepted = consents.every(Boolean);
   const duplicateBlockers = useMemo(() => (parsed ? unresolvedDuplicates(parsed) : []), [parsed]);
   const busy = Boolean(busyAction);
+  const consolidationBlocker = useMemo(() => {
+    if (!parsed || !generated) return t.xmlPreviewRequired;
+    if (parsed.validation.errors.length || generated.validation.errors.length) return t.criticalErrorsBlocked;
+    if (duplicateBlockers.length) return t.unresolvedDuplicatesBlocked;
+    if (!previewReviewed) return t.previewReviewRequired;
+    if (!mappingReviewed) return t.mappingReviewRequired;
+    return null;
+  }, [duplicateBlockers.length, generated, mappingReviewed, parsed, previewReviewed, t]);
 
   function chooseFile(file?: File | null) {
     if (!file) return;
@@ -130,10 +138,12 @@ export function SyncXmlWorkflow() {
   }
 
   async function consolidate() {
-    if (!parsed || !generated || parsed.validation.errors.length || duplicateBlockers.length || !previewReviewed || !mappingReviewed) {
+    if (consolidationBlocker) {
+      setMessage(consolidationBlocker);
       setActiveStep(generated ? 3 : parsed ? 2 : 1);
       return;
     }
+    if (!parsed || !generated) return;
     setBusyAction("consolidate");
     setMessage(null);
     try {
@@ -172,7 +182,10 @@ export function SyncXmlWorkflow() {
       return;
     }
     if (generated) void consolidate();
-    else setActiveStep(parsed ? 2 : 1);
+    else {
+      setMessage(t.xmlPreviewRequired);
+      setActiveStep(parsed ? 2 : 1);
+    }
   }
 
   function downloadXml() {
@@ -329,7 +342,7 @@ export function SyncXmlWorkflow() {
           onViewChange={setActiveView}
           onDownload={downloadXml}
           onConsolidate={consolidate}
-          canConsolidate={Boolean(parsed && !parsed.validation.errors.length && !duplicateBlockers.length && previewReviewed && mappingReviewed)}
+          canConsolidate={!consolidationBlocker}
         />
       )}
 
@@ -501,7 +514,12 @@ function XmlViewer({
       )}
       <div className="mt-5 flex flex-wrap gap-3">
         <button className="btn-secondary" onClick={onDownload}><Download className="h-4 w-4" />{t.downloadXml}</button>
-        <button className="btn-primary" onClick={onConsolidate} disabled={busy || Boolean(generated.validation.errors.length) || !canConsolidate}>
+        <button
+          className="btn-primary"
+          onClick={onConsolidate}
+          disabled={busy}
+          aria-disabled={!canConsolidate}
+        >
           {busyAction === "consolidate" ? <WorkingLabel label={t.processing} /> : <><CheckCircle2 className="h-4 w-4" />{t.consolidate}</>}
         </button>
       </div>
