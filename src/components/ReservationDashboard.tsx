@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Download, Search, Trash2 } from "lucide-react";
+import { formatDashboardDateTime } from "@/lib/dateFormat";
 import { usePreferences } from "./AppPreferencesProvider";
 
 export function ReservationDashboard() {
@@ -81,8 +82,8 @@ export function ReservationDashboard() {
               </div>
             </div>
             <div className="grid gap-3 md:grid-cols-3">
-              <Metric label={t.checkIn} value={selected.checkIn ?? selected.payload?.reservation?.checkInDate} />
-              <Metric label={t.checkOut} value={selected.checkOut ?? selected.payload?.reservation?.checkOutDate} />
+              <Metric label={t.checkIn} value={reservationDateTime(selected, "checkIn")} />
+              <Metric label={t.checkOut} value={reservationDateTime(selected, "checkOut")} />
               <Metric label={t.guestCount} value={String(selected.guestCount ?? selected.payload?.guests?.length ?? 0)} />
             </div>
             <div className="overflow-x-auto rounded-lg border border-app">
@@ -107,6 +108,20 @@ export function ReservationDashboard() {
   );
 }
 
+function reservationDateTime(reservation: any, type: "checkIn" | "checkOut") {
+  const payload = reservation.normalizedPayloadJson ?? reservation.payload;
+  const parsedReservation = payload?.reservation;
+  if (type === "checkIn") {
+    return formatDashboardDateTime(parsedReservation?.checkInDate ?? reservation.checkIn, parsedReservation?.checkInTime);
+  }
+  return formatDashboardDateTime(parsedReservation?.checkOutDate ?? reservation.checkOut, parsedReservation?.checkOutTime);
+}
+
 function Metric({ label, value }: { label: string; value?: string }) {
-  return <div className="rounded-lg border border-app bg-surface-elevated p-4"><p className="text-xs font-bold uppercase text-muted">{label}</p><p className="mt-1 font-heading text-lg font-bold">{value ?? "-"}</p></div>;
+  return (
+    <div className="metric-card">
+      <p className="text-xs font-bold uppercase text-muted">{label}</p>
+      <p className="metric-value">{value ?? "-"}</p>
+    </div>
+  );
 }

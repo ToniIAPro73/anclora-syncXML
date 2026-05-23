@@ -1,12 +1,14 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import type { ComponentType } from "react";
+import type { ComponentType, ReactNode } from "react";
 import { AlertTriangle, CheckCircle2, Download, FileSpreadsheet, FileText, SearchCheck, ShieldCheck, UploadCloud } from "lucide-react";
 import type { GeneratedXmlResult, ParsedExcel } from "@/lib/domain";
+import { smartValidateParsedExcel } from "@/lib/validation";
+import { buildXmlDownloadFileName } from "@/lib/xml/fileName";
 import { usePreferences } from "./AppPreferencesProvider";
 
-type BusyAction = "upload" | "generate" | "consolidate" | null;
+type BusyAction = "upload" | "validate" | "generate" | "consolidate" | null;
 type WorkflowStep = 1 | 2 | 3 | 4;
 
 async function fetchJson(url: string, init: RequestInit, timeoutMs = 25000) {
@@ -31,6 +33,7 @@ export function SyncXmlWorkflow() {
   const [busyAction, setBusyAction] = useState<BusyAction>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [consolidated, setConsolidated] = useState(false);
+  const [smartValidated, setSmartValidated] = useState(false);
   const [dragActive, setDragActive] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -58,6 +61,7 @@ export function SyncXmlWorkflow() {
       setParsed(data.parsed);
       setGenerated(null);
       setConsolidated(false);
+      setSmartValidated(false);
       setActiveStep(2);
       setMessage(t.uploadComplete);
     } catch {
@@ -94,6 +98,18 @@ export function SyncXmlWorkflow() {
     } finally {
       setBusyAction(null);
     }
+  }
+
+  function validateSmart() {
+    if (!parsed) return;
+    setBusyAction("validate");
+    const next = smartValidateParsedExcel(parsed);
+    setParsed(next);
+    setGenerated(null);
+    setConsolidated(false);
+    setSmartValidated(true);
+    setMessage(next.validation.errors.length ? t.smartValidationErrors : t.smartValidationOk);
+    setBusyAction(null);
   }
 
   async function consolidate() {
@@ -148,7 +164,7 @@ export function SyncXmlWorkflow() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `syncxml-${parsed?.reservation.reference ?? Date.now()}.xml`;
+    a.download = buildXmlDownloadFileName(parsed);
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -219,7 +235,15 @@ export function SyncXmlWorkflow() {
       )}
 
       {activeStep === 2 && parsed && (
-        <ExcelReview parsed={parsed} validGuests={validGuests.length} busy={busy} busyAction={busyAction} onGenerate={generate} />
+        <ExcelReview
+          parsed={parsed}
+          validGuests={validGuests.length}
+          busy={busy}
+          busyAction={busyAction}
+          smartValidated={smartValidated}
+          onSmartValidate={validateSmart}
+          onGenerate={generate}
+        />
       )}
 
       {activeStep === 3 && generated && parsed && (
@@ -254,7 +278,23 @@ export function SyncXmlWorkflow() {
   );
 }
 
-function ExcelReview({ parsed, validGuests, busy, busyAction, onGenerate }: { parsed: ParsedExcel; validGuests: number; busy: boolean; busyAction: BusyAction; onGenerate: () => void }) {
+function ExcelReview({
+  parsed,
+  validGuests,
+  busy,
+  busyAction,
+  smartValidated,
+  onSmartValidate,
+  onGenerate,
+}: {
+  parsed: ParsedExcel;
+  validGuests: number;
+  busy: boolean;
+  busyAction: BusyAction;
+  smartValidated: boolean;
+  onSmartValidate: () => void;
+  onGenerate: () => void;
+}) {
   const { dictionary: t } = usePreferences();
   return (
     <>
@@ -281,12 +321,20 @@ function ExcelReview({ parsed, validGuests, busy, busyAction, onGenerate }: { pa
 
       <section className="panel overflow-hidden">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-app p-5">
-          <h2 className="font-heading text-xl font-bold">{t.guests}: {parsed.guests.length}</h2>
-          <button disabled={Boolean(parsed.validation.errors.length) || busy} onClick={onGenerate} className="btn-primary disabled:opacity-45">
-            {busyAction === "generate" ? <WorkingLabel label={t.processing} /> : t.generateXml}
-          </button>
+          <div>
+            <h2 className="font-heading text-xl font-bold">{t.guests}: {parsed.guests.length}</h2>
+            <p className="mt-1 text-sm text-muted">{smartValidated ? t.smartValidationApplied : t.smartValidationPending}</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button disabled={busy} onClick={onSmartValidate} className="btn-secondary disabled:opacity-45">
+              {busyAction === "validate" ? <WorkingLabel label={t.processing} /> : <><ShieldCheck className="h-4 w-4" />{t.smartValidate}</>}
+            </button>
+            <button disabled={Boolean(parsed.validation.errors.length) || busy} onClick={onGenerate} className="btn-primary disabled:opacity-45">
+              {busyAction === "generate" ? <WorkingLabel label={t.processing} /> : t.generateXml}
+            </button>
+          </div>
         </div>
-        <GuestTable guests={parsed.guests} />
+        <GuestTable guests={parsed.guests} smartValidated={smartValidated} />
       </section>
 
       <section className="grid gap-4 lg:grid-cols-2">
@@ -379,7 +427,18 @@ function ProcessRail({ activeStep, parsed, generated, consolidated, busyAction, 
   );
 }
 
-function GuestTable({ guests }: { guests: ParsedExcel["guests"] }) {
+function fieldState(guest: ParsedExcel["guests"][number], fields: string[], smartValidated: boolean) {
+  const issues = guest.errors.concat(guest.warnings).filter((issue) => issue.field && fields.includes(issue.field));
+  if (issues.some((issue) => issue.severity === "error")) return "error";
+  if (issues.some((issue) => issue.severity === "warning")) return "warning";
+  return smartValidated ? "valid" : "neutral";
+}
+
+function FieldCell({ state, children }: { state: "error" | "warning" | "valid" | "neutral"; children: ReactNode }) {
+  return <td className={`field-cell is-${state}`}>{children}</td>;
+}
+
+function GuestTable({ guests, smartValidated }: { guests: ParsedExcel["guests"]; smartValidated: boolean }) {
   const { dictionary: t } = usePreferences();
   return (
     <div className="guest-table-wrap">
@@ -400,11 +459,11 @@ function GuestTable({ guests }: { guests: ParsedExcel["guests"] }) {
             <tr key={guest.sourceRow}>
               <td><StatusPill status={guest.validationStatus} /></td>
               <td>{guest.sourceRow}</td>
-              <td className="font-semibold">{guest.firstName}<br />{guest.surname1} {guest.surname2}</td>
-              <td><span className="text-muted">{guest.documentType}</span><br />{guest.documentNumber}</td>
-              <td><span className="text-muted">Nac.</span> {guest.birthDate}<br /><span className="text-muted">Pais</span> {guest.nationalityIso3}</td>
-              <td className="break-anywhere">{guest.email || "-"}<br /><span className="text-muted">{guest.phone || "-"}</span></td>
-              <td className="break-anywhere">{guest.address}</td>
+              <FieldCell state={fieldState(guest, ["firstName", "surname1", "surname2"], smartValidated)}><span className="font-semibold">{guest.firstName}</span><br />{guest.surname1} {guest.surname2}</FieldCell>
+              <FieldCell state={fieldState(guest, ["documentNumber", "documentType"], smartValidated)}><span className="text-muted">{guest.documentType}</span><br />{guest.documentNumber}</FieldCell>
+              <FieldCell state={fieldState(guest, ["birthDate", "nationalityIso3"], smartValidated)}><span className="text-muted">Nac.</span> {guest.birthDate}<br /><span className="text-muted">Pais</span> {guest.nationalityIso3}</FieldCell>
+              <FieldCell state={fieldState(guest, ["email", "phone"], smartValidated)}><span className="break-anywhere">{guest.email || "-"}</span><br /><span className="text-muted">{guest.phone || "-"}</span></FieldCell>
+              <FieldCell state={fieldState(guest, ["address", "postalCode", "municipalityCode"], smartValidated)}><span className="break-anywhere">{guest.address}</span></FieldCell>
               <td><CompactIssueList issues={guest.errors.concat(guest.warnings)} /></td>
             </tr>
           ))}
