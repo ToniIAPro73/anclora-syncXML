@@ -2,7 +2,7 @@
 
 import { useMemo, useRef, useState } from "react";
 import type { ComponentType, ReactNode } from "react";
-import { CheckCircle2, Download, Eye, EyeOff, FileSpreadsheet, FileText, SearchCheck, ShieldCheck, Trash2, UploadCloud } from "lucide-react";
+import { Ban, CheckCircle2, ClipboardCheck, Download, Eye, EyeOff, FileSpreadsheet, FileText, RadioTower, SearchCheck, Send, ShieldCheck, Trash2, UploadCloud } from "lucide-react";
 import type { DuplicateResolution, GeneratedXmlResult, ParsedExcel } from "@/lib/domain";
 import { smartValidateParsedExcel } from "@/lib/validation";
 import { buildXmlDownloadFileName } from "@/lib/xml/fileName";
@@ -12,6 +12,7 @@ import { maskAddress, maskDocument, maskEmail, maskPayment, maskPhone } from "@/
 
 type BusyAction = "upload" | "validate" | "generate" | "consolidate" | null;
 type WorkflowStep = 1 | 2 | 3 | 4;
+type SesUiAction = "validate" | "prepare" | "sendPre" | "queryLot" | "queryCommunication" | "cancelLot" | "catalog" | null;
 
 async function fetchJson(url: string, init: RequestInit, timeoutMs = 25000) {
   const controller = new AbortController();
@@ -523,6 +524,195 @@ function XmlViewer({
           {busyAction === "consolidate" ? <WorkingLabel label={t.processing} /> : <><CheckCircle2 className="h-4 w-4" />{t.consolidate}</>}
         </button>
       </div>
+      <SesIntegrationPanel xml={generated.xml} />
+    </section>
+  );
+}
+
+function SesIntegrationPanel({ xml }: { xml: string }) {
+  const { dictionary: t } = usePreferences();
+  const [busyAction, setBusyAction] = useState<SesUiAction>(null);
+  const [schemaOk, setSchemaOk] = useState<boolean | null>(null);
+  const [result, setResult] = useState<string | null>(null);
+  const [lotCode, setLotCode] = useState("");
+  const [communicationCode, setCommunicationCode] = useState("");
+  const [catalog, setCatalog] = useState("");
+
+  async function run(action: SesUiAction, request: () => Promise<string>) {
+    setBusyAction(action);
+    setResult(null);
+    try {
+      setResult(await request());
+    } catch {
+      setResult(t.actionFailed);
+    } finally {
+      setBusyAction(null);
+    }
+  }
+
+  async function validateSes() {
+    await run("validate", async () => {
+      const { response, data } = await fetchJson("/api/ses/validate", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ xml, kind: "altaParteHospedaje" }),
+      });
+      const ok = Boolean(response.ok && data.validation?.ok);
+      setSchemaOk(ok);
+      return ok ? t.sesValidationOk : `${t.sesValidationFailed}: ${data.validation?.errors?.length ?? 0}`;
+    });
+  }
+
+  async function prepareRequest() {
+    await run("prepare", async () => {
+      const { response, data } = await fetchJson("/api/ses/communicate", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ xml, environment: "pre", dryRun: true }),
+      });
+      if (!response.ok) return data.error ?? t.actionFailed;
+      setSchemaOk(true);
+      return `${data.message ?? t.sesPreparedOk} ${data.xmlHash ? `${t.sesXmlHash}: ${data.xmlHash.slice(0, 12)}...` : ""}`;
+    });
+  }
+
+  async function sendPreproduction() {
+    if (!window.confirm(t.sesPreSendConfirm)) return;
+    await run("sendPre", async () => {
+      const { response, data } = await fetchJson("/api/ses/communicate", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ xml, environment: "pre", dryRun: false }),
+      }, 45000);
+      if (!response.ok) return data.error ?? t.actionFailed;
+      return data.response?.ok ? t.sesPreSendOk : `${t.sesPreSendFailed}: ${data.response?.status ?? "-"}`;
+    });
+  }
+
+  async function queryLot() {
+    const value = lotCode.trim();
+    if (!value) return setResult(t.sesCodeRequired);
+    await run("queryLot", async () => {
+      const { response, data } = await fetchJson("/api/ses/lote", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ loteCodes: [value], environment: "pre", dryRun: false }),
+      }, 45000);
+      if (!response.ok) return data.error ?? t.actionFailed;
+      return `${t.sesQueryCompleted}: ${data.status ?? "OK"}`;
+    });
+  }
+
+  async function queryCommunication() {
+    const value = communicationCode.trim();
+    if (!value) return setResult(t.sesCodeRequired);
+    await run("queryCommunication", async () => {
+      const { response, data } = await fetchJson("/api/ses/comunicacion", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ communicationCodes: [value], environment: "pre", dryRun: false }),
+      }, 45000);
+      if (!response.ok) return data.error ?? t.actionFailed;
+      return `${t.sesQueryCompleted}: ${data.status ?? "OK"}`;
+    });
+  }
+
+  async function cancelLot() {
+    const value = lotCode.trim();
+    if (!value) return setResult(t.sesCodeRequired);
+    if (!window.confirm(t.sesCancelConfirm)) return;
+    await run("cancelLot", async () => {
+      const { response, data } = await fetchJson("/api/ses/anulacion-lote", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ loteCode: value, environment: "pre", dryRun: false }),
+      }, 45000);
+      if (!response.ok) return data.error ?? t.actionFailed;
+      return `${t.sesCancelCompleted}: ${data.status ?? "OK"}`;
+    });
+  }
+
+  async function queryCatalog() {
+    const value = catalog.trim();
+    if (!value) return setResult(t.sesCatalogRequired);
+    await run("catalog", async () => {
+      const { response, data } = await fetchJson("/api/ses/catalogo", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ catalog: value, environment: "pre", dryRun: false }),
+      }, 45000);
+      if (!response.ok) return data.error ?? t.actionFailed;
+      return `${t.sesQueryCompleted}: ${data.status ?? "OK"}`;
+    });
+  }
+
+  const working = Boolean(busyAction);
+
+  return (
+    <section className="ses-panel mt-6">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="flex min-w-0 gap-3">
+          <div className="icon-tile"><RadioTower className="h-5 w-5" /></div>
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <h3 className="font-heading text-xl font-black">{t.sesPanelTitle}</h3>
+              <span className="status-pill is-valid">{t.sesPreproduction}</span>
+              <span className="status-pill is-warning">{t.sesProductionBlocked}</span>
+            </div>
+            <p className="mt-2 max-w-3xl text-sm text-secondary">{t.sesPanelCopy}</p>
+          </div>
+        </div>
+        <div className="ses-schema-state">
+          {schemaOk === true ? <CheckCircle2 className="h-4 w-4 text-accent" /> : schemaOk === false ? <Ban className="h-4 w-4 text-error" /> : <ShieldCheck className="h-4 w-4 text-muted" />}
+          <span>{schemaOk === true ? t.sesSchemaValid : schemaOk === false ? t.sesSchemaInvalid : t.sesSchemaPending}</span>
+        </div>
+      </div>
+
+      <div className="mt-5 grid gap-4 xl:grid-cols-[1fr_1fr]">
+        <div className="ses-card">
+          <h4 className="font-heading text-base font-bold">{t.sesTransmission}</h4>
+          <p className="mt-1 text-sm text-muted">{t.sesTransmissionCopy}</p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <button type="button" className="btn-secondary" disabled={working} onClick={validateSes}>
+              {busyAction === "validate" ? <WorkingLabel label={t.processing} /> : <><ClipboardCheck className="h-4 w-4" />{t.sesValidateXml}</>}
+            </button>
+            <button type="button" className="btn-secondary" disabled={working} onClick={prepareRequest}>
+              {busyAction === "prepare" ? <WorkingLabel label={t.processing} /> : <><ShieldCheck className="h-4 w-4" />{t.sesPrepareDryRun}</>}
+            </button>
+            <button type="button" className="btn-primary" disabled={working || schemaOk === false} onClick={sendPreproduction}>
+              {busyAction === "sendPre" ? <WorkingLabel label={t.processing} /> : <><Send className="h-4 w-4" />{t.sesSendPreproduction}</>}
+            </button>
+          </div>
+        </div>
+
+        <div className="ses-card">
+          <h4 className="font-heading text-base font-bold">{t.sesQueries}</h4>
+          <p className="mt-1 text-sm text-muted">{t.sesQueriesCopy}</p>
+          <div className="mt-4 grid gap-3 md:grid-cols-2">
+            <label className="space-y-1">
+              <span className="text-xs font-bold uppercase text-muted">{t.sesLotCode}</span>
+              <input className="input" value={lotCode} onChange={(event) => setLotCode(event.target.value)} placeholder="Lote" />
+            </label>
+            <label className="space-y-1">
+              <span className="text-xs font-bold uppercase text-muted">{t.sesCommunicationCode}</span>
+              <input className="input" value={communicationCode} onChange={(event) => setCommunicationCode(event.target.value)} placeholder="Codigo" />
+            </label>
+            <label className="space-y-1 md:col-span-2">
+              <span className="text-xs font-bold uppercase text-muted">{t.sesCatalog}</span>
+              <input className="input" value={catalog} onChange={(event) => setCatalog(event.target.value)} placeholder="TIPO_DOCUMENTO" />
+            </label>
+          </div>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <button type="button" className="btn-secondary" disabled={working} onClick={queryLot}>{busyAction === "queryLot" ? <WorkingLabel label={t.processing} /> : t.sesQueryLot}</button>
+            <button type="button" className="btn-secondary" disabled={working} onClick={queryCommunication}>{busyAction === "queryCommunication" ? <WorkingLabel label={t.processing} /> : t.sesQueryCommunication}</button>
+            <button type="button" className="btn-secondary" disabled={working} onClick={queryCatalog}>{busyAction === "catalog" ? <WorkingLabel label={t.processing} /> : t.sesQueryCatalog}</button>
+            <button type="button" className="btn-danger" disabled={working} onClick={cancelLot}>{busyAction === "cancelLot" ? <WorkingLabel label={t.processing} /> : t.sesCancelLot}</button>
+          </div>
+        </div>
+      </div>
+
+      {result && <div className="ses-result mt-4" role="status">{result}</div>}
+      <p className="mt-4 text-xs leading-5 text-muted">{t.sesPrivacyNote}</p>
     </section>
   );
 }

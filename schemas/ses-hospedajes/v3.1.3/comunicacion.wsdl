@@ -1,0 +1,500 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wsdl:definitions xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:sch0="http://www.soap.servicios.hospedajes.mir.es/comunicacion" xmlns:sch1="http://www.soap.servicios.hospedajes.mir.es/tipoComunicacion" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:tns="http://www.soap.servicios.hospedajes.mir.es/comunicacion" targetNamespace="http://www.soap.servicios.hospedajes.mir.es/comunicacion">
+    <wsdl:types xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+        <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://www.soap.servicios.hospedajes.mir.es/comunicacion" xmlns:com="http://www.soap.servicios.hospedajes.mir.es/tipoComunicacion" attributeFormDefault="unqualified" elementFormDefault="unqualified" targetNamespace="http://www.soap.servicios.hospedajes.mir.es/comunicacion">
+            <xsd:import namespace="http://www.soap.servicios.hospedajes.mir.es/tipoComunicacion" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+            <xsd:element name="consultaComunicacionRequest" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                <xsd:complexType xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                    <xsd:sequence xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                        <xsd:element name="codigos" type="com:CodigosComunicacionType" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+            <xsd:element name="consultaComunicacionResponse" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                <xsd:complexType xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                    <xsd:sequence xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                        <xsd:element name="resultado" type="com:ResultadoRespuestaType" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                        <xsd:element maxOccurs="unbounded" minOccurs="0" name="comunicacion" type="com:comunicacionType" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+            <xsd:element name="consultaLoteRequest" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                <xsd:complexType xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                    <xsd:sequence xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                        <xsd:element name="codigosLote" type="com:codigosLoteType" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+            <xsd:element name="consultaLoteResponse" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                <xsd:complexType xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                    <xsd:sequence xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                        <xsd:element name="respuesta" type="com:ResultadoRespuestaType" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                        <xsd:element maxOccurs="unbounded" minOccurs="0" name="resultado" type="com:wscomunicacionType" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+            <xsd:element name="anulacionLoteRequest" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                <xsd:complexType xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                    <xsd:sequence xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                        <xsd:element name="lote" type="com:CodigoLoteType" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+            <xsd:element name="anulacionLoteResponse" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                <xsd:complexType xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                    <xsd:sequence xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                        <xsd:element name="codigo" type="xsd:int" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                        <xsd:element name="descripcion" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+            <xsd:element name="comunicacionRequest" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                <xsd:complexType xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                    <xsd:sequence xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                        <xsd:element name="peticion" type="com:peticionType" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+            <xsd:element name="comunicacionResponse" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                <xsd:complexType xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                    <xsd:sequence xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                        <xsd:element name="respuesta" type="com:estadoRespuestaType" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                        <xsd:element maxOccurs="unbounded" minOccurs="0" name="resultado" type="com:wscomunicacionType" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+            <xsd:element name="catalogoRequest" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                <xsd:complexType xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                    <xsd:sequence xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                        <xsd:element name="peticion" type="catalogoRequestType" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+            <xsd:element name="catalogoResponse" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                <xsd:complexType xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                    <xsd:sequence xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                        <xsd:element name="resultado" type="com:ResultadoRespuestaType" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                        <xsd:element name="respuesta" type="catalogoResponseType" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+            <xsd:complexType name="catalogoResponseType" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                <xsd:sequence xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                    <xsd:element name="resultado" type="resultadoType" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                </xsd:sequence>
+            </xsd:complexType>
+            <xsd:complexType name="resultadoType" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                <xsd:sequence xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                    <xsd:element maxOccurs="unbounded" minOccurs="0" name="tupla" type="catalogoType" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                </xsd:sequence>
+            </xsd:complexType>
+            <xsd:complexType name="catalogoType" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                <xsd:sequence xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                    <xsd:element name="codigo" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element name="descripcion" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                </xsd:sequence>
+            </xsd:complexType>
+            <xsd:complexType name="catalogoRequestType" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                <xsd:sequence xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                    <xsd:element name="catalogo" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                </xsd:sequence>
+            </xsd:complexType>
+        </xsd:schema>
+        <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://www.soap.servicios.hospedajes.mir.es/tipoComunicacion" attributeFormDefault="unqualified" elementFormDefault="unqualified" targetNamespace="http://www.soap.servicios.hospedajes.mir.es/tipoComunicacion">
+            <xsd:complexType name="CodigosComunicacionType" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                <xsd:sequence xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                    <xsd:element maxOccurs="unbounded" name="codigo" type="CodigoComunicacionType" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                </xsd:sequence>
+            </xsd:complexType>
+            <xsd:complexType name="ResultadoRespuestaType" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                <xsd:sequence xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                    <xsd:element name="codigo" type="xsd:int" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element name="descripcion" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                </xsd:sequence>
+            </xsd:complexType>
+            <xsd:simpleType name="CodigoComunicacionType" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                <xsd:restriction base="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                    <xsd:maxLength value="36" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:whiteSpace value="collapse" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                </xsd:restriction>
+            </xsd:simpleType>
+            <xsd:complexType name="codigosLoteType" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                <xsd:sequence xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                    <xsd:element maxOccurs="unbounded" name="lote" type="CodigoComunicacionType" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                </xsd:sequence>
+            </xsd:complexType>
+            <xsd:complexType name="direccionType" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                <xsd:sequence xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                    <xsd:element name="direccion" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element minOccurs="0" name="direccionComplementaria" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element minOccurs="0" name="municipio" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element minOccurs="0" name="localidad" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element name="cp" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element name="pais" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                </xsd:sequence>
+            </xsd:complexType>
+            <xsd:complexType name="establecimientoType" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                <xsd:sequence xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                    <xsd:element minOccurs="0" name="codigo" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element minOccurs="0" name="nombre" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element minOccurs="0" name="tipo" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element minOccurs="0" name="direccion" type="direccionType" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                </xsd:sequence>
+            </xsd:complexType>
+            <xsd:complexType name="arrendadorType" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                <xsd:sequence xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                    <xsd:element name="nombre" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element minOccurs="0" name="apellido1" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element minOccurs="0" name="apellido2" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element name="tipoDocumento" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element name="documento" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element name="codigo" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element name="tipo" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                </xsd:sequence>
+            </xsd:complexType>
+            <xsd:complexType name="pagoType" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                <xsd:sequence xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                    <xsd:element name="tipo" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element minOccurs="0" name="fecha" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element minOccurs="0" name="medioPago" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element minOccurs="0" name="titular" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element minOccurs="0" name="caducidadTarjeta" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                </xsd:sequence>
+            </xsd:complexType>
+            <xsd:complexType name="infoAlojamientoType" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                <xsd:sequence xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                    <xsd:element minOccurs="0" name="numeroPersonas" type="xsd:integer" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element minOccurs="0" name="conexionInternet" type="xsd:boolean" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element minOccurs="0" name="numeroHabitaciones" type="xsd:integer" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                </xsd:sequence>
+            </xsd:complexType>
+            <xsd:complexType name="comunicacionType" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                <xsd:sequence xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                    <xsd:element name="tipo" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element name="codigo" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element minOccurs="0" name="anulada" type="xsd:boolean" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element name="referencia" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element name="fechaContrato" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element name="fechaInicio" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element name="fechaFin" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element name="fechaAlta" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element name="pago" type="pagoType" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element name="arrendador" type="arrendadorType" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element minOccurs="0" name="establecimiento" type="establecimientoType" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element minOccurs="0" name="infoAlojamiento" type="infoAlojamientoType" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element minOccurs="0" name="direccionRecogida" type="direccionType" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element minOccurs="0" name="direccionDevolucion" type="direccionType" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element minOccurs="0" name="establecimientoRecogida" type="establecimientoType" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element minOccurs="0" name="establecimientoDevolucion" type="establecimientoType" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element name="personas" type="personasType" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element minOccurs="0" name="vehiculos" type="vehiculosType" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                </xsd:sequence>
+            </xsd:complexType>
+            <xsd:complexType name="vehiculoType" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                <xsd:sequence xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                    <xsd:element minOccurs="0" name="tipo" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element minOccurs="0" name="marca" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element minOccurs="0" name="modelo" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element minOccurs="0" name="matricula" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element minOccurs="0" name="categoria" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element minOccurs="0" name="bastidor" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element minOccurs="0" name="color" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element minOccurs="0" name="kilometrosRecogida" type="xsd:double" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element minOccurs="0" name="kilometrosDevolucion" type="xsd:double" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element minOccurs="0" name="datosGps" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                </xsd:sequence>
+            </xsd:complexType>
+            <xsd:complexType name="personasType" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                <xsd:sequence xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                    <xsd:element maxOccurs="unbounded" minOccurs="0" name="persona" type="personaType" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                </xsd:sequence>
+            </xsd:complexType>
+            <xsd:complexType name="vehiculosType" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                <xsd:sequence xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                    <xsd:element maxOccurs="unbounded" minOccurs="0" name="vehiculo" type="vehiculoType" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                </xsd:sequence>
+            </xsd:complexType>
+            <xsd:complexType name="personaType" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                <xsd:sequence xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                    <xsd:element name="rol" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element name="nombre" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element name="apellido1" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element minOccurs="0" name="apellido2" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element minOccurs="0" name="tipoDocumento" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element minOccurs="0" name="documento" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element minOccurs="0" name="soporteDocumento" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element minOccurs="0" name="fechaNacimiento" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element minOccurs="0" name="nacionalidad" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element minOccurs="0" name="sexo" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element minOccurs="0" name="direccion" type="direccionType" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element minOccurs="0" name="telefono" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element minOccurs="0" name="telefono2" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element minOccurs="0" name="correo" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element minOccurs="0" name="parentesco" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element minOccurs="0" name="permisoConducir" type="permisoConducirType" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                </xsd:sequence>
+            </xsd:complexType>
+            <xsd:complexType name="permisoConducirType" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                <xsd:sequence xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                    <xsd:element name="tipo" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element name="fechaValidez" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element minOccurs="0" name="numero" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element minOccurs="0" name="soporte" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                </xsd:sequence>
+            </xsd:complexType>
+            <xsd:simpleType name="CodigoLoteType" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                <xsd:restriction base="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                    <xsd:maxLength value="36" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:whiteSpace value="collapse" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                </xsd:restriction>
+            </xsd:simpleType>
+            <xsd:complexType name="peticionType" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                <xsd:sequence xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                    <xsd:element name="cabecera" type="cabeceraLoteType" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element name="solicitud" type="solicitudType" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                </xsd:sequence>
+            </xsd:complexType>
+            <xsd:complexType name="cabeceraLoteType" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                <xsd:sequence xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                    <xsd:element name="codigoArrendador" type="codigoArrendadorType" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element name="aplicacion" type="string50Type" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element name="tipoOperacion" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                        <xsd:simpleType xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                            <xsd:restriction base="operacionType" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                                <xsd:enumeration value="A" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                                <xsd:enumeration value="B" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                                <xsd:enumeration value="C" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                            </xsd:restriction>
+                        </xsd:simpleType>
+                    </xsd:element>
+                    <xsd:element minOccurs="0" name="tipoComunicacion" type="tipoComunicacionType" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                </xsd:sequence>
+            </xsd:complexType>
+            <xsd:simpleType name="codigoArrendadorType" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                <xsd:restriction base="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                    <xsd:maxLength value="10" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:whiteSpace value="collapse" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                </xsd:restriction>
+            </xsd:simpleType>
+            <xsd:simpleType name="string50Type" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                <xsd:restriction base="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                    <xsd:maxLength value="50" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:whiteSpace value="collapse" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                </xsd:restriction>
+            </xsd:simpleType>
+            <xsd:simpleType name="LoteType" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                <xsd:restriction base="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                    <xsd:maxLength value="36" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:whiteSpace value="collapse" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                </xsd:restriction>
+            </xsd:simpleType>
+            <xsd:complexType name="estadoRespuestaType" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                <xsd:sequence xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                    <xsd:element name="codigo" type="xsd:int" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element name="descripcion" type="string100Type" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element minOccurs="0" name="lote" type="LoteType" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                </xsd:sequence>
+            </xsd:complexType>
+            <xsd:simpleType name="operacionType" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                <xsd:annotation xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                    <xsd:documentation xmlns:xsd="http://www.w3.org/2001/XMLSchema">Tipo de operación podrá ser 'A' (Alta), 'C' (Consulta) ó 'B' (Anulación).</xsd:documentation>
+                </xsd:annotation>
+                <xsd:restriction base="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                    <xsd:maxLength value="1" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:whiteSpace value="collapse" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                </xsd:restriction>
+            </xsd:simpleType>
+            <xsd:simpleType name="tipoComunicacionType" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                <xsd:restriction base="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                    <xsd:maxLength value="2" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:whiteSpace value="collapse" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                </xsd:restriction>
+            </xsd:simpleType>
+            <xsd:simpleType name="solicitudType" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                <xsd:annotation xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                    <xsd:documentation xmlns:xsd="http://www.w3.org/2001/XMLSchema">La solicitud será el fichero xml comprimido (zip) y en Base64.</xsd:documentation>
+                </xsd:annotation>
+                <xsd:restriction base="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                    <xsd:whiteSpace value="collapse" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                </xsd:restriction>
+            </xsd:simpleType>
+            <xsd:complexType name="wscomunicacionType" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                <xsd:sequence xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                    <xsd:element name="lote" type="LoteType" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element name="tipoComunicacion" type="tipoComunicacionType" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element name="tipoOperacion" type="operacionType" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element name="fechaPeticion" type="xsd:dateTime" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element name="fechaProcesamiento" type="xsd:dateTime" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element name="codigoEstado" type="xsd:int" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element name="descEstado" type="string200Type" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element name="identificadorUsuario" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element name="nombreUsuario" type="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element name="codigoArrendador" type="codigoArrendadorType" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element name="aplicacion" type="string50Type" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element minOccurs="0" name="resultadoComunicaciones" type="resultadosType" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                </xsd:sequence>
+            </xsd:complexType>
+            <xsd:complexType name="resultadosType" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                <xsd:sequence xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                    <xsd:element maxOccurs="unbounded" minOccurs="0" name="resultadoComunicacion" type="resultadoType" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                </xsd:sequence>
+            </xsd:complexType>
+            <xsd:complexType name="resultadoType" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                <xsd:sequence xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                    <xsd:element name="orden" type="xsd:int" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:element minOccurs="0" name="anulada" type="xsd:boolean" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:choice xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                        <xsd:element name="codigoComunicacion" type="LoteType" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                        <xsd:sequence xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                            <xsd:element name="tipoError" type="string5Type" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                            <xsd:element name="error" type="string100Type" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                        </xsd:sequence>
+                    </xsd:choice>
+                </xsd:sequence>
+            </xsd:complexType>
+            <xsd:simpleType name="string5Type" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                <xsd:restriction base="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                    <xsd:maxLength value="5" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:whiteSpace value="collapse" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                </xsd:restriction>
+            </xsd:simpleType>
+            <xsd:simpleType name="string100Type" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                <xsd:restriction base="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                    <xsd:maxLength value="100" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:whiteSpace value="collapse" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                </xsd:restriction>
+            </xsd:simpleType>
+            <xsd:simpleType name="string200Type" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                <xsd:restriction base="xsd:string" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                    <xsd:maxLength value="200" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                    <xsd:whiteSpace value="collapse" xmlns:xsd="http://www.w3.org/2001/XMLSchema"/>
+                </xsd:restriction>
+            </xsd:simpleType>
+        </xsd:schema>
+    </wsdl:types>
+    <wsdl:message name="anulacionLoteResponse" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+        <wsdl:part element="tns:anulacionLoteResponse" name="anulacionLoteResponse" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+    </wsdl:part>
+    </wsdl:message>
+    <wsdl:message name="catalogoRequest" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+        <wsdl:part element="tns:catalogoRequest" name="catalogoRequest" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+    </wsdl:part>
+    </wsdl:message>
+    <wsdl:message name="catalogoResponse" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+        <wsdl:part element="tns:catalogoResponse" name="catalogoResponse" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+    </wsdl:part>
+    </wsdl:message>
+    <wsdl:message name="consultaComunicacionRequest" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+        <wsdl:part element="tns:consultaComunicacionRequest" name="consultaComunicacionRequest" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+    </wsdl:part>
+    </wsdl:message>
+    <wsdl:message name="anulacionLoteRequest" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+        <wsdl:part element="tns:anulacionLoteRequest" name="anulacionLoteRequest" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+    </wsdl:part>
+    </wsdl:message>
+    <wsdl:message name="comunicacionResponse" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+        <wsdl:part element="tns:comunicacionResponse" name="comunicacionResponse" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+    </wsdl:part>
+    </wsdl:message>
+    <wsdl:message name="comunicacionRequest" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+        <wsdl:part element="tns:comunicacionRequest" name="comunicacionRequest" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+    </wsdl:part>
+    </wsdl:message>
+    <wsdl:message name="consultaComunicacionResponse" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+        <wsdl:part element="tns:consultaComunicacionResponse" name="consultaComunicacionResponse" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+    </wsdl:part>
+    </wsdl:message>
+    <wsdl:message name="consultaLoteRequest" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+        <wsdl:part element="tns:consultaLoteRequest" name="consultaLoteRequest" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+    </wsdl:part>
+    </wsdl:message>
+    <wsdl:message name="consultaLoteResponse" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+        <wsdl:part element="tns:consultaLoteResponse" name="consultaLoteResponse" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+    </wsdl:part>
+    </wsdl:message>
+    <wsdl:portType name="ComunicacionPort" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+        <wsdl:operation name="anulacionLote" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+            <wsdl:input message="tns:anulacionLoteRequest" name="anulacionLoteRequest" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+    </wsdl:input>
+            <wsdl:output message="tns:anulacionLoteResponse" name="anulacionLoteResponse" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+    </wsdl:output>
+        </wsdl:operation>
+        <wsdl:operation name="catalogo" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+            <wsdl:input message="tns:catalogoRequest" name="catalogoRequest" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+    </wsdl:input>
+            <wsdl:output message="tns:catalogoResponse" name="catalogoResponse" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+    </wsdl:output>
+        </wsdl:operation>
+        <wsdl:operation name="consultaComunicacion" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+            <wsdl:input message="tns:consultaComunicacionRequest" name="consultaComunicacionRequest" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+    </wsdl:input>
+            <wsdl:output message="tns:consultaComunicacionResponse" name="consultaComunicacionResponse" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+    </wsdl:output>
+        </wsdl:operation>
+        <wsdl:operation name="comunicacion" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+            <wsdl:input message="tns:comunicacionRequest" name="comunicacionRequest" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+    </wsdl:input>
+            <wsdl:output message="tns:comunicacionResponse" name="comunicacionResponse" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+    </wsdl:output>
+        </wsdl:operation>
+        <wsdl:operation name="consultaLote" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+            <wsdl:input message="tns:consultaLoteRequest" name="consultaLoteRequest" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+    </wsdl:input>
+            <wsdl:output message="tns:consultaLoteResponse" name="consultaLoteResponse" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+    </wsdl:output>
+        </wsdl:operation>
+    </wsdl:portType>
+    <wsdl:binding name="ComunicacionPortSoap11" type="tns:ComunicacionPort" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+        <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"/>
+        <wsdl:operation name="anulacionLote" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+            <soap:operation soapAction="" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"/>
+            <wsdl:input name="anulacionLoteRequest" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+                <soap:body use="literal" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"/>
+            </wsdl:input>
+            <wsdl:output name="anulacionLoteResponse" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+                <soap:body use="literal" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"/>
+            </wsdl:output>
+        </wsdl:operation>
+        <wsdl:operation name="catalogo" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+            <soap:operation soapAction="" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"/>
+            <wsdl:input name="catalogoRequest" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+                <soap:body use="literal" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"/>
+            </wsdl:input>
+            <wsdl:output name="catalogoResponse" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+                <soap:body use="literal" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"/>
+            </wsdl:output>
+        </wsdl:operation>
+        <wsdl:operation name="consultaComunicacion" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+            <soap:operation soapAction="" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"/>
+            <wsdl:input name="consultaComunicacionRequest" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+                <soap:body use="literal" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"/>
+            </wsdl:input>
+            <wsdl:output name="consultaComunicacionResponse" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+                <soap:body use="literal" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"/>
+            </wsdl:output>
+        </wsdl:operation>
+        <wsdl:operation name="comunicacion" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+            <soap:operation soapAction="" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"/>
+            <wsdl:input name="comunicacionRequest" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+                <soap:body use="literal" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"/>
+            </wsdl:input>
+            <wsdl:output name="comunicacionResponse" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+                <soap:body use="literal" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"/>
+            </wsdl:output>
+        </wsdl:operation>
+        <wsdl:operation name="consultaLote" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+            <soap:operation soapAction="" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"/>
+            <wsdl:input name="consultaLoteRequest" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+                <soap:body use="literal" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"/>
+            </wsdl:input>
+            <wsdl:output name="consultaLoteResponse" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+                <soap:body use="literal" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"/>
+            </wsdl:output>
+        </wsdl:operation>
+    </wsdl:binding>
+    <wsdl:service name="ComunicacionPortService" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+        <wsdl:port binding="tns:ComunicacionPortSoap11" name="ComunicacionPortSoap11" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+            <soap:address location="https://hospedajes.ses.mir.es/hospedajes-web/ws/v1/comunicacion" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"/>
+        </wsdl:port>
+    </wsdl:service>
+</wsdl:definitions>

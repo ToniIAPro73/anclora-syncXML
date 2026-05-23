@@ -2,6 +2,7 @@ import { XMLBuilder, XMLParser, XMLValidator } from "fast-xml-parser";
 import type { GeneratedXmlResult, ParsedExcel } from "../domain";
 import { toXmlDate, toXmlDateTime } from "../normalizers";
 import { validateNoCriticalPlaceholders } from "../validation";
+import { validateSesHospedajesXml } from "@/lib/ses/schema";
 
 const TEMPLATE_XML = `<ns2:peticion xmlns:ns2="http://www.neg.hospedajes.mir.es/altaParteHospedaje"><solicitud><codigoEstablecimiento></codigoEstablecimiento><comunicacion><contrato><referencia></referencia><fechaContrato></fechaContrato><fechaEntrada></fechaEntrada><fechaSalida></fechaSalida><numPersonas>0</numPersonas><numHabitaciones>1</numHabitaciones><internet>true</internet><pago><tipoPago></tipoPago></pago></contrato></comunicacion></solicitud></ns2:peticion>`;
 
@@ -64,6 +65,7 @@ export function generateHospitalityXml(parsed: ParsedExcel, templateXml = TEMPLA
   };
   const xml = builder.build(root);
   const placeholderErrors = validateNoCriticalPlaceholders(xml);
+  const schemaValidation = validateSesHospedajesXml(xml, "altaParteHospedaje");
   return {
     xml,
     visual: {
@@ -73,8 +75,8 @@ export function generateHospitalityXml(parsed: ParsedExcel, templateXml = TEMPLA
       guests: validGuests,
     },
     validation: {
-      status: parsed.validation.errors.length || placeholderErrors.length ? "ERROR" : parsed.validation.warnings.length ? "WARNING" : "VALID",
-      errors: [...parsed.validation.errors, ...placeholderErrors],
+      status: parsed.validation.errors.length || placeholderErrors.length || schemaValidation.errors.length ? "ERROR" : parsed.validation.warnings.length ? "WARNING" : "VALID",
+      errors: [...parsed.validation.errors, ...placeholderErrors, ...schemaValidation.errors],
       warnings: parsed.validation.warnings,
     },
   };
