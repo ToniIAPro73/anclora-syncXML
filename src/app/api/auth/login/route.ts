@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server";
 import { setSessionCookie } from "@/lib/auth";
 import { canUsePasswordAuth, getRuntimeConfigError, isExplicitLocalDemoMode } from "@/lib/security/env";
+import { authRateLimiter, getRateLimitKey } from "@/lib/security/rateLimit";
 
 export async function POST(request: Request) {
+  const rateLimit = authRateLimiter.check(getRateLimitKey(request));
+  if (!rateLimit.allowed) return NextResponse.json({ error: "Demasiados intentos" }, { status: 429 });
   const configError = getRuntimeConfigError();
   if (configError) return NextResponse.json({ error: "Configuracion de acceso incompleta" }, { status: 503 });
   if (!canUsePasswordAuth()) {

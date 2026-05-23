@@ -9,7 +9,8 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
   const { id } = await context.params;
   const reservation = await getReservation(id) as any;
   if (!reservation) return NextResponse.json({ error: "Reserva no encontrada" }, { status: 404 });
-  const xml = reservation.xml ?? reservation.normalizedPayloadJson?.xml ?? "";
+  const xml = reservation.xml ?? reservation.generatedXml ?? "";
+  if (!xml) return NextResponse.json({ error: "XML no disponible para esta reserva" }, { status: 404 });
   const fileName = buildXmlDownloadFileName({
     reservation: {
       reference: reservation.reference ?? reservation.normalizedPayloadJson?.reservation?.reference ?? reservation.payload?.reservation?.reference,
@@ -21,7 +22,7 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
         ?? reservation.payload?.property?.establishmentCode,
     },
   });
-  return new NextResponse(xml || "<error>XML no disponible en esta instalacion</error>", {
+  return new NextResponse(xml, {
     headers: {
       "content-type": "application/xml; charset=utf-8",
       "content-disposition": `attachment; filename="${fileName}"`,
