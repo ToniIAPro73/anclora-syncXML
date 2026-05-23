@@ -43,6 +43,7 @@ model Reservation {
   generatedXmlFileId    String?
   validationReportJson  Json?
   normalizedPayloadJson Json?
+  generatedXml          String?
   createdAt             DateTime          @default(now())
   updatedAt             DateTime          @updatedAt
   generatedAt           DateTime?

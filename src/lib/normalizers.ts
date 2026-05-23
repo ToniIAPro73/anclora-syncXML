@@ -54,13 +54,28 @@ export function normalizeTime(value: unknown): string | undefined {
   return `${match[1].padStart(2, "0")}:${(match[2] ?? "00").padStart(2, "0")}:00`;
 }
 
+function madridOffset(date: string, time = "12:00:00") {
+  const [year, month, day] = date.split("-").map(Number);
+  const [hour, minute, second] = time.split(":").map(Number);
+  const probe = new Date(Date.UTC(year, month - 1, day, hour, minute, second || 0));
+  const parts = new Intl.DateTimeFormat("en", {
+    timeZone: "Europe/Madrid",
+    timeZoneName: "longOffset",
+  }).formatToParts(probe);
+  const offset = parts.find((part) => part.type === "timeZoneName")?.value ?? "GMT+01:00";
+  const match = offset.match(/^GMT([+-])(\d{1,2})(?::?(\d{2}))?$/);
+  if (!match) return "+01:00";
+  return `${match[1]}${match[2].padStart(2, "0")}:${match[3] ?? "00"}`;
+}
+
 export function toXmlDateTime(date?: string, time?: string): string | undefined {
   if (!date) return undefined;
-  return `${date}T${time ?? "00:00:00"}+02:00`;
+  const resolvedTime = time ?? "00:00:00";
+  return `${date}T${resolvedTime}${madridOffset(date, resolvedTime)}`;
 }
 
 export function toXmlDate(date?: string): string | undefined {
-  return date ? `${date}+02:00` : undefined;
+  return date ? `${date}${madridOffset(date)}` : undefined;
 }
 
 export function normalizeDocumentType(value: unknown): "NIF" | "NIE" | "PAS" | "OTRO" | undefined {
