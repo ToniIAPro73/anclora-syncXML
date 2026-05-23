@@ -3,8 +3,8 @@ import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:
 const ALGORITHM = "aes-256-gcm";
 
 function getKey() {
-  const value = process.env.SYNCXML_FILE_ENCRYPTION_KEY;
-  if (!value) throw new Error("SYNCXML_FILE_ENCRYPTION_KEY no configurada");
+  const value = process.env.SYNCXML_ENCRYPTION_KEY || process.env.SYNCXML_FILE_ENCRYPTION_KEY;
+  if (!value) throw new Error("SYNCXML_ENCRYPTION_KEY no configurada");
   if (/^[A-Za-z0-9+/=]{44}$/.test(value)) return Buffer.from(value, "base64");
   return createHash("sha256").update(value).digest();
 }
@@ -25,4 +25,10 @@ export function decryptBuffer(encrypted: Buffer, iv: string, authTag: string) {
   const decipher = createDecipheriv(ALGORITHM, getKey(), Buffer.from(iv, "base64"));
   decipher.setAuthTag(Buffer.from(authTag, "base64"));
   return Buffer.concat([decipher.update(encrypted), decipher.final()]);
+}
+
+export function encryptString(value?: string | null) {
+  if (!value) return undefined;
+  const encrypted = encryptBuffer(Buffer.from(value, "utf8"));
+  return `enc:v1:${encrypted.iv}:${encrypted.authTag}:${encrypted.encrypted.toString("base64")}`;
 }

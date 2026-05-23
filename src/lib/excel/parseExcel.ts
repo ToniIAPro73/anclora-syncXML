@@ -2,6 +2,7 @@ import * as XLSX from "xlsx";
 import type { ParsedExcel } from "../domain";
 import { cleanText, extractPostalCode, normalizeDocumentType, normalizeNationality, normalizePaymentType, normalizePhone, normalizeTime, parseDate } from "../normalizers";
 import { validateGuest, validateParsedExcel } from "../validation";
+import { detectDuplicates } from "../duplicates";
 
 const HEADER_NAMES = [
   "Nombre",
@@ -96,5 +97,6 @@ export function parseExcelBuffer(buffer: Buffer, fileName?: string): ParsedExcel
   if (!payment.paymentType) payment.paymentType = "OTRO";
   if (!reservation.guestCount) reservation.guestCount = guests.length;
   const parsed = { fileName, sheets: workbook.SheetNames, reservation, property, payment, guests, ignoredRows, rawRows };
-  return validateParsedExcel(parsed);
+  const validated = validateParsedExcel(parsed);
+  return { ...validated, duplicates: detectDuplicates(validated) };
 }

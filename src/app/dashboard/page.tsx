@@ -1,5 +1,6 @@
 import { ReservationDashboard } from "@/components/ReservationDashboard";
+import { ProductClassification } from "@/components/ProductClassification";
 
 export default function DashboardPage() {
-  return <ReservationDashboard />;
+  return <div className="space-y-6"><ProductClassification /><ReservationDashboard /></div>;
 }

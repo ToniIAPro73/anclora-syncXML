@@ -1,6 +1,8 @@
 import { randomUUID } from "node:crypto";
 import type { GeneratedXmlResult, ParsedExcel } from "../domain";
 import { hasDatabase, prisma } from "./prisma";
+import { persistentStorageEnabled } from "../security/env";
+import { encryptString } from "../privacy/encryption";
 
 type StoredReservation = {
   id: string;
@@ -38,7 +40,7 @@ export async function createReservation(input: {
   generated: GeneratedXmlResult;
   sourceExcel?: { name: string; type: string; buffer: Buffer };
 }) {
-  if (!hasDatabase()) {
+  if (!hasDatabase() || !persistentStorageEnabled()) {
     return createMemoryReservation({ ...input, persistenceMode: "memory" });
   }
 
@@ -70,29 +72,41 @@ export async function createReservation(input: {
           status: "CONSOLIDATED",
           validationStatus: input.generated.validation.status,
           validationReportJson: input.generated.validation,
-          normalizedPayloadJson: input.parsed,
+          normalizedPayloadJson: {
+            reservation: input.parsed.reservation,
+            property: {
+              name: input.parsed.property.name,
+              establishmentCode: input.parsed.property.establishmentCode,
+              municipalityCode: input.parsed.property.municipalityCode,
+              countryIso3: input.parsed.property.countryIso3,
+            },
+            payment: { paymentType: input.parsed.payment.paymentType },
+            guestCount: input.parsed.guests.length,
+            privacyMode: "private-no-storage-default",
+            piiPersisted: "encrypted-minimized",
+          },
           generatedAt: new Date(),
           guests: {
             create: input.parsed.guests.map((guest) => ({
               sourceRow: guest.sourceRow,
               role: guest.role,
-              firstName: guest.firstName,
-              surname1: guest.surname1,
-              surname2: guest.surname2,
-              birthDate: guest.birthDate ? new Date(guest.birthDate) : undefined,
+              firstName: encryptString(guest.firstName) ?? "enc:empty",
+              surname1: encryptString(guest.surname1) ?? "enc:empty",
+              surname2: encryptString(guest.surname2),
+              birthDate: undefined,
               nationalityIso3: guest.nationalityIso3,
               documentType: guest.documentType,
-              documentNumber: guest.documentNumber,
-              documentSupport: guest.documentSupport,
+              documentNumber: encryptString(guest.documentNumber),
+              documentSupport: encryptString(guest.documentSupport),
               sex: guest.sex,
-              address: guest.address,
+              address: encryptString(guest.address),
               municipality: guest.municipality,
               municipalityCode: guest.municipalityCode,
               postalCode: guest.postalCode,
               countryIso3: guest.countryIso3,
-              phone: guest.phone,
-              phone2: guest.phone2,
-              email: guest.email,
+              phone: encryptString(guest.phone),
+              phone2: encryptString(guest.phone2),
+              email: encryptString(guest.email),
               relationship: guest.relationship,
               validationStatus: guest.validationStatus,
               validationErrors: guest.errors,
@@ -116,7 +130,7 @@ export async function createReservation(input: {
 }
 
 export async function listReservations(query?: string) {
-  if (!hasDatabase()) {
+  if (!hasDatabase() || !persistentStorageEnabled()) {
     const q = query?.toLowerCase();
     return (memoryStore.syncXmlReservations ?? []).filter((item) => !item.deletedAt && (!q || JSON.stringify(item).toLowerCase().includes(q)));
   }
@@ -143,12 +157,12 @@ export async function listReservations(query?: string) {
 }
 
 export async function getReservation(id: string) {
-  if (!hasDatabase()) return (memoryStore.syncXmlReservations ?? []).find((item) => item.id === id && !item.deletedAt);
+  if (!hasDatabase() || !persistentStorageEnabled()) return (memoryStore.syncXmlReservations ?? []).find((item) => item.id === id && !item.deletedAt);
   return prisma.reservation.findFirst({ where: { id, deletedAt: null }, include: { property: true, guests: true, files: true, auditEvents: true } });
 }
 
 export async function deleteReservation(id: string) {
-  if (!hasDatabase()) {
+  if (!hasDatabase() || !persistentStorageEnabled()) {
     const item = (memoryStore.syncXmlReservations ?? []).find((reservation) => reservation.id === id);
     if (item) item.deletedAt = new Date().toISOString();
     return item;
