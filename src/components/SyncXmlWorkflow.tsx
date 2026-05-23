@@ -123,7 +123,7 @@ export function SyncXmlWorkflow() {
       setConsolidated(false);
       setActiveView("visual");
       setActiveStep(3);
-      setMessage(t.xmlGeneratedOk);
+      setMessage(data.generated.validation.errors.length ? t.xmlGeneratedWithIssues : t.xmlGeneratedOk);
     } catch {
       setMessage(t.actionFailed);
     } finally {
@@ -243,6 +243,15 @@ export function SyncXmlWorkflow() {
       {message && <div className="process-message" role="status">{message}</div>}
       {busy && <div className="process-message is-working" role="status">{t.processing}</div>}
       <PrivacyModeCard onClear={clearOperation} hasData={Boolean(parsed || generated || selectedFile)} />
+      <TraceabilityPanel
+        selectedFileName={selectedFile?.name}
+        parsed={parsed}
+        generated={generated}
+        consolidated={consolidated}
+        smartValidated={smartValidated}
+        previewReviewed={previewReviewed}
+        mappingReviewed={mappingReviewed}
+      />
 
       {activeStep === 1 && (
         <section className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
@@ -350,6 +359,7 @@ export function SyncXmlWorkflow() {
           onDownload={downloadXml}
           onConsolidate={consolidate}
           canConsolidate={!consolidationBlocker}
+          consolidationBlocker={consolidationBlocker}
         />
       )}
 
@@ -486,6 +496,7 @@ function XmlViewer({
   onDownload,
   onConsolidate,
   canConsolidate,
+  consolidationBlocker,
 }: {
   generated: GeneratedXmlResult;
   activeView: "visual" | "xml";
@@ -495,8 +506,10 @@ function XmlViewer({
   onDownload: () => void;
   onConsolidate: () => void;
   canConsolidate: boolean;
+  consolidationBlocker: string | null;
 }) {
   const { dictionary: t } = usePreferences();
+  const hasXmlErrors = generated.validation.errors.length > 0;
   return (
     <section className="panel p-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -511,21 +524,21 @@ function XmlViewer({
         </div>
       </div>
       {activeView === "visual" ? (
-        <div className="mt-5 grid gap-4 md:grid-cols-2">
-          <InfoCard title={t.reservationSummary} rows={[[t.reference, generated.visual.reservation.reference], [t.checkIn, generated.visual.reservation.checkInDate], [t.checkOut, generated.visual.reservation.checkOutDate], [t.guestCount, String(generated.visual.guests.length)], [t.paymentType, generated.visual.payment.paymentType]]} />
-          <InfoCard title={t.property} rows={[[t.code, generated.visual.property.establishmentCode], [t.name, generated.visual.property.name], [t.address, maskAddress(generated.visual.property.address)]]} />
-          {generated.visual.guests.map((guest) => <InfoCard key={guest.sourceRow} title={`${guest.firstName} ${guest.surname1}`} rows={[[t.document, `${guest.documentType} ${maskDocument(guest.documentNumber)}`], [t.nationality, guest.nationalityIso3], [t.birthDate, guest.birthDate], [t.address, maskAddress(guest.address)], [t.email, maskEmail(guest.email)], [t.phone, maskPhone(guest.phone)]]} />)}
-        </div>
+        <XmlTreeView generated={generated} />
       ) : (
         <pre className="mt-5 max-h-[520px] overflow-auto rounded-lg bg-black/45 p-4 text-xs text-emerald-200"><code>{generated.xml}</code></pre>
       )}
+      <div className={`human-review-gate mt-5 ${canConsolidate ? "is-valid" : "is-warning"}`}>
+        <ShieldCheck className="h-4 w-4" />
+        <span>{canConsolidate ? t.humanReviewReady : consolidationBlocker}</span>
+      </div>
+      {hasXmlErrors && <div className="mt-5"><IssuePanel title={t.xmlValidationIssues} issues={generated.validation.errors} /></div>}
       <div className="mt-5 flex flex-wrap gap-3">
-        <button className="btn-secondary" onClick={onDownload}><Download className="h-4 w-4" />{t.downloadXml}</button>
+        <button className="btn-secondary" onClick={onDownload} disabled={hasXmlErrors} title={hasXmlErrors ? t.xmlDownloadBlocked : undefined}><Download className="h-4 w-4" />{t.downloadXml}</button>
         <button
           className="btn-primary"
           onClick={onConsolidate}
-          disabled={busy}
-          aria-disabled={!canConsolidate}
+          disabled={busy || !canConsolidate}
         >
           {busyAction === "consolidate" ? <WorkingLabel label={t.processing} /> : <><CheckCircle2 className="h-4 w-4" />{t.consolidate}</>}
         </button>
@@ -749,6 +762,104 @@ function SesIntegrationPanel({ xml }: { xml: string }) {
       {result && <div className="ses-result mt-4" role="status">{result}</div>}
       <p className="mt-4 text-xs leading-5 text-muted">{t.sesPrivacyNote}</p>
     </section>
+  );
+}
+
+function TraceabilityPanel({
+  selectedFileName,
+  parsed,
+  generated,
+  consolidated,
+  smartValidated,
+  previewReviewed,
+  mappingReviewed,
+}: {
+  selectedFileName?: string;
+  parsed: ParsedExcel | null;
+  generated: GeneratedXmlResult | null;
+  consolidated: boolean;
+  smartValidated: boolean;
+  previewReviewed: boolean;
+  mappingReviewed: boolean;
+}) {
+  const { dictionary: t } = usePreferences();
+  const criticalErrors = (parsed?.validation.errors.length ?? 0) + (generated?.validation.errors.length ?? 0);
+  const duplicateBlockers = parsed ? unresolvedDuplicates(parsed).length : 0;
+  const milestones = [
+    { label: t.traceImport, value: selectedFileName ?? t.processPending, done: Boolean(parsed), blocked: false },
+    { label: t.traceValidate, value: parsed ? `${criticalErrors} ${t.errors.toLowerCase()}` : t.processPending, done: Boolean(parsed && smartValidated && criticalErrors === 0), blocked: criticalErrors > 0 },
+    { label: t.tracePreview, value: previewReviewed ? t.processDone : t.processPending, done: previewReviewed, blocked: false },
+    { label: t.traceMapping, value: mappingReviewed ? t.processDone : t.processPending, done: mappingReviewed, blocked: false },
+    { label: t.traceDuplicates, value: parsed ? `${duplicateBlockers} ${t.processPending.toLowerCase()}` : t.processPending, done: Boolean(parsed && duplicateBlockers === 0), blocked: duplicateBlockers > 0 },
+    { label: t.traceXml, value: generated ? t.processDone : t.processPending, done: Boolean(generated), blocked: false },
+    { label: t.traceConsolidate, value: consolidated ? t.processDone : t.processPending, done: consolidated, blocked: false },
+  ];
+  return (
+    <section className="trace-panel">
+      <div>
+        <h2 className="font-heading text-base font-bold">{t.traceabilityTitle}</h2>
+        <p className="mt-1 text-sm text-muted">{t.traceabilityCopy}</p>
+      </div>
+      <div className="trace-grid">
+        {milestones.map((item) => (
+          <div key={item.label} className={`trace-item ${item.blocked ? "is-blocked" : item.done ? "is-done" : ""}`}>
+            <span className="trace-dot" />
+            <span className="trace-label">{item.label}</span>
+            <span className="trace-value">{item.value}</span>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function XmlTreeView({ generated }: { generated: GeneratedXmlResult }) {
+  const { dictionary: t } = usePreferences();
+  const reservation = generated.visual.reservation;
+  const property = generated.visual.property;
+  const payment = generated.visual.payment;
+  return (
+    <div className="xml-tree mt-5">
+      <div className="xml-node is-root">
+        <div className="xml-node-header">
+          <FileText className="h-4 w-4" />
+          <span>{t.xmlTreeTitle}</span>
+          <span className="status-pill is-valid">{t.sesSchemaValid}</span>
+        </div>
+        <div className="xml-branch">
+          <InfoCard title={t.xmlTreeRequest} rows={[[t.code, property.establishmentCode], [t.name, property.name], [t.address, maskAddress(property.address)]]} />
+          <InfoCard title={t.xmlTreeContract} rows={[[t.reference, reservation.reference], [t.checkIn, reservation.checkInDate], [t.checkOut, reservation.checkOutDate], [t.guestCount, String(generated.visual.guests.length)], [t.paymentType, payment.paymentType]]} />
+          <InfoCard title={t.xmlTreePayment} rows={[[t.paymentType, payment.paymentType], ["IBAN", maskPayment(payment.iban)], ["Internet", String(reservation.internet ?? true)]]} />
+        </div>
+        <div className="mt-4">
+          <h3 className="font-heading text-base font-bold">{t.xmlTreeGuests}</h3>
+          <div className="xml-guest-grid mt-3">
+            {generated.visual.guests.map((guest) => <XmlGuestNode key={guest.sourceRow} guest={guest} />)}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function XmlGuestNode({ guest }: { guest: ParsedExcel["guests"][number] }) {
+  const { dictionary: t } = usePreferences();
+  return (
+    <article className="xml-guest-node">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h4 className="font-heading text-sm font-bold">{guest.firstName} {guest.surname1}</h4>
+          <p className="mt-1 text-xs text-muted">{t.newRecord}</p>
+        </div>
+        <StatusPill status={guest.validationStatus} />
+      </div>
+      <dl className="mt-3 space-y-1 text-xs">
+        <div className="flex justify-between gap-3"><dt className="text-muted">{t.document}</dt><dd>{guest.documentType} {maskDocument(guest.documentNumber)}</dd></div>
+        <div className="flex justify-between gap-3"><dt className="text-muted">{t.birthDate}</dt><dd>{guest.birthDate ?? "-"}</dd></div>
+        <div className="flex justify-between gap-3"><dt className="text-muted">{t.nationality}</dt><dd>{guest.nationalityIso3 ?? "-"}</dd></div>
+        <div className="flex justify-between gap-3"><dt className="text-muted">{t.contact}</dt><dd>{maskEmail(guest.email)} · {maskPhone(guest.phone)}</dd></div>
+      </dl>
+    </article>
   );
 }
 
@@ -982,19 +1093,28 @@ function DuplicatePanel({ duplicates, onResolve }: { duplicates: NonNullable<Par
 function OperationSummary({ parsed, temporaryCleared }: { parsed: ParsedExcel; temporaryCleared: boolean }) {
   const { dictionary: t } = usePreferences();
   const skipped = (parsed.duplicates ?? []).filter((duplicate) => duplicate.resolution === "skip_new").length;
+  const rows: Array<[string, string | number]> = [
+    [t.existingRecords, "0"],
+    [t.newRecords, parsed.guests.length - skipped],
+    [t.duplicatesDetected, parsed.duplicates?.length ?? 0],
+    [t.omittedRecords, skipped],
+    [t.correctedErrors, "0"],
+    [t.pendingWarnings, parsed.validation.warnings.length],
+    [t.totalConsolidated, parsed.guests.length - skipped],
+    [t.privacyModeUsed, t.privateModeTitle],
+    [t.temporaryDataStatus, temporaryCleared ? t.temporaryDataCleared : t.temporaryDataInSession],
+  ];
   return (
     <div className="mt-6">
-      <InfoCard title={t.operationSummary} rows={[
-        [t.existingRecords, "0"],
-        [t.newRecords, String(parsed.guests.length - skipped)],
-        [t.duplicatesDetected, String(parsed.duplicates?.length ?? 0)],
-        [t.omittedRecords, String(skipped)],
-        [t.correctedErrors, "0"],
-        [t.pendingWarnings, String(parsed.validation.warnings.length)],
-        [t.totalConsolidated, String(parsed.guests.length - skipped)],
-        [t.privacyModeUsed, t.privateModeTitle],
-        [t.temporaryDataStatus, temporaryCleared ? t.temporaryDataCleared : t.temporaryDataInSession],
-      ]} />
+      <h3 className="font-heading text-lg font-bold">{t.operationSummary}</h3>
+      <div className="summary-grid mt-4">
+        {rows.map(([label, value]) => (
+          <div key={label} className="metric-card">
+            <p className="text-xs font-bold uppercase text-muted">{label}</p>
+            <p className="metric-value">{value}</p>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
