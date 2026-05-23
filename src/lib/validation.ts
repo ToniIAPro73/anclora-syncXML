@@ -75,7 +75,9 @@ const IBAN_LENGTHS: Record<string, number> = {
   VG: 24,
   XK: 20,
 };
-const ALLOWED_PAYMENT_TYPES = new Set(["EFECT", "TARJT", "TRANS", "PLATF", "OTRO"]);
+const ALLOWED_PAYMENT_TYPES = new Set(["DESTI", "EFECT", "TARJT", "PLATF", "TRANS", "MOVIL", "TREG", "OTRO"]);
+const ALLOWED_DOCUMENT_TYPES = new Set(["NIF", "NIE", "PAS", "OTRO"]);
+const ALLOWED_SEX_VALUES = new Set(["H", "M", "O"]);
 
 function issue(severity: "error" | "warning", code: string, message: string, field?: string, sourceRow?: number): ValidationIssue {
   return { severity, code, message, field, sourceRow };
@@ -91,10 +93,21 @@ export function validateGuest(guest: Omit<GuestRecord, "validationStatus" | "err
   const errors: ValidationIssue[] = [];
   const warnings: ValidationIssue[] = [];
   if (!guest.firstName) errors.push(issue("error", "guest.firstName.required", "Nombre obligatorio", "firstName", guest.sourceRow));
+  else if (guest.firstName.length > 50) errors.push(issue("error", "guest.firstName.maxLength", "Nombre superior a 50 caracteres", "firstName", guest.sourceRow));
   if (!guest.surname1) errors.push(issue("error", "guest.surname1.required", "Primer apellido obligatorio", "surname1", guest.sourceRow));
+  else if (guest.surname1.length > 50) errors.push(issue("error", "guest.surname1.maxLength", "Primer apellido superior a 50 caracteres", "surname1", guest.sourceRow));
+  if (guest.surname2 && guest.surname2.length > 50) errors.push(issue("error", "guest.surname2.maxLength", "Segundo apellido superior a 50 caracteres", "surname2", guest.sourceRow));
   if (!guest.documentNumber) errors.push(issue("error", "guest.documentNumber.required", "Documento obligatorio", "documentNumber", guest.sourceRow));
-  if (!guest.birthDate) errors.push(issue("error", "guest.birthDate.invalid", "Fecha de nacimiento invalida", "birthDate", guest.sourceRow));
+  else if (normalizedDocument(guest.documentNumber).length > 15) errors.push(issue("error", "guest.documentNumber.maxLength", "Documento superior a 15 caracteres", "documentNumber", guest.sourceRow));
+  if (!guest.documentType) errors.push(issue("error", "guest.documentType.required", "Tipo de documento obligatorio", "documentType", guest.sourceRow));
+  else if (!ALLOWED_DOCUMENT_TYPES.has(guest.documentType)) errors.push(issue("error", "guest.documentType.invalid", "Tipo de documento no admitido", "documentType", guest.sourceRow));
+  if (!guest.birthDate) errors.push(issue("error", "guest.birthDate.invalid", "Fecha de nacimiento inválida", "birthDate", guest.sourceRow));
   if (!guest.nationalityIso3) errors.push(issue("error", "guest.nationality.required", "Nacionalidad obligatoria", "nationalityIso3", guest.sourceRow));
+  if (guest.sex && !ALLOWED_SEX_VALUES.has(guest.sex)) errors.push(issue("error", "guest.sex.invalid", "Sexo no admitido", "sex", guest.sourceRow));
+  if (guest.address && guest.address.length > 100) errors.push(issue("error", "guest.address.maxLength", "Dirección superior a 100 caracteres", "address", guest.sourceRow));
+  if (guest.addressComplement && guest.addressComplement.length > 100) errors.push(issue("error", "guest.addressComplement.maxLength", "Dirección complementaria superior a 100 caracteres", "addressComplement", guest.sourceRow));
+  if (guest.documentSupport && guest.documentSupport.length > 9) errors.push(issue("error", "guest.documentSupport.maxLength", "Soporte de documento superior a 9 caracteres", "documentSupport", guest.sourceRow));
+  if (guest.relationship && guest.relationship.length > 2) warnings.push(issue("warning", "guest.relationship.maxLength", "Parentesco superior a 2 caracteres", "relationship", guest.sourceRow));
   if (!guest.phone) warnings.push(issue("warning", "guest.phone.missing", "Teléfono no informado", "phone", guest.sourceRow));
   if (!guest.email) warnings.push(issue("warning", "guest.email.missing", "Email no informado", "email", guest.sourceRow));
   if (!guest.relationship) warnings.push(issue("warning", "guest.relationship.missing", "Parentesco no informado", "relationship", guest.sourceRow));
@@ -108,8 +121,10 @@ export function validateParsedExcel(parsed: Omit<ParsedExcel, "validation">): Pa
   const errors: ValidationIssue[] = [];
   const warnings: ValidationIssue[] = [];
   if (!parsed.reservation.reference) errors.push(issue("error", "reservation.reference.required", "Referencia de reserva ausente", "reference"));
-  if (!parsed.reservation.checkInDate || !parsed.reservation.checkOutDate) errors.push(issue("error", "reservation.dates.invalid", "Fechas de entrada/salida invalidas", "dates"));
+  else if (parsed.reservation.reference.length > 50) errors.push(issue("error", "reservation.reference.maxLength", "Referencia superior a 50 caracteres", "reference"));
+  if (!parsed.reservation.checkInDate || !parsed.reservation.checkOutDate) errors.push(issue("error", "reservation.dates.invalid", "Fechas de entrada/salida inválidas", "dates"));
   if (!parsed.property.establishmentCode) errors.push(issue("error", "property.establishmentCode.required", "Código de establecimiento ausente", "establishmentCode"));
+  else if (parsed.property.establishmentCode.length > 10) errors.push(issue("error", "property.establishmentCode.maxLength", "Código de establecimiento superior a 10 caracteres", "establishmentCode"));
   const validGuests = parsed.guests.filter((guest) => guest.errors.length === 0);
   if (parsed.reservation.guestCount && parsed.reservation.guestCount !== validGuests.length) {
     errors.push(issue("error", "reservation.guestCount.mismatch", "El número de personas no coincide con los huéspedes válidos", "guestCount"));
