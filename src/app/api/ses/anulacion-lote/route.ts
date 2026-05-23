@@ -17,7 +17,7 @@ export async function POST(request: Request) {
       environment: z.enum(["pre", "prod"]).optional(),
       dryRun: z.boolean().optional(),
     }).safeParse(body);
-    if (!parsed.success) return NextResponse.json({ error: "Payload invalido" }, { status: 400 });
+    if (!parsed.success) return NextResponse.json({ error: "Payload inválido" }, { status: 400 });
     const result = await cancelSesLote(parsed.data.loteCode, { environment: parsed.data.environment, dryRun: parsed.data.dryRun ?? true });
     if (!("status" in result)) return NextResponse.json({ dryRun: true, environment: result.environment, endpoint: result.endpoint });
     return NextResponse.json(summarizeSesHttpResponse(result));

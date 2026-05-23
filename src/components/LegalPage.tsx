@@ -6,16 +6,16 @@ import { usePreferences } from "./AppPreferencesProvider";
 const content = {
   privacy: {
     es: {
-      title: "Politica de privacidad de Anclora SyncXML",
+      title: "Política de privacidad de Anclora SyncXML",
       sections: [
-        ["Datos tratados", "La aplicacion puede procesar datos de huespedes, documentos de identidad, fechas de nacimiento, nacionalidad, direcciones, telefonos, correos, datos de estancia, datos de pago limitados y metadatos contractuales incluidos por el usuario."],
-        ["Finalidad", "Los datos se procesan para generar, validar, revisar y exportar XML bajo instruccion del usuario."],
-        ["Modo sin persistencia", "Por defecto, Anclora SyncXML trabaja en modo privado sin almacenamiento permanente. Los datos temporales pueden eliminarse desde la accion de borrado de operacion."],
-        ["Retencion", "No se conserva informacion personal de forma permanente salvo configuracion explicita de almacenamiento persistente por un administrador autorizado."],
-        ["Seguridad", "El modelo aplica minimizacion, control de acceso, no logging de PII y separacion entre metadatos tecnicos y contenido personal. Si se habilita persistencia, deben aplicarse cifrado y politicas de retencion."],
-        ["Responsabilidad del usuario", "El usuario debe tener legitimacion o autorizacion para importar los datos y debe revisar el resultado antes de cualquier uso oficial."],
-        ["Derechos y contacto", "Para solicitudes de privacidad o contacto legal, use el canal legal designado por Anclora Group o configure un contacto legal antes de produccion."],
-        ["Limitacion", "La herramienta no presta asesoramiento legal ni garantiza por si sola el cumplimiento normativo."],
+        ["Datos tratados", "La aplicación puede procesar datos de huéspedes, documentos de identidad, fechas de nacimiento, nacionalidad, direcciones, teléfonos, correos, datos de estancia, datos de pago limitados y metadatos contractuales incluidos por el usuario."],
+        ["Finalidad", "Los datos se procesan para generar, validar, revisar y exportar XML bajo instrucción del usuario."],
+        ["Modo sin persistencia", "Por defecto, Anclora SyncXML trabaja en modo privado sin almacenamiento permanente. Los datos temporales pueden eliminarse desde la acción de borrado de operación."],
+        ["Retención", "No se conserva información personal de forma permanente salvo configuración explícita de almacenamiento persistente por un administrador autorizado."],
+        ["Seguridad", "El modelo aplica minimización, control de acceso, no logging de PII y separación entre metadatos técnicos y contenido personal. Si se habilita persistencia, deben aplicarse cifrado y políticas de retención."],
+        ["Responsabilidad del usuario", "El usuario debe tener legitimación o autorización para importar los datos y debe revisar el resultado antes de cualquier uso oficial."],
+        ["Derechos y contacto", "Para solicitudes de privacidad o contacto legal, use el canal legal designado por Anclora Group o configure un contacto legal antes de producción."],
+        ["Limitación", "La herramienta no presta asesoramiento legal ni garantiza por sí sola el cumplimiento normativo."],
       ],
     },
     en: {
@@ -47,16 +47,16 @@ const content = {
   },
   terms: {
     es: {
-      title: "Terminos de uso de Anclora SyncXML",
+      title: "Términos de uso de Anclora SyncXML",
       sections: [
-        ["Objeto", "Anclora SyncXML ayuda a preparar, validar, revisar y exportar XML a partir de datos de reservas y huespedes."],
-        ["Uso permitido", "Puede usarse para operaciones internas autorizadas, revision humana y exportacion controlada."],
-        ["Uso prohibido", "No deben cargarse archivos sin autorizacion, datos innecesarios, datos excesivos o informacion de pago sensible no requerida."],
-        ["Responsabilidad", "El usuario responde de la legitimidad de los datos importados y de la revision previa a consolidar o exportar."],
-        ["Limitacion de responsabilidad", "La herramienta se ofrece en validacion controlada y no sustituye procesos legales, tecnicos u organizativos propios del usuario."],
-        ["Tratamiento de datos", "El modo por defecto es privado sin almacenamiento permanente. La persistencia requiere configuracion expresa."],
-        ["Revision humana", "Toda consolidacion y XML exportado debe revisarse por una persona antes de uso oficial o comunicacion a terceros."],
-        ["Cambios", "La aplicacion puede actualizar validaciones, seguridad, textos y flujo durante la fase pre-MVP."],
+        ["Objeto", "Anclora SyncXML ayuda a preparar, validar, revisar y exportar XML a partir de datos de reservas y huéspedes."],
+        ["Uso permitido", "Puede usarse para operaciones internas autorizadas, revisión humana y exportación controlada."],
+        ["Uso prohibido", "No deben cargarse archivos sin autorización, datos innecesarios, datos excesivos o información de pago sensible no requerida."],
+        ["Responsabilidad", "El usuario responde de la legitimidad de los datos importados y de la revisión previa a consolidar o exportar."],
+        ["Limitación de responsabilidad", "La herramienta se ofrece en validación controlada y no sustituye procesos legales, técnicos u organizativos propios del usuario."],
+        ["Tratamiento de datos", "El modo por defecto es privado sin almacenamiento permanente. La persistencia requiere configuración expresa."],
+        ["Revisión humana", "Toda consolidación y XML exportado debe revisarse por una persona antes de uso oficial o comunicación a terceros."],
+        ["Cambios", "La aplicación puede actualizar validaciones, seguridad, textos y flujo durante la fase pre-MVP."],
       ],
     },
     en: {
