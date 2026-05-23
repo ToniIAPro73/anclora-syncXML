@@ -31,10 +31,12 @@ export function getSesConfig(environment: SesEnvironment = (process.env.SYNCXML_
   };
 }
 
-export function assertSesConfig(config: SesConfig) {
+export function assertSesConfig(config: SesConfig, options: { requireCredentials?: boolean } = {}) {
   const missing: string[] = [];
-  if (!config.username) missing.push("SYNCXML_SES_USERNAME");
-  if (!config.password) missing.push("SYNCXML_SES_PASSWORD");
+  if (options.requireCredentials !== false) {
+    if (!config.username) missing.push("SYNCXML_SES_USERNAME");
+    if (!config.password) missing.push("SYNCXML_SES_PASSWORD");
+  }
   if (!config.landlordCode) missing.push("SYNCXML_SES_LANDLORD_CODE");
   if (!config.applicationName) missing.push("SYNCXML_SES_APPLICATION");
   if (missing.length) throw new Error(`Missing SES.HOSPEDAJES configuration: ${missing.join(", ")}`);

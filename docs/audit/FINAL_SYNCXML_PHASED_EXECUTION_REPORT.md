@@ -23,7 +23,7 @@
 | Fase 0 | Complete | Repository inventory, scripts, stack, baseline command results and risks documented. |
 | Fase 1 | Complete for repository-verifiable facts | Stack, Excel flow, Villa Kentia guest count, template placeholders and external blockers documented. |
 | Fase 2 | Complete for repository-local hardening | Backend validation, XML persistence/download, rate limiting, encryption roundtrip, timezone and placeholder fixes implemented and tested. |
-| Fase 3 | Partial | Official v3.1.3 XSD/WSDL package archived, local validation helper added, SOAP service client and API routes prepared. Live pre-production test and full XSD engine validation remain pending. |
+| Fase 3 | Partial | Official v3.1.3 XSD/WSDL package archived, local validation helper added, SOAP service client and API routes prepared, and UI added for manual XML download plus assisted SES services. Live pre-production test and full XSD engine validation remain pending. |
 | Fase 4 | Partial | Existing UX gates remain; full visual XML/correction/history work is pending. |
 | Fase 5 | Blocked | Production pre-check-in is blocked by privacy, DPA and retention decisions. |
 | Fase 6 | Partial | Governance documentation exists; operational controller decisions remain pending. |
@@ -60,6 +60,7 @@
 - Archived SES.HOSPEDAJES v3.1.3 XSD/WSDL/PDF source package.
 - Added SES ZIP/Base64 packaging and SOAP client helpers.
 - Added SES API routes for validation, communication, lot query, communication query, lot cancellation and catalog query.
+- Added premium SES UI panel in the XML review screen while keeping manual XML download available.
 
 ## Main Security and Privacy Changes
 
@@ -70,6 +71,7 @@
 - Backend validation is not optional for consolidation.
 - No new PII logging was introduced.
 - SES production sending is blocked by default and requires explicit configuration.
+- SES query/send responses are summarised by default to reduce PII exposure in the browser.
 
 ## Tests Added
 

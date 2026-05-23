@@ -63,6 +63,12 @@ The implementation defaults to pre-production. Production sending is blocked unl
   - `POST /api/ses/anulacion-lote`
   - `POST /api/ses/catalogo`
 - Dry-run default so no data is sent unless explicitly requested.
+- Premium UI panel in the XML review screen with two parallel paths:
+  - Manual XML download for Ministry web upload.
+  - Assisted SES.HOSPEDAJES services for validation, pre-production send and queries.
+- ES/EN/DE copy for the SES panel and actions.
+- Responsive SES layout with stacked cards on smaller viewports.
+- Summarised SES API responses by default to avoid returning complete response payloads with potential PII to the browser.
 - Tests for local validation, ZIP/Base64 packaging, SOAP envelope generation and production-send blocking.
 
 ## Important Limitation
@@ -110,3 +116,4 @@ Latest local commands:
 - No accepted SES communication evidence is archived yet.
 - Full XSD engine validation is still pending.
 - UI controls for SES send/query are not yet exposed to users.
+- Full user-facing SES response inspection is intentionally not implemented because it may expose personal data; only operational summaries are returned by default.
