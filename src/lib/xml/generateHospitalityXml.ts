@@ -1,14 +1,21 @@
-import { XMLBuilder, XMLParser } from "fast-xml-parser";
+import { XMLBuilder, XMLParser, XMLValidator } from "fast-xml-parser";
 import type { GeneratedXmlResult, ParsedExcel } from "../domain";
 import { toXmlDate, toXmlDateTime } from "../normalizers";
 import { validateNoCriticalPlaceholders } from "../validation";
 
 const TEMPLATE_XML = `<ns2:peticion xmlns:ns2="http://www.neg.hospedajes.mir.es/altaParteHospedaje"><solicitud><codigoEstablecimiento></codigoEstablecimiento><comunicacion><contrato><referencia></referencia><fechaContrato></fechaContrato><fechaEntrada></fechaEntrada><fechaSalida></fechaSalida><numPersonas>0</numPersonas><numHabitaciones>1</numHabitaciones><internet>true</internet><pago><tipoPago></tipoPago></pago></contrato></comunicacion></solicitud></ns2:peticion>`;
 
-const parser = new XMLParser({ ignoreAttributes: false, preserveOrder: false });
+export function rejectDangerousXml(xml: string) {
+  if (/<!ENTITY|<!DOCTYPE/i.test(xml)) throw new Error("XML peligroso no permitido");
+}
+
+const parser = new XMLParser({ ignoreAttributes: false, preserveOrder: false, processEntities: false });
 const builder = new XMLBuilder({ ignoreAttributes: false, format: true, suppressEmptyNode: false });
 
 export function generateHospitalityXml(parsed: ParsedExcel, templateXml = TEMPLATE_XML): GeneratedXmlResult {
+  rejectDangerousXml(templateXml);
+  const validation = XMLValidator.validate(templateXml);
+  if (validation !== true) throw new Error("XML plantilla mal formado");
   const validGuests = parsed.guests.filter((guest) => guest.errors.length === 0);
   const root = parser.parse(templateXml);
   const peticion = root["ns2:peticion"] ?? root.peticion;
@@ -74,6 +81,9 @@ export function generateHospitalityXml(parsed: ParsedExcel, templateXml = TEMPLA
 }
 
 export function assertWellFormedXml(xml: string) {
+  rejectDangerousXml(xml);
+  const validation = XMLValidator.validate(xml);
+  if (validation !== true) throw new Error("XML mal formado");
   parser.parse(xml);
   return true;
 }

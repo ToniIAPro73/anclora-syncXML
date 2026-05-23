@@ -1,11 +1,14 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { canUsePasswordAuth, getSessionSecret, isExplicitLocalDemoMode, validateRuntimeConfig } from "./security/env";
 
 const COOKIE_NAME = "anclora-syncxml-session";
 
 export async function isAuthenticated() {
-  if (process.env.NODE_ENV !== "production" && !process.env.SYNCXML_ADMIN_PASSWORD) return true;
-  return (await cookies()).get(COOKIE_NAME)?.value === process.env.AUTH_SECRET;
+  validateRuntimeConfig();
+  if (!canUsePasswordAuth()) return false;
+  if (isExplicitLocalDemoMode()) return true;
+  return (await cookies()).get(COOKIE_NAME)?.value === getSessionSecret();
 }
 
 export async function requireAuth() {
@@ -14,8 +17,9 @@ export async function requireAuth() {
 }
 
 export async function setSessionCookie(response: NextResponse) {
-  if (!process.env.AUTH_SECRET) return response;
-  response.cookies.set(COOKIE_NAME, process.env.AUTH_SECRET, {
+  const sessionSecret = getSessionSecret();
+  if (!sessionSecret) return response;
+  response.cookies.set(COOKIE_NAME, sessionSecret, {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",

@@ -17,6 +17,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <div className="flex flex-wrap items-center gap-3">
             <Link className="nav-link" href="/">{t.newBooking}</Link>
             <Link className="nav-link" href="/dashboard">{t.dashboard}</Link>
+            <Link className="nav-link" href="/privacy">{t.privacy}</Link>
+            <Link className="nav-link" href="/terms">{t.terms}</Link>
             <ThemeToggle />
             <LanguageToggle />
           </div>
@@ -25,6 +27,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <main className="mx-auto max-w-7xl px-4 py-8">
         <AuthGate>{children}</AuthGate>
       </main>
+      <footer className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 border-t border-app px-4 py-6 text-sm text-muted">
+        <span>{t.appName} · {t.privateModeTitle}</span>
+        <span className="flex flex-wrap gap-3"><Link href="/privacy">{t.privacy}</Link><Link href="/terms">{t.terms}</Link></span>
+      </footer>
     </div>
   );
 }

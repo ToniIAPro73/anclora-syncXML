@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Download, Search, Trash2 } from "lucide-react";
 import { formatDashboardDateTime } from "@/lib/dateFormat";
 import { usePreferences } from "./AppPreferencesProvider";
+import { maskDocument, maskEmail, maskPhone } from "@/lib/privacy/masking";
 
 export function ReservationDashboard() {
   const { dictionary: t } = usePreferences();
@@ -93,9 +94,9 @@ export function ReservationDashboard() {
                   {(selected.guests ?? selected.payload?.guests ?? []).map((guest: any) => (
                     <tr key={guest.id ?? guest.sourceRow}>
                       <td>{guest.firstName} {guest.surname1}</td>
-                      <td>{guest.documentType} {guest.documentNumber}</td>
-                      <td>{guest.email}</td>
-                      <td>{guest.phone}</td>
+                      <td>{guest.documentType} {maskDocument(guest.documentNumber)}</td>
+                      <td>{maskEmail(guest.email)}</td>
+                      <td>{maskPhone(guest.phone)}</td>
                     </tr>
                   ))}
                 </tbody>

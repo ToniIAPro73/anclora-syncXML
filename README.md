@@ -1,73 +1,118 @@
-# React + TypeScript + Vite
+# Anclora SyncXML
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Anclora SyncXML es una herramienta Premium de Anclora Group para preparar, validar, revisar y exportar XML a partir de datos de reservas y huespedes importados desde Excel/XLSX.
 
-Currently, two official plugins are available:
+Estado actual: **pre-MVP / validacion controlada**. No debe presentarse como garantia legal ni como integracion oficial automatizada con plataformas externas si dicha integracion no existe tecnicamente.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Alcance
 
-## React Compiler
+- Importacion controlada de XLSX.
+- Validacion de datos de reserva, establecimiento, huespedes y pago.
+- Vista previa con datos sensibles enmascarados por defecto.
+- Deteccion y resolucion manual de duplicados.
+- Generacion y descarga de XML revisable.
+- Modo privado sin almacenamiento permanente por defecto.
+- Auditoria operacional sin PII.
+- UI en espanol, ingles y aleman.
+- Tema dark por defecto con soporte light.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Limites legales
 
-## Expanding the ESLint configuration
+Anclora SyncXML no presta asesoramiento legal y no garantiza por si sola el cumplimiento normativo. El usuario debe tener autorizacion para tratar los datos importados y revisar el XML antes de cualquier uso oficial o comunicacion a terceros.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Privacidad por defecto
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+El modo por defecto es **sin persistencia**. Los datos importados, previews, validaciones y XML generados viven en memoria/sesion de operacion y pueden borrarse con la accion "Borrar datos de esta operacion".
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+La persistencia en base de datos solo debe habilitarse explicitamente con:
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+SYNCXML_ENABLE_PERSISTENT_STORAGE="true"
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Si se habilita, el despliegue debe aplicar cifrado, retencion, control de acceso y borrado operativo antes de usar datos reales.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Arquitectura general
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+- Next.js App Router para UI y API routes.
+- Prisma como capa opcional de base de datos.
+- Vitest para tests unitarios.
+- `xlsx` para lectura defensiva de hojas Excel.
+- `fast-xml-parser` para parseo/generacion XML con bloqueo de estructuras peligrosas.
+- i18n local en `src/lib/i18n.ts`.
+
+## Variables de entorno
+
+Variables criticas en produccion:
+
+- `SYNCXML_ADMIN_PASSWORD`
+- `SYNCXML_ENCRYPTION_KEY`
+- `SESSION_SECRET`
+- `DATABASE_URL`
+- `NODE_ENV=production`
+
+Variables operativas:
+
+- `SYNCXML_ENABLE_PERSISTENT_STORAGE=false` por defecto.
+- `SYNCXML_LOCAL_DEMO=true` solo en desarrollo local sin datos reales.
+- `BLOB_READ_WRITE_TOKEN` si se incorpora almacenamiento externo.
+
+En produccion, si faltan secretos criticos, el acceso falla de forma segura.
+
+## Instalacion y ejecucion local
+
+```bash
+npm install
+npm run dev
 ```
+
+Para desarrollo local sin datos reales:
+
+```bash
+SYNCXML_LOCAL_DEMO=true npm run dev
+```
+
+## Tests y build
+
+```bash
+npm run lint
+npm run test
+npm run build
+```
+
+## Seguridad
+
+- No loguear nombres, documentos, telefonos, emails, direcciones, pagos, XML completo ni Excel completo.
+- Rechazar extensiones no permitidas, archivos vacios, tamano excesivo, MIME inesperado y archivos corruptos.
+- Bloquear XML mal formado, DOCTYPE y ENTITY.
+- Enmascarar documentos, emails, telefonos, direcciones y pagos por defecto.
+- Bloquear consolidacion con errores criticos o duplicados sin resolver.
+
+## i18n y tema
+
+El idioma por defecto es espanol. La UI incluye ES/EN/DE y toggle visible. El tema por defecto es dark, con toggle dark/light/system.
+
+## Flujo funcional
+
+1. Dashboard o nueva operacion.
+2. Estado de privacidad visible.
+3. Consentimiento informado obligatorio.
+4. Importacion XLSX.
+5. Analisis y validacion.
+6. Preview enmascarada.
+7. Revision de mapeo y vista previa.
+8. Revision de errores y duplicados.
+9. Preview XML.
+10. Confirmacion y consolidacion.
+11. Descarga XML.
+12. Limpieza de datos temporales.
+
+## Checklist antes de produccion
+
+- Auditoria legal y de privacidad completada.
+- Persistencia desactivada o cifrado/retencion/borrado auditados.
+- Secretos configurados en entorno seguro.
+- Pruebas visuales dark/light/mobile revisadas.
+- Tests y build pasando.
+- Contacto legal real definido en politicas.
+- No usar datos reales hasta completar auditoria de seguridad y privacidad.

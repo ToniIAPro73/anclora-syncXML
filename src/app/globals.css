@@ -365,7 +365,7 @@ label:has(input[type="file"]:disabled) {
 
 .guest-table-wrap {
   width: 100%;
-  overflow: hidden;
+  overflow-x: auto;
 }
 
 .guest-table {
@@ -428,6 +428,24 @@ label:has(input[type="file"]:disabled) {
 }
 
 .tab.is-active { background: var(--accent); color: var(--accent-contrast); }
+
+.checkbox-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  color: var(--secondary);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.checkbox-row input {
+  margin-top: 0.2rem;
+  accent-color: var(--accent);
+}
+
+.bg-surface-elevated {
+  background: var(--surface-elevated);
+}
 
 @media (max-width: 900px) {
   .process-rail {

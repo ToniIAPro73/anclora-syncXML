@@ -1,6 +1,6 @@
 export type AppTheme = "dark" | "light" | "system";
 export type AppLanguage = "es" | "en" | "de";
-export type ValidationSeverity = "error" | "warning";
+export type ValidationSeverity = "error" | "warning" | "info";
 export type ValidationStatus = "PENDING" | "VALID" | "WARNING" | "ERROR";
 export type ReservationStatus = "DRAFT" | "IMPORTED" | "VALIDATED" | "XML_GENERATED" | "CONSOLIDATED" | "DOWNLOADED" | "DELETED";
 
@@ -72,6 +72,17 @@ export type PaymentData = {
   iban?: string;
 };
 
+export type DuplicateClassification = "likely" | "possible" | "none";
+export type DuplicateResolution = "pending" | "skip_new" | "keep_both" | "manual_review";
+
+export type DuplicateCandidate = {
+  id: string;
+  classification: DuplicateClassification;
+  reasonCodes: string[];
+  sourceRows: number[];
+  resolution: DuplicateResolution;
+};
+
 export type ParsedExcel = {
   fileName?: string;
   sheets: string[];
@@ -81,6 +92,7 @@ export type ParsedExcel = {
   guests: GuestRecord[];
   ignoredRows: Array<{ rowNumber: number; values: string[]; reason: string }>;
   rawRows: Array<{ rowNumber: number; values: string[] }>;
+  duplicates?: DuplicateCandidate[];
   validation: {
     status: ValidationStatus;
     errors: ValidationIssue[];

@@ -2,11 +2,13 @@
 
 import { useMemo, useRef, useState } from "react";
 import type { ComponentType, ReactNode } from "react";
-import { AlertTriangle, CheckCircle2, Download, FileSpreadsheet, FileText, SearchCheck, ShieldCheck, UploadCloud } from "lucide-react";
-import type { GeneratedXmlResult, ParsedExcel } from "@/lib/domain";
+import { CheckCircle2, Download, Eye, EyeOff, FileSpreadsheet, FileText, SearchCheck, ShieldCheck, Trash2, UploadCloud } from "lucide-react";
+import type { DuplicateResolution, GeneratedXmlResult, ParsedExcel } from "@/lib/domain";
 import { smartValidateParsedExcel } from "@/lib/validation";
 import { buildXmlDownloadFileName } from "@/lib/xml/fileName";
 import { usePreferences } from "./AppPreferencesProvider";
+import { unresolvedDuplicates } from "@/lib/duplicates";
+import { maskAddress, maskDocument, maskEmail, maskPayment, maskPhone } from "@/lib/privacy/masking";
 
 type BusyAction = "upload" | "validate" | "generate" | "consolidate" | null;
 type WorkflowStep = 1 | 2 | 3 | 4;
@@ -35,9 +37,16 @@ export function SyncXmlWorkflow() {
   const [consolidated, setConsolidated] = useState(false);
   const [smartValidated, setSmartValidated] = useState(false);
   const [dragActive, setDragActive] = useState(false);
+  const [consents, setConsents] = useState([false, false, false, false, false]);
+  const [showFullData, setShowFullData] = useState(false);
+  const [previewReviewed, setPreviewReviewed] = useState(false);
+  const [mappingReviewed, setMappingReviewed] = useState(false);
+  const [temporaryCleared, setTemporaryCleared] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const validGuests = useMemo(() => parsed?.guests.filter((guest) => guest.errors.length === 0) ?? [], [parsed]);
+  const consentAccepted = consents.every(Boolean);
+  const duplicateBlockers = useMemo(() => (parsed ? unresolvedDuplicates(parsed) : []), [parsed]);
   const busy = Boolean(busyAction);
 
   function chooseFile(file?: File | null) {
@@ -55,13 +64,16 @@ export function SyncXmlWorkflow() {
       form.append("file", file);
       const { response, data } = await fetchJson("/api/upload/excel", { method: "POST", body: form });
       if (!response.ok) {
-        setMessage(data.error ?? t.actionFailed);
+        setMessage(fileErrorMessage(data.error, t));
         return;
       }
       setParsed(data.parsed);
       setGenerated(null);
       setConsolidated(false);
       setSmartValidated(false);
+      setPreviewReviewed(false);
+      setMappingReviewed(false);
+      setTemporaryCleared(false);
       setActiveStep(2);
       setMessage(t.uploadComplete);
     } catch {
@@ -108,12 +120,13 @@ export function SyncXmlWorkflow() {
     setGenerated(null);
     setConsolidated(false);
     setSmartValidated(true);
+    setPreviewReviewed(false);
     setMessage(next.validation.errors.length ? t.smartValidationErrors : t.smartValidationOk);
     setBusyAction(null);
   }
 
   async function consolidate() {
-    if (!parsed || !generated) {
+    if (!parsed || !generated || parsed.validation.errors.length || duplicateBlockers.length || !previewReviewed || !mappingReviewed) {
       setActiveStep(generated ? 3 : parsed ? 2 : 1);
       return;
     }
@@ -169,6 +182,29 @@ export function SyncXmlWorkflow() {
     URL.revokeObjectURL(url);
   }
 
+  function clearOperation() {
+    if (!window.confirm(t.clearOperationConfirm)) return;
+    setSelectedFile(null);
+    setParsed(null);
+    setGenerated(null);
+    setActiveStep(1);
+    setConsolidated(false);
+    setSmartValidated(false);
+    setPreviewReviewed(false);
+    setMappingReviewed(false);
+    setShowFullData(false);
+    setTemporaryCleared(true);
+    setMessage(t.temporaryDataCleared);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }
+
+  function updateDuplicateResolution(id: string, resolution: DuplicateResolution) {
+    setParsed((current) => current
+      ? { ...current, duplicates: (current.duplicates ?? []).map((duplicate) => (duplicate.id === id ? { ...duplicate, resolution } : duplicate)) }
+      : current);
+    setGenerated(null);
+  }
+
   return (
     <div className="space-y-6">
       <ProcessRail
@@ -182,6 +218,7 @@ export function SyncXmlWorkflow() {
 
       {message && <div className="process-message" role="status">{message}</div>}
       {busy && <div className="process-message is-working" role="status">{t.processing}</div>}
+      <PrivacyModeCard onClear={clearOperation} hasData={Boolean(parsed || generated || selectedFile)} />
 
       {activeStep === 1 && (
         <section className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
@@ -191,12 +228,14 @@ export function SyncXmlWorkflow() {
               <div>
                 <h1 className="font-heading text-3xl font-black">{t.uploadTitle}</h1>
                 <p className="mt-2 max-w-2xl text-sm text-muted">{t.uploadCopy}</p>
+                <p className="mt-3 text-sm text-warning">{t.noticeBeforeImport}</p>
               </div>
             </div>
+            <ConsentPanel consents={consents} onChange={setConsents} />
             <button
               type="button"
               className={`upload-zone mt-6 ${dragActive ? "is-dragging" : ""}`}
-              disabled={busy}
+              disabled={busy || !consentAccepted}
               onClick={() => fileInputRef.current?.click()}
               onDragEnter={(event) => {
                 event.preventDefault();
@@ -218,9 +257,9 @@ export function SyncXmlWorkflow() {
               <span className="text-sm text-muted">{t.clickOrDrop}</span>
               {selectedFile && <span className="upload-file">{t.fileSelected}: {selectedFile.name}</span>}
             </button>
-            <input ref={fileInputRef} className="hidden" type="file" accept=".xlsx" disabled={busy} onChange={(event) => chooseFile(event.target.files?.[0])} />
+            <input ref={fileInputRef} className="hidden" type="file" accept=".xlsx" disabled={busy || !consentAccepted} onChange={(event) => chooseFile(event.target.files?.[0])} />
             <div className="mt-5 flex justify-end">
-              <button className="btn-primary" disabled={!selectedFile || busy} onClick={() => upload()}>
+              <button className="btn-primary" disabled={!selectedFile || busy || !consentAccepted} onClick={() => upload()}>
                 {busyAction === "upload" ? <WorkingLabel label={t.processing} /> : t.importAction}
               </button>
             </div>
@@ -243,6 +282,13 @@ export function SyncXmlWorkflow() {
           smartValidated={smartValidated}
           onSmartValidate={validateSmart}
           onGenerate={generate}
+          showFullData={showFullData}
+          onShowFullDataChange={setShowFullData}
+          previewReviewed={previewReviewed}
+          onPreviewReviewedChange={setPreviewReviewed}
+          mappingReviewed={mappingReviewed}
+          onMappingReviewedChange={setMappingReviewed}
+          onDuplicateResolution={updateDuplicateResolution}
         />
       )}
 
@@ -255,6 +301,7 @@ export function SyncXmlWorkflow() {
           onViewChange={setActiveView}
           onDownload={downloadXml}
           onConsolidate={consolidate}
+          canConsolidate={Boolean(parsed && !parsed.validation.errors.length && !duplicateBlockers.length && previewReviewed && mappingReviewed)}
         />
       )}
 
@@ -267,6 +314,7 @@ export function SyncXmlWorkflow() {
               <p className="mt-2 text-sm text-secondary">{message ?? t.consolidatedOk}</p>
             </div>
           </div>
+          {parsed && <OperationSummary parsed={parsed} temporaryCleared={temporaryCleared} />}
           {generated && (
             <div className="mt-5">
               <button className="btn-secondary" onClick={downloadXml}><Download className="h-4 w-4" />{t.downloadXml}</button>
@@ -278,6 +326,15 @@ export function SyncXmlWorkflow() {
   );
 }
 
+function fileErrorMessage(error: unknown, t: ReturnType<typeof usePreferences>["dictionary"]) {
+  if (error === "file.extension.invalid") return t.fileExtensionInvalid;
+  if (error === "file.empty") return t.fileEmpty;
+  if (error === "file.size.exceeded") return t.fileSizeExceeded;
+  if (error === "file.mime.invalid") return t.fileMimeInvalid;
+  if (error === "file.corrupt") return t.fileCorrupt;
+  return typeof error === "string" ? error : t.actionFailed;
+}
+
 function ExcelReview({
   parsed,
   validGuests,
@@ -286,6 +343,13 @@ function ExcelReview({
   smartValidated,
   onSmartValidate,
   onGenerate,
+  showFullData,
+  onShowFullDataChange,
+  previewReviewed,
+  onPreviewReviewedChange,
+  mappingReviewed,
+  onMappingReviewedChange,
+  onDuplicateResolution,
 }: {
   parsed: ParsedExcel;
   validGuests: number;
@@ -294,8 +358,16 @@ function ExcelReview({
   smartValidated: boolean;
   onSmartValidate: () => void;
   onGenerate: () => void;
+  showFullData: boolean;
+  onShowFullDataChange: (value: boolean) => void;
+  previewReviewed: boolean;
+  onPreviewReviewedChange: (value: boolean) => void;
+  mappingReviewed: boolean;
+  onMappingReviewedChange: (value: boolean) => void;
+  onDuplicateResolution: (id: string, resolution: DuplicateResolution) => void;
 }) {
   const { dictionary: t } = usePreferences();
+  const duplicateBlockers = unresolvedDuplicates(parsed);
   return (
     <>
       <section className="grid gap-4 md:grid-cols-3">
@@ -306,15 +378,16 @@ function ExcelReview({
           [t.guestCount, String(parsed.reservation.guestCount ?? validGuests)],
         ]} />
         <InfoCard title={t.property} rows={[
-          ["Codigo", parsed.property.establishmentCode],
-          ["Nombre", parsed.property.name],
-          ["Direccion", parsed.property.address],
-          ["Municipio", `${parsed.property.postalCode ?? ""} ${parsed.property.municipality ?? ""}`],
-          ["Provincia", parsed.property.province],
+          [t.code, parsed.property.establishmentCode],
+          [t.name, parsed.property.name],
+          [t.address, showFullData ? parsed.property.address : maskAddress(parsed.property.address)],
+          [t.municipality, `${parsed.property.postalCode ?? ""} ${parsed.property.municipality ?? ""}`],
+          [t.province, parsed.property.province],
         ]} />
         <InfoCard title={t.contractPayment} rows={[
-          ["Contrato", parsed.reservation.contractDate],
+          [t.contract, parsed.reservation.contractDate],
           [t.paymentType, parsed.payment.paymentType],
+          ["IBAN", maskPayment(parsed.payment.iban)],
           ["Internet", String(parsed.reservation.internet ?? true)],
         ]} />
       </section>
@@ -324,23 +397,33 @@ function ExcelReview({
           <div>
             <h2 className="font-heading text-xl font-bold">{t.guests}: {parsed.guests.length}</h2>
             <p className="mt-1 text-sm text-muted">{smartValidated ? t.smartValidationApplied : t.smartValidationPending}</p>
+            <p className="mt-2 text-sm text-warning">{t.noticeBeforeConsolidate}</p>
           </div>
           <div className="flex flex-wrap gap-2">
+            <button type="button" className="btn-secondary" onClick={() => onShowFullDataChange(!showFullData)}>
+              {showFullData ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}{t.showFullData}
+            </button>
             <button disabled={busy} onClick={onSmartValidate} className="btn-secondary disabled:opacity-45">
               {busyAction === "validate" ? <WorkingLabel label={t.processing} /> : <><ShieldCheck className="h-4 w-4" />{t.smartValidate}</>}
             </button>
-            <button disabled={Boolean(parsed.validation.errors.length) || busy} onClick={onGenerate} className="btn-primary disabled:opacity-45">
+            <button disabled={Boolean(parsed.validation.errors.length) || Boolean(duplicateBlockers.length) || !previewReviewed || !mappingReviewed || busy} onClick={onGenerate} className="btn-primary disabled:opacity-45">
               {busyAction === "generate" ? <WorkingLabel label={t.processing} /> : t.generateXml}
             </button>
           </div>
         </div>
-        <GuestTable guests={parsed.guests} smartValidated={smartValidated} />
+        {showFullData && <div className="mx-5 mb-4 rounded-lg border border-app bg-surface-elevated p-3 text-sm text-warning">{t.fullDataWarning}</div>}
+        <div className="mx-5 mb-4 flex flex-wrap gap-4">
+          <label className="checkbox-row"><input type="checkbox" checked={previewReviewed} onChange={(event) => onPreviewReviewedChange(event.target.checked)} />{t.reviewPreview}</label>
+          <label className="checkbox-row"><input type="checkbox" checked={mappingReviewed} onChange={(event) => onMappingReviewedChange(event.target.checked)} />{t.mappingReviewed}</label>
+        </div>
+        <GuestTable guests={parsed.guests} smartValidated={smartValidated} showFullData={showFullData} />
       </section>
 
       <section className="grid gap-4 lg:grid-cols-2">
         <IssuePanel title={t.errors} issues={parsed.validation.errors} />
         <IssuePanel title={t.warnings} issues={parsed.validation.warnings} />
       </section>
+      <DuplicatePanel duplicates={parsed.duplicates ?? []} onResolve={onDuplicateResolution} />
     </>
   );
 }
@@ -353,6 +436,7 @@ function XmlViewer({
   onViewChange,
   onDownload,
   onConsolidate,
+  canConsolidate,
 }: {
   generated: GeneratedXmlResult;
   activeView: "visual" | "xml";
@@ -361,6 +445,7 @@ function XmlViewer({
   onViewChange: (view: "visual" | "xml") => void;
   onDownload: () => void;
   onConsolidate: () => void;
+  canConsolidate: boolean;
 }) {
   const { dictionary: t } = usePreferences();
   return (
@@ -369,6 +454,7 @@ function XmlViewer({
         <div>
           <h2 className="font-heading text-xl font-bold">XML</h2>
           <p className="mt-1 text-sm text-muted">{t.xmlNote}</p>
+          <p className="mt-2 text-sm text-warning">{t.noticeBeforeExport}</p>
         </div>
         <div className="flex gap-2">
           <button className={`tab ${activeView === "visual" ? "is-active" : ""}`} onClick={() => onViewChange("visual")}>{t.visualView}</button>
@@ -378,15 +464,15 @@ function XmlViewer({
       {activeView === "visual" ? (
         <div className="mt-5 grid gap-4 md:grid-cols-2">
           <InfoCard title={t.reservationSummary} rows={[[t.reference, generated.visual.reservation.reference], [t.checkIn, generated.visual.reservation.checkInDate], [t.checkOut, generated.visual.reservation.checkOutDate], [t.guestCount, String(generated.visual.guests.length)], [t.paymentType, generated.visual.payment.paymentType]]} />
-          <InfoCard title={t.property} rows={[["Codigo", generated.visual.property.establishmentCode], ["Nombre", generated.visual.property.name], ["Direccion", generated.visual.property.address]]} />
-          {generated.visual.guests.map((guest) => <InfoCard key={guest.sourceRow} title={`${guest.firstName} ${guest.surname1}`} rows={[[t.document, `${guest.documentType} ${guest.documentNumber}`], [t.nationality, guest.nationalityIso3], [t.birthDate, guest.birthDate], [t.address, guest.address], [t.email, guest.email], [t.phone, guest.phone]]} />)}
+          <InfoCard title={t.property} rows={[[t.code, generated.visual.property.establishmentCode], [t.name, generated.visual.property.name], [t.address, maskAddress(generated.visual.property.address)]]} />
+          {generated.visual.guests.map((guest) => <InfoCard key={guest.sourceRow} title={`${guest.firstName} ${guest.surname1}`} rows={[[t.document, `${guest.documentType} ${maskDocument(guest.documentNumber)}`], [t.nationality, guest.nationalityIso3], [t.birthDate, guest.birthDate], [t.address, maskAddress(guest.address)], [t.email, maskEmail(guest.email)], [t.phone, maskPhone(guest.phone)]]} />)}
         </div>
       ) : (
         <pre className="mt-5 max-h-[520px] overflow-auto rounded-lg bg-black/45 p-4 text-xs text-emerald-200"><code>{generated.xml}</code></pre>
       )}
       <div className="mt-5 flex flex-wrap gap-3">
         <button className="btn-secondary" onClick={onDownload}><Download className="h-4 w-4" />{t.downloadXml}</button>
-        <button className="btn-primary" onClick={onConsolidate} disabled={busy || Boolean(generated.validation.errors.length)}>
+        <button className="btn-primary" onClick={onConsolidate} disabled={busy || Boolean(generated.validation.errors.length) || !canConsolidate}>
           {busyAction === "consolidate" ? <WorkingLabel label={t.processing} /> : <><CheckCircle2 className="h-4 w-4" />{t.consolidate}</>}
         </button>
       </div>
@@ -438,7 +524,7 @@ function FieldCell({ state, children }: { state: "error" | "warning" | "valid" |
   return <td className={`field-cell is-${state}`}>{children}</td>;
 }
 
-function GuestTable({ guests, smartValidated }: { guests: ParsedExcel["guests"]; smartValidated: boolean }) {
+function GuestTable({ guests, smartValidated, showFullData }: { guests: ParsedExcel["guests"]; smartValidated: boolean; showFullData: boolean }) {
   const { dictionary: t } = usePreferences();
   return (
     <div className="guest-table-wrap">
@@ -453,17 +539,17 @@ function GuestTable({ guests, smartValidated }: { guests: ParsedExcel["guests"];
           <col className="w-[22%]" />
           <col className="w-[13%]" />
         </colgroup>
-        <thead><tr><th>Est.</th><th>#</th><th>{t.name}</th><th>Doc.</th><th>Datos</th><th>Contacto</th><th>Dir.</th><th>Avisos</th></tr></thead>
+        <thead><tr><th>{t.status}</th><th>#</th><th>{t.name}</th><th>{t.document}</th><th>{t.data}</th><th>{t.contact}</th><th>{t.address}</th><th>{t.guestWarnings}</th></tr></thead>
         <tbody>
           {guests.map((guest) => (
             <tr key={guest.sourceRow}>
               <td><StatusPill status={guest.validationStatus} /></td>
               <td>{guest.sourceRow}</td>
               <FieldCell state={fieldState(guest, ["firstName", "surname1", "surname2"], smartValidated)}><span className="font-semibold">{guest.firstName}</span><br />{guest.surname1} {guest.surname2}</FieldCell>
-              <FieldCell state={fieldState(guest, ["documentNumber", "documentType"], smartValidated)}><span className="text-muted">{guest.documentType}</span><br />{guest.documentNumber}</FieldCell>
-              <FieldCell state={fieldState(guest, ["birthDate", "nationalityIso3"], smartValidated)}><span className="text-muted">Nac.</span> {guest.birthDate}<br /><span className="text-muted">Pais</span> {guest.nationalityIso3}</FieldCell>
-              <FieldCell state={fieldState(guest, ["email", "phone"], smartValidated)}><span className="break-anywhere">{guest.email || "-"}</span><br /><span className="text-muted">{guest.phone || "-"}</span></FieldCell>
-              <FieldCell state={fieldState(guest, ["address", "postalCode", "municipalityCode"], smartValidated)}><span className="break-anywhere">{guest.address}</span></FieldCell>
+              <FieldCell state={fieldState(guest, ["documentNumber", "documentType"], smartValidated)}><span className="text-muted">{guest.documentType}</span><br />{showFullData ? guest.documentNumber : maskDocument(guest.documentNumber)}</FieldCell>
+              <FieldCell state={fieldState(guest, ["birthDate", "nationalityIso3"], smartValidated)}><span className="text-muted">{t.birthShort}</span> {guest.birthDate}<br /><span className="text-muted">{t.countryShort}</span> {guest.nationalityIso3}</FieldCell>
+              <FieldCell state={fieldState(guest, ["email", "phone"], smartValidated)}><span className="break-anywhere">{showFullData ? guest.email || "-" : maskEmail(guest.email)}</span><br /><span className="text-muted">{showFullData ? guest.phone || "-" : maskPhone(guest.phone)}</span></FieldCell>
+              <FieldCell state={fieldState(guest, ["address", "postalCode", "municipalityCode"], smartValidated)}><span className="break-anywhere">{showFullData ? guest.address : maskAddress(guest.address)}</span></FieldCell>
               <td><CompactIssueList issues={guest.errors.concat(guest.warnings)} /></td>
             </tr>
           ))}
@@ -486,20 +572,146 @@ function StatusPill({ status }: { status: string }) {
   return <span className={`status-pill ${status === "ERROR" ? "is-error" : status === "WARNING" ? "is-warning" : "is-valid"}`}>{label}</span>;
 }
 
-function IssuePanel({ title, issues }: { title: string; issues: Array<{ code: string; message: string; severity: string; sourceRow?: number }> }) {
-  return <div className="panel p-5"><h3 className="font-heading font-bold">{title}</h3>{issues.length ? <ul className="mt-3 space-y-2 text-sm">{issues.map((issue, index) => <li key={`${issue.code}-${index}`} className="flex gap-2 text-secondary"><AlertTriangle className={issue.severity === "error" ? "h-4 w-4 text-error" : "h-4 w-4 text-warning"} />{issue.sourceRow ? `Fila ${issue.sourceRow}: ` : ""}{issue.message}</li>)}</ul> : <p className="mt-3 text-sm text-muted">OK</p>}</div>;
+function IssuePanel({ title, issues }: { title: string; issues: Array<{ code: string; message: string; severity: string; field?: string; sourceRow?: number }> }) {
+  const { dictionary: t } = usePreferences();
+  return (
+    <div className="panel overflow-hidden">
+      <div className="border-b border-app p-5">
+        <h3 className="font-heading font-bold">{title}</h3>
+        <p className="mt-1 text-sm text-muted">{t.issueSummary}: {issues.length}</p>
+      </div>
+      {issues.length ? (
+        <div className="overflow-x-auto">
+          <table className="data-table">
+            <thead><tr><th>{t.severity}</th><th>{t.row}</th><th>{t.field}</th><th>{t.explanation}</th><th>{t.recommendedAction}</th></tr></thead>
+            <tbody>
+              {issues.map((issue, index) => (
+                <tr key={`${issue.code}-${index}`}>
+                  <td><span className={`status-pill ${issue.severity === "error" ? "is-error" : "is-warning"}`}>{issue.severity === "error" ? t.errors : t.warnings}</span></td>
+                  <td>{issue.sourceRow ?? "-"}</td>
+                  <td>{issue.field || "-"}</td>
+                  <td>{translateIssueMessage(issue.code, issue.message, t)}</td>
+                  <td>{t.fixBeforeConsolidating}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : <p className="p-5 text-sm text-muted">OK</p>}
+    </div>
+  );
 }
 
 function CompactIssueList({ issues }: { issues: Array<{ code: string; message: string; severity: string; field?: string }> }) {
+  const { dictionary: t } = usePreferences();
   if (!issues.length) return <span className="text-muted">OK</span>;
   return (
     <div className="space-y-1">
       {issues.slice(0, 3).map((issue) => (
         <p key={issue.code + issue.field} className={issue.severity === "error" ? "text-error" : "text-warning"}>
-          {issue.message.replace(" no informado", "").replace("Telefono", "Tel.").replace("Codigo de municipio", "Cod. mun.").replace("Soporte de documento", "Soporte doc.")}
+          {translateIssueMessage(issue.code, issue.message, t).replace(" no informado", "").replace(" not provided", "").replace("Telefono", "Tel.").replace("Phone", "Tel.").replace("Codigo de municipio", "Cod. mun.").replace("Municipality code", "Mun. code").replace("Gemeindecode", "Gemeinde").replace("Soporte de documento", "Soporte doc.").replace("Document support", "Doc. support").replace("Dokumentnachweis", "Dok.")}
         </p>
       ))}
       {issues.length > 3 && <p className="text-muted">+{issues.length - 3}</p>}
+    </div>
+  );
+}
+
+function translateIssueMessage(code: string, fallback: string, t: ReturnType<typeof usePreferences>["dictionary"]) {
+  if (code === "guest.phone.missing") return t.issuePhoneMissing;
+  if (code === "guest.relationship.missing") return t.issueRelationshipMissing;
+  if (code === "guest.sex.missing") return t.issueSexMissing;
+  if (code === "guest.documentSupport.missing") return t.issueDocumentSupportMissing;
+  if (code === "guest.municipalityCode.missing") return t.issueMunicipalityCodeMissing;
+  return fallback;
+}
+
+function PrivacyModeCard({ onClear, hasData }: { onClear: () => void; hasData: boolean }) {
+  const { dictionary: t } = usePreferences();
+  return (
+    <section className="panel border-accent/30 p-5">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex min-w-0 gap-3">
+          <ShieldCheck className="mt-1 h-5 w-5 shrink-0 text-accent" />
+          <div>
+            <h2 className="font-heading text-base font-bold">{t.privateModeTitle}</h2>
+            <p className="mt-1 text-sm text-secondary">{t.privateModeBanner}</p>
+          </div>
+        </div>
+        <button type="button" className="btn-secondary" disabled={!hasData} onClick={onClear}><Trash2 className="h-4 w-4" />{t.clearOperationData}</button>
+      </div>
+    </section>
+  );
+}
+
+function ConsentPanel({ consents, onChange }: { consents: boolean[]; onChange: (next: boolean[]) => void }) {
+  const { dictionary: t } = usePreferences();
+  const items = [t.consentAuthorised, t.consentNoLegalAdvice, t.consentReview, t.consentMinimisation, t.consentPrivateMode];
+  return (
+    <div className="mt-6 rounded-lg border border-app bg-surface-elevated p-4">
+      <h2 className="font-heading text-base font-bold">{t.consentTitle}</h2>
+      <p className="mt-1 text-sm text-muted">{t.consentIntro}</p>
+      <div className="mt-4 space-y-3">
+        {items.map((item, index) => (
+          <label key={item} className="checkbox-row">
+            <input type="checkbox" checked={consents[index]} onChange={(event) => onChange(consents.map((value, itemIndex) => (itemIndex === index ? event.target.checked : value)))} />
+            {item}
+          </label>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function DuplicatePanel({ duplicates, onResolve }: { duplicates: NonNullable<ParsedExcel["duplicates"]>; onResolve: (id: string, resolution: DuplicateResolution) => void }) {
+  const { dictionary: t } = usePreferences();
+  if (!duplicates.length) return <section className="panel p-5"><h3 className="font-heading font-bold">{t.duplicates}</h3><p className="mt-2 text-sm text-muted">OK</p></section>;
+  return (
+    <section className="panel overflow-hidden">
+      <div className="border-b border-app p-5">
+        <h3 className="font-heading font-bold">{t.duplicates}</h3>
+        <p className="mt-1 text-sm text-warning">{t.reviewBeforeConsolidation}</p>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="data-table">
+          <thead><tr><th>{t.status}</th><th>{t.row}</th><th>{t.explanation}</th><th>{t.recommendedAction}</th></tr></thead>
+          <tbody>
+            {duplicates.map((duplicate) => (
+              <tr key={duplicate.id}>
+                <td><span className={`status-pill ${duplicate.classification === "likely" ? "is-error" : "is-warning"}`}>{duplicate.classification === "likely" ? t.likelyDuplicate : t.possibleDuplicate}</span></td>
+                <td>{duplicate.sourceRows.join(", ")}</td>
+                <td>{duplicate.reasonCodes.join(", ")}</td>
+                <td>
+                  <div className="flex flex-wrap gap-2">
+                    <button type="button" className={`tab ${duplicate.resolution === "skip_new" ? "is-active" : ""}`} onClick={() => onResolve(duplicate.id, "skip_new")}>{t.skipNewRecord}</button>
+                    <button type="button" className={`tab ${duplicate.resolution === "keep_both" ? "is-active" : ""}`} onClick={() => onResolve(duplicate.id, "keep_both")}>{t.keepBothRecords}</button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
+
+function OperationSummary({ parsed, temporaryCleared }: { parsed: ParsedExcel; temporaryCleared: boolean }) {
+  const { dictionary: t } = usePreferences();
+  const skipped = (parsed.duplicates ?? []).filter((duplicate) => duplicate.resolution === "skip_new").length;
+  return (
+    <div className="mt-6">
+      <InfoCard title={t.operationSummary} rows={[
+        [t.existingRecords, "0"],
+        [t.newRecords, String(parsed.guests.length - skipped)],
+        [t.duplicatesDetected, String(parsed.duplicates?.length ?? 0)],
+        [t.omittedRecords, String(skipped)],
+        [t.correctedErrors, "0"],
+        [t.pendingWarnings, String(parsed.validation.warnings.length)],
+        [t.totalConsolidated, String(parsed.guests.length - skipped)],
+        [t.privacyModeUsed, t.privateModeTitle],
+        [t.temporaryDataStatus, temporaryCleared ? t.temporaryDataCleared : t.temporaryDataInSession],
+      ]} />
     </div>
   );
 }

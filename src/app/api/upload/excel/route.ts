@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
-import { z } from "zod";
 import { parseExcelBuffer } from "@/lib/excel/parseExcel";
 import { requireAuth } from "@/lib/auth";
-
-const MAX_SIZE = 5 * 1024 * 1024;
+import { hashBuffer, pseudonymizeSession, recordAuditEvent } from "@/lib/audit";
+import { validateUploadFile } from "@/lib/security/files";
 
 export async function POST(request: Request) {
   const unauthorized = await requireAuth();
@@ -11,9 +10,27 @@ export async function POST(request: Request) {
   const formData = await request.formData();
   const file = formData.get("file");
   if (!(file instanceof File)) return NextResponse.json({ error: "Archivo no recibido" }, { status: 400 });
-  const parsed = z.object({ name: z.string().endsWith(".xlsx"), size: z.number().max(MAX_SIZE) }).safeParse({ name: file.name.toLowerCase(), size: file.size });
-  if (!parsed.success) return NextResponse.json({ error: "Solo se admiten archivos .xlsx de hasta 5MB" }, { status: 400 });
+  recordAuditEvent({ eventType: "file_import_started", pseudonymousSessionId: pseudonymizeSession(request.headers.get("cookie")), language: "es", theme: "dark" });
+  const fileValidation = validateUploadFile(file, [".xlsx"]);
+  if (!fileValidation.ok) {
+    recordAuditEvent({ eventType: "file_import_failed", pseudonymousSessionId: pseudonymizeSession(request.headers.get("cookie")), validationResult: fileValidation.errorCode, language: "es", theme: "dark" });
+    return NextResponse.json({ error: fileValidation.errorCode }, { status: 400 });
+  }
   const buffer = Buffer.from(await file.arrayBuffer());
-  const result = parseExcelBuffer(buffer, file.name);
-  return NextResponse.json({ parsed: result });
+  try {
+    const result = parseExcelBuffer(buffer, fileValidation.safeName);
+    recordAuditEvent({
+      eventType: result.validation.errors.length ? "validation_error_detected" : "file_import_validated",
+      pseudonymousSessionId: pseudonymizeSession(request.headers.get("cookie")),
+      recordCount: result.guests.length,
+      validationResult: result.validation.status,
+      fileHash: hashBuffer(buffer),
+      language: "es",
+      theme: "dark",
+    });
+    return NextResponse.json({ parsed: result });
+  } catch {
+    recordAuditEvent({ eventType: "file_import_failed", pseudonymousSessionId: pseudonymizeSession(request.headers.get("cookie")), fileHash: hashBuffer(buffer), language: "es", theme: "dark" });
+    return NextResponse.json({ error: "file.corrupt" }, { status: 400 });
+  }
 }

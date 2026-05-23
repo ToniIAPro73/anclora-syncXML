@@ -1,4 +1,5 @@
 import type { GuestRecord, ParsedExcel, ValidationIssue, ValidationStatus } from "./domain";
+import { detectDuplicates } from "./duplicates";
 
 const DNI_CONTROL = "TRWAGMYFPDXBNJZSQVHLCKE";
 const IBAN_LENGTHS: Record<string, number> = {
@@ -74,6 +75,7 @@ const IBAN_LENGTHS: Record<string, number> = {
   VG: 24,
   XK: 20,
 };
+const ALLOWED_PAYMENT_TYPES = new Set(["EFECT", "TARJT", "TRANS", "PLATF", "OTRO"]);
 
 function issue(severity: "error" | "warning", code: string, message: string, field?: string, sourceRow?: number): ValidationIssue {
   return { severity, code, message, field, sourceRow };
@@ -112,6 +114,9 @@ export function validateParsedExcel(parsed: Omit<ParsedExcel, "validation">): Pa
   if (parsed.reservation.guestCount && parsed.reservation.guestCount !== validGuests.length) {
     errors.push(issue("error", "reservation.guestCount.mismatch", "El numero de personas no coincide con los huespedes validos", "guestCount"));
   }
+  if (parsed.payment.paymentType && !ALLOWED_PAYMENT_TYPES.has(parsed.payment.paymentType)) {
+    errors.push(issue("error", "payment.type.invalid", "Tipo de pago no permitido", "paymentType"));
+  }
   const seen = new Map<string, number>();
   for (const guest of parsed.guests) {
     if (!guest.documentNumber) continue;
@@ -121,7 +126,8 @@ export function validateParsedExcel(parsed: Omit<ParsedExcel, "validation">): Pa
     errors.push(...guest.errors);
     warnings.push(...guest.warnings);
   }
-  return { ...parsed, validation: { status: statusFrom(errors, warnings), errors, warnings } };
+  const withValidation = { ...parsed, validation: { status: statusFrom(errors, warnings), errors, warnings } };
+  return { ...withValidation, duplicates: parsed.duplicates ?? detectDuplicates(withValidation) };
 }
 
 function normalizedDocument(value?: string) {
@@ -272,7 +278,8 @@ export function smartValidateParsedExcel(parsed: ParsedExcel): ParsedExcel {
     }
   }
 
-  return { ...base, validation: { status: statusFrom(errors, warnings), errors, warnings } };
+  const withValidation = { ...base, validation: { status: statusFrom(errors, warnings), errors, warnings } };
+  return { ...withValidation, duplicates: detectDuplicates(withValidation) };
 }
 
 export function validateNoCriticalPlaceholders(xml: string): ValidationIssue[] {
