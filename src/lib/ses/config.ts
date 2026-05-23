@@ -31,13 +31,26 @@ export function getSesConfig(environment: SesEnvironment = (process.env.SYNCXML_
   };
 }
 
-export function assertSesConfig(config: SesConfig, options: { requireCredentials?: boolean } = {}) {
+export function getSesConfigStatus(environment: SesEnvironment = "pre") {
+  const config = getSesConfig(environment);
+  return {
+    environment: config.environment,
+    endpoint: config.endpoint,
+    hasCredentials: Boolean(config.username && config.password),
+    hasLandlordCode: Boolean(config.landlordCode),
+    hasApplicationName: Boolean(config.applicationName),
+    readyForPreproduction: Boolean(config.username && config.password && config.landlordCode && config.applicationName),
+    productionEnabled: config.allowProductionSend,
+  };
+}
+
+export function assertSesConfig(config: SesConfig, options: { requireCredentials?: boolean; requireLandlordCode?: boolean } = {}) {
   const missing: string[] = [];
   if (options.requireCredentials !== false) {
     if (!config.username) missing.push("SYNCXML_SES_USERNAME");
     if (!config.password) missing.push("SYNCXML_SES_PASSWORD");
   }
-  if (!config.landlordCode) missing.push("SYNCXML_SES_LANDLORD_CODE");
+  if (options.requireLandlordCode !== false && !config.landlordCode) missing.push("SYNCXML_SES_LANDLORD_CODE");
   if (!config.applicationName) missing.push("SYNCXML_SES_APPLICATION");
   if (missing.length) throw new Error(`Missing SES.HOSPEDAJES configuration: ${missing.join(", ")}`);
   if (config.environment === "prod" && !config.allowProductionSend) {
