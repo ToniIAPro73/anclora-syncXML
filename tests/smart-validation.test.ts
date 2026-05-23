@@ -4,11 +4,22 @@ import { parseExcelBuffer } from "@/lib/excel/parseExcel";
 import { smartValidateParsedExcel } from "@/lib/validation";
 
 describe("smartValidateParsedExcel", () => {
-  it("keeps the reference Excel valid for XML generation", () => {
+  it("flags missing SES municipality codes before XML generation", () => {
     const parsed = parseExcelBuffer(readFileSync("docs/registro_huespedes.xlsx"), "registro_huespedes.xlsx");
     const validated = smartValidateParsedExcel(parsed);
 
-    expect(validated.validation.errors).toHaveLength(0);
+    expect(validated.validation.errors.filter((error) => error.code === "ses.readiness.municipalityCode.required")).toHaveLength(7);
+    expect(validated.guests.every((guest) => guest.validationStatus !== "ERROR")).toBe(true);
+  });
+
+  it("allows SES readiness when Spanish municipality codes are present", () => {
+    const parsed = parseExcelBuffer(readFileSync("docs/registro_huespedes.xlsx"), "registro_huespedes.xlsx");
+    const validated = smartValidateParsedExcel({
+      ...parsed,
+      guests: parsed.guests.map((guest) => ({ ...guest, municipalityCode: "07040" })),
+    });
+
+    expect(validated.validation.errors.some((error) => error.code === "ses.readiness.municipalityCode.required")).toBe(false);
     expect(validated.guests.every((guest) => guest.validationStatus !== "ERROR")).toBe(true);
   });
 
