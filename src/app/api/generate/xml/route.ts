@@ -13,7 +13,7 @@ export async function POST(request: Request) {
   if (unauthorized) return unauthorized;
   const body = await request.json();
   const parsed = z.object({ parsed: z.any() }).safeParse(body);
-  if (!parsed.success) return NextResponse.json({ error: "Payload invalido" }, { status: 400 });
+  if (!parsed.success) return NextResponse.json({ error: "Payload inválido" }, { status: 400 });
   const template = await readReferenceTemplate();
   const validated = smartValidateParsedExcel(parsed.data.parsed);
   const generated = generateHospitalityXml(validated, template);
