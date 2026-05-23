@@ -3,8 +3,11 @@ import { parseExcelBuffer } from "@/lib/excel/parseExcel";
 import { requireAuth } from "@/lib/auth";
 import { hashBuffer, pseudonymizeSession, recordAuditEvent } from "@/lib/audit";
 import { validateUploadFile } from "@/lib/security/files";
+import { getRateLimitKey, sensitiveRateLimiter } from "@/lib/security/rateLimit";
 
 export async function POST(request: Request) {
+  const rateLimit = sensitiveRateLimiter.check(`upload:${getRateLimitKey(request)}`);
+  if (!rateLimit.allowed) return NextResponse.json({ error: "Demasiadas solicitudes" }, { status: 429 });
   const unauthorized = await requireAuth();
   if (unauthorized) return unauthorized;
   const formData = await request.formData();

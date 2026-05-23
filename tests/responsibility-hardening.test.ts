@@ -5,6 +5,8 @@ import { canUsePasswordAuth, persistentStorageEnabled, validateRuntimeConfig } f
 import { validateUploadFile } from "@/lib/security/files";
 import { maskAddress, maskDocument, maskEmail, maskPayment, maskPhone } from "@/lib/privacy/masking";
 import { assertWellFormedXml, generateHospitalityXml } from "@/lib/xml/generateHospitalityXml";
+import { createRateLimiter } from "@/lib/security/rateLimit";
+import { validateForBackendConsolidation } from "@/lib/validation";
 
 const OLD_ENV = { ...process.env };
 
@@ -62,6 +64,14 @@ describe("responsibility hardening", () => {
     expect(canUsePasswordAuth()).toBe(false);
   });
 
+  it("denies password auth when no admin password or session secret are configured", () => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("SYNCXML_ADMIN_PASSWORD", "");
+    vi.stubEnv("SESSION_SECRET", "");
+    vi.stubEnv("AUTH_SECRET", "");
+    expect(canUsePasswordAuth()).toBe(false);
+  });
+
   it("allows local demo only with explicit marker outside production", () => {
     vi.stubEnv("NODE_ENV", "development");
     vi.stubEnv("SYNCXML_LOCAL_DEMO", "true");
@@ -86,5 +96,24 @@ describe("responsibility hardening", () => {
     expect(generated.xml).toContain("Ana &amp; Lia");
     expect(generated.xml).toContain("Menor &lt;Mayor&gt;");
     expect(assertWellFormedXml(generated.xml)).toBe(true);
+  });
+
+  it("applies backend critical validation before consolidation", () => {
+    const parsed = parsedFixture();
+    const validation = validateForBackendConsolidation({
+      ...parsed,
+      guests: parsed.guests.map((guest, index) => index === 0 ? { ...guest, documentNumber: "12345678A" } : guest),
+    });
+
+    expect(validation.errors.some((error) => error.code === "guest.document.control.invalid")).toBe(true);
+  });
+
+  it("rate limits repeated sensitive actions", () => {
+    const limiter = createRateLimiter({ limit: 2, windowMs: 60_000 });
+
+    expect(limiter.check("session-a").allowed).toBe(true);
+    expect(limiter.check("session-a").allowed).toBe(true);
+    expect(limiter.check("session-a").allowed).toBe(false);
+    expect(limiter.check("session-b").allowed).toBe(true);
   });
 });
