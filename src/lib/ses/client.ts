@@ -113,10 +113,11 @@ export function buildCatalogoEnvelope(catalog: string) {
 
 export async function sendParteHospedajeXml(xml: string, options: SesRequestOptions = {}) {
   const config = getSesConfig(options.environment);
-  assertSesConfig(config);
+  const dryRun = options.dryRun ?? true;
+  assertSesConfig(config, { requireCredentials: !dryRun });
   const zippedXmlBase64 = zipXmlBase64(xml, "altaParteHospedaje.xml");
   const soapXml = buildComunicacionEnvelope({ config, operation: "A", communicationType: "PV", zippedXmlBase64 });
-  if (options.dryRun ?? true) return { dryRun: true, environment: config.environment, endpoint: config.endpoint, soapXml };
+  if (dryRun) return { dryRun: true, environment: config.environment, endpoint: config.endpoint, soapXml };
   return postSoap(soapXml, config, options.fetchImpl ?? fetch);
 }
 
@@ -124,32 +125,36 @@ export const sendReservaHospedajeXml = sendParteHospedajeXml;
 
 export async function querySesLote(loteCodes: string[], options: SesRequestOptions = {}) {
   const config = getSesConfig(options.environment);
-  assertSesConfig(config);
+  const dryRun = options.dryRun ?? true;
+  assertSesConfig(config, { requireCredentials: !dryRun });
   const soapXml = buildConsultaLoteEnvelope(loteCodes);
-  if (options.dryRun ?? true) return { dryRun: true, environment: config.environment, endpoint: config.endpoint, soapXml };
+  if (dryRun) return { dryRun: true, environment: config.environment, endpoint: config.endpoint, soapXml };
   return postSoap(soapXml, config, options.fetchImpl ?? fetch);
 }
 
 export async function querySesComunicacion(communicationCodes: string[], options: SesRequestOptions = {}) {
   const config = getSesConfig(options.environment);
-  assertSesConfig(config);
+  const dryRun = options.dryRun ?? true;
+  assertSesConfig(config, { requireCredentials: !dryRun });
   const soapXml = buildConsultaComunicacionEnvelope(communicationCodes);
-  if (options.dryRun ?? true) return { dryRun: true, environment: config.environment, endpoint: config.endpoint, soapXml };
+  if (dryRun) return { dryRun: true, environment: config.environment, endpoint: config.endpoint, soapXml };
   return postSoap(soapXml, config, options.fetchImpl ?? fetch);
 }
 
 export async function cancelSesLote(loteCode: string, options: SesRequestOptions = {}) {
   const config = getSesConfig(options.environment);
-  assertSesConfig(config);
+  const dryRun = options.dryRun ?? true;
+  assertSesConfig(config, { requireCredentials: !dryRun });
   const soapXml = buildAnulacionLoteEnvelope(loteCode);
-  if (options.dryRun ?? true) return { dryRun: true, environment: config.environment, endpoint: config.endpoint, soapXml };
+  if (dryRun) return { dryRun: true, environment: config.environment, endpoint: config.endpoint, soapXml };
   return postSoap(soapXml, config, options.fetchImpl ?? fetch);
 }
 
 export async function querySesCatalog(catalog: string, options: SesRequestOptions = {}) {
   const config = getSesConfig(options.environment);
-  assertSesConfig(config);
+  const dryRun = options.dryRun ?? true;
+  assertSesConfig(config, { requireCredentials: !dryRun });
   const soapXml = buildCatalogoEnvelope(catalog);
-  if (options.dryRun ?? true) return { dryRun: true, environment: config.environment, endpoint: config.endpoint, soapXml };
+  if (dryRun) return { dryRun: true, environment: config.environment, endpoint: config.endpoint, soapXml };
   return postSoap(soapXml, config, options.fetchImpl ?? fetch);
 }
