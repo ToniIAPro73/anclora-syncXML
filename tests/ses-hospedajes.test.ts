@@ -60,6 +60,30 @@ describe("SES.HOSPEDAJES phase 3 integration", () => {
     expect(validation.errors.some((error) => error.field?.endsWith("direccion.codigoPostal"))).toBe(true);
   });
 
+  it("rejects XML with catalogue values outside the documented SES values", () => {
+    const validation = validateSesHospedajesXml(validParteHospedajeXml.replace("<tipoPago>PLATF</tipoPago>", "<tipoPago>TEXTO</tipoPago>"));
+
+    expect(validation.ok).toBe(false);
+    expect(validation.errors.some((error) => error.code === "ses.catalog.paymentType")).toBe(true);
+  });
+
+  it("rejects XML with salida before entrada", () => {
+    const validation = validateSesHospedajesXml(validParteHospedajeXml.replace(
+      "<fechaSalida>2026-05-03T10:00:00+02:00</fechaSalida>",
+      "<fechaSalida>2026-04-29T10:00:00+02:00</fechaSalida>",
+    ));
+
+    expect(validation.ok).toBe(false);
+    expect(validation.errors.some((error) => error.code === "ses.business.dateOrder")).toBe(true);
+  });
+
+  it("requires codigoMunicipio for Spanish addresses", () => {
+    const validation = validateSesHospedajesXml(validParteHospedajeXml.replace("<codigoMunicipio>07040</codigoMunicipio>", ""));
+
+    expect(validation.ok).toBe(false);
+    expect(validation.errors.some((error) => error.code === "ses.business.municipalityCode.required")).toBe(true);
+  });
+
   it("packages the XML as a ZIP container encoded in Base64", () => {
     const encoded = zipXmlBase64(validParteHospedajeXml);
     expect(encoded).toMatch(/^UEsDB/);
