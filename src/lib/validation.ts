@@ -282,13 +282,18 @@ export function smartValidateParsedExcel(parsed: ParsedExcel): ParsedExcel {
   return { ...withValidation, duplicates: detectDuplicates(withValidation) };
 }
 
+export function validateForBackendConsolidation(parsed: ParsedExcel): ParsedExcel["validation"] {
+  const validated = smartValidateParsedExcel(parsed);
+  return validated.validation;
+}
+
 export function validateNoCriticalPlaceholders(xml: string): ValidationIssue[] {
   const checks: Array<[string, RegExp]> = [
     ["texto", />texto</],
     ["00000", /<(codigoMunicipio|codigoPostal)>00000<\/(codigoMunicipio|codigoPostal)>/],
     ["999999999", />999999999</],
     ["correo@correo.es", />correo@correo\.es</],
-    ["2026-04-09 de ejemplo", /2026-04-09/],
+    ["fecha/hora de ejemplo", /2026-04-09T11:26:27\.782/],
   ];
   return checks
     .filter(([, pattern]) => pattern.test(xml))

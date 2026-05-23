@@ -32,3 +32,11 @@ export function encryptString(value?: string | null) {
   const encrypted = encryptBuffer(Buffer.from(value, "utf8"));
   return `enc:v1:${encrypted.iv}:${encrypted.authTag}:${encrypted.encrypted.toString("base64")}`;
 }
+
+export function decryptString(value?: string | null) {
+  if (!value) return undefined;
+  const parts = value.split(":");
+  if (parts.length !== 5 || parts[0] !== "enc" || parts[1] !== "v1") throw new Error("Formato de cifrado no soportado");
+  const [, , iv, authTag, payload] = parts;
+  return decryptBuffer(Buffer.from(payload, "base64"), iv, authTag).toString("utf8");
+}

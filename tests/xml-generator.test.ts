@@ -23,4 +23,31 @@ describe("generateHospitalityXml", () => {
     expect(generated.xml).toContain("2026-04-30T12:00:00+02:00");
     expect(generated.xml).toContain("2026-05-03T10:00:00+02:00");
   });
+
+  it("uses Europe/Madrid winter offset instead of a fixed +02:00", () => {
+    const winter = generateHospitalityXml({
+      ...parsed,
+      reservation: {
+        ...parsed.reservation,
+        checkInDate: "2026-01-10",
+        checkOutDate: "2026-01-12",
+      },
+    }, template);
+
+    expect(winter.xml).toContain("2026-01-10T12:00:00+01:00");
+    expect(winter.xml).toContain("2026-01-12T10:00:00+01:00");
+  });
+
+  it("does not flag a legitimate 2026-04-09 reservation date as a template placeholder", () => {
+    const sameAsTemplateDate = generateHospitalityXml({
+      ...parsed,
+      reservation: {
+        ...parsed.reservation,
+        checkInDate: "2026-04-09",
+        checkOutDate: "2026-04-10",
+      },
+    }, template);
+
+    expect(sameAsTemplateDate.validation.errors.filter((error) => error.code === "xml.placeholder.critical")).toHaveLength(0);
+  });
 });

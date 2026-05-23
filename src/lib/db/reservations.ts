@@ -72,6 +72,7 @@ export async function createReservation(input: {
           status: "CONSOLIDATED",
           validationStatus: input.generated.validation.status,
           validationReportJson: input.generated.validation,
+          generatedXml: input.generated.xml,
           normalizedPayloadJson: {
             reservation: input.parsed.reservation,
             property: {
@@ -124,7 +125,8 @@ export async function createReservation(input: {
       });
       return reservation;
     });
-  } catch {
+  } catch (error) {
+    if (persistentStorageEnabled()) throw error;
     return createMemoryReservation({ ...input, persistenceMode: "database-fallback" });
   }
 }
