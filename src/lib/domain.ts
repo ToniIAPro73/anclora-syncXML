@@ -69,6 +69,7 @@ export type PaymentData = {
   paymentType?: string;
   paymentMethod?: string;
   paymentHolder?: string;
+  iban?: string;
 };
 
 export type ParsedExcel = {

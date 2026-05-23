@@ -333,6 +333,25 @@ label:has(input[type="file"]:disabled) {
   vertical-align: top;
 }
 
+.data-table td.field-cell {
+  border-left: 3px solid transparent;
+}
+
+.data-table td.field-cell.is-valid {
+  border-left-color: color-mix(in srgb, var(--success) 70%, transparent);
+  background: color-mix(in srgb, var(--success) 8%, transparent);
+}
+
+.data-table td.field-cell.is-warning {
+  border-left-color: color-mix(in srgb, var(--warning) 72%, transparent);
+  background: color-mix(in srgb, var(--warning) 10%, transparent);
+}
+
+.data-table td.field-cell.is-error {
+  border-left-color: color-mix(in srgb, var(--error) 72%, transparent);
+  background: color-mix(in srgb, var(--error) 10%, transparent);
+}
+
 .guest-table-wrap {
   width: 100%;
   overflow: hidden;
@@ -367,6 +386,26 @@ label:has(input[type="file"]:disabled) {
 .status-pill.is-valid { color: var(--success); background: color-mix(in srgb, var(--success) 14%, transparent); }
 .status-pill.is-warning { color: var(--warning); background: color-mix(in srgb, var(--warning) 14%, transparent); }
 .status-pill.is-error { color: var(--error); background: color-mix(in srgb, var(--error) 14%, transparent); }
+
+.metric-card {
+  min-width: 0;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface-elevated);
+  padding: 1rem;
+}
+
+.metric-value {
+  margin-top: 0.35rem;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  color: var(--fg);
+  font-family: var(--font-sora), var(--font-inter), sans-serif;
+  font-size: clamp(0.95rem, 0.78rem + 0.32vw, 1.08rem);
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+  line-height: 1.28;
+}
 
 .tab {
   min-height: 2.25rem;
