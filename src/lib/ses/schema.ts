@@ -7,6 +7,10 @@ import { SES_SCHEMA_DIR, SES_SCHEMA_VERSION } from "./config";
 export type SesSchemaKind = "altaParteHospedaje" | "altaReservaHospedaje";
 
 const parser = new XMLParser({ ignoreAttributes: false, processEntities: false, parseTagValue: false });
+const HOSPEDAJE_PAYMENT_TYPES = new Set(["DESTI", "EFECT", "TARJT", "PLATF", "TRANS", "MOVIL", "TREG", "OTRO"]);
+const DOCUMENT_TYPES = new Set(["NIF", "NIE", "PAS", "OTRO"]);
+const SEX_VALUES = new Set(["H", "M", "O"]);
+const RELATIONSHIP_VALUES = new Set(["AB", "BA", "CO", "CU", "HE", "HJ", "HR", "NI", "PM", "SB", "SG", "TI", "TU", "OT"]);
 
 function issue(code: string, message: string, field?: string): ValidationIssue {
   return { severity: "error", code, message, field };
@@ -44,6 +48,21 @@ function isInt(value: unknown) {
 
 function max(value: unknown, length: number) {
   return text(value).length <= length;
+}
+
+function min(value: unknown, length: number) {
+  return text(value).length >= length;
+}
+
+function oneOf(value: unknown, allowed: Set<string>) {
+  return allowed.has(text(value).toUpperCase());
+}
+
+function timestamp(value: unknown) {
+  const raw = text(value);
+  if (!isIsoDateTime(raw)) return undefined;
+  const parsed = Date.parse(raw);
+  return Number.isNaN(parsed) ? undefined : parsed;
 }
 
 function requireField(errors: ValidationIssue[], object: Record<string, unknown>, field: string, base: string) {
@@ -94,10 +113,19 @@ export function validateSesHospedajesXml(xml: string, kind: SesSchemaKind = "alt
       if (contrato.fechaContrato && !isIsoDate(contrato.fechaContrato)) errors.push(issue("ses.xsd.date", "fechaContrato no cumple xsd:date", `${base}.contrato.fechaContrato`));
       if (contrato.fechaEntrada && !isIsoDateTime(contrato.fechaEntrada)) errors.push(issue("ses.xsd.dateTime", "fechaEntrada no cumple xsd:dateTime", `${base}.contrato.fechaEntrada`));
       if (contrato.fechaSalida && !isIsoDateTime(contrato.fechaSalida)) errors.push(issue("ses.xsd.dateTime", "fechaSalida no cumple xsd:dateTime", `${base}.contrato.fechaSalida`));
+      const checkIn = timestamp(contrato.fechaEntrada);
+      const checkOut = timestamp(contrato.fechaSalida);
+      if (checkIn !== undefined && checkOut !== undefined && checkOut <= checkIn) errors.push(issue("ses.business.dateOrder", "fechaSalida debe ser posterior a fechaEntrada", `${base}.contrato.fechaSalida`));
       if (contrato.numPersonas && !isInt(contrato.numPersonas)) errors.push(issue("ses.xsd.int", "numPersonas debe ser entero", `${base}.contrato.numPersonas`));
+      if (contrato.numPersonas && isInt(contrato.numPersonas) && Number(contrato.numPersonas) < 1) errors.push(issue("ses.business.numPersonas", "numPersonas debe ser mayor que cero", `${base}.contrato.numPersonas`));
+      if (contrato.numHabitaciones && !isInt(contrato.numHabitaciones)) errors.push(issue("ses.xsd.int", "numHabitaciones debe ser entero", `${base}.contrato.numHabitaciones`));
       if (contrato.internet && !/^(true|false|0|1)$/.test(text(contrato.internet))) errors.push(issue("ses.xsd.boolean", "internet debe ser boolean", `${base}.contrato.internet`));
       if (!text(contrato.pago?.tipoPago)) errors.push(issue("ses.xsd.required", "tipoPago es obligatorio", `${base}.contrato.pago.tipoPago`));
       if (contrato.pago?.tipoPago && !max(contrato.pago.tipoPago, 5)) errors.push(issue("ses.xsd.maxLength", "tipoPago excede 5 caracteres", `${base}.contrato.pago.tipoPago`));
+      if (contrato.pago?.tipoPago && !oneOf(contrato.pago.tipoPago, HOSPEDAJE_PAYMENT_TYPES)) errors.push(issue("ses.catalog.paymentType", "tipoPago no está en el catálogo admitido", `${base}.contrato.pago.tipoPago`));
+      if (contrato.pago?.medioPago && !max(contrato.pago.medioPago, 50)) errors.push(issue("ses.xsd.maxLength", "medioPago excede 50 caracteres", `${base}.contrato.pago.medioPago`));
+      if (contrato.pago?.titular && !max(contrato.pago.titular, 100)) errors.push(issue("ses.xsd.maxLength", "titular excede 100 caracteres", `${base}.contrato.pago.titular`));
+      if (contrato.pago?.caducidadTarjeta && !max(contrato.pago.caducidadTarjeta, 7)) errors.push(issue("ses.xsd.maxLength", "caducidadTarjeta excede 7 caracteres", `${base}.contrato.pago.caducidadTarjeta`));
 
       const personas = asArray<Record<string, any>>(comunicacion.persona);
       if (!personas.length) errors.push(issue("ses.xsd.required", "Debe existir al menos una persona", `${base}.persona`));
@@ -111,15 +139,29 @@ export function validateSesHospedajesXml(xml: string, kind: SesSchemaKind = "alt
         if (persona.rol && !["VI", "CP", "CS", "TI"].includes(text(persona.rol))) errors.push(issue("ses.xsd.enum", "rol no admitido por XSD", `${personBase}.rol`));
         if (persona.nombre && !max(persona.nombre, 50)) errors.push(issue("ses.xsd.maxLength", "nombre excede 50 caracteres", `${personBase}.nombre`));
         if (persona.apellido1 && !max(persona.apellido1, 50)) errors.push(issue("ses.xsd.maxLength", "apellido1 excede 50 caracteres", `${personBase}.apellido1`));
+        if (persona.apellido2 && !max(persona.apellido2, 50)) errors.push(issue("ses.xsd.maxLength", "apellido2 excede 50 caracteres", `${personBase}.apellido2`));
+        if (persona.tipoDocumento && !max(persona.tipoDocumento, 5)) errors.push(issue("ses.xsd.maxLength", "tipoDocumento excede 5 caracteres", `${personBase}.tipoDocumento`));
+        if (persona.tipoDocumento && !oneOf(persona.tipoDocumento, DOCUMENT_TYPES)) errors.push(issue("ses.catalog.documentType", "tipoDocumento no está en el catálogo admitido", `${personBase}.tipoDocumento`));
         if (persona.numeroDocumento && !max(persona.numeroDocumento, 15)) errors.push(issue("ses.xsd.maxLength", "numeroDocumento excede 15 caracteres", `${personBase}.numeroDocumento`));
+        if (persona.soporteDocumento && !max(persona.soporteDocumento, 9)) errors.push(issue("ses.xsd.maxLength", "soporteDocumento excede 9 caracteres", `${personBase}.soporteDocumento`));
         if (persona.fechaNacimiento && !isIsoDate(persona.fechaNacimiento)) errors.push(issue("ses.xsd.date", "fechaNacimiento no cumple xsd:date", `${personBase}.fechaNacimiento`));
         if (persona.nacionalidad && !isIso3(persona.nacionalidad)) errors.push(issue("ses.xsd.pattern", "nacionalidad debe ser ISO alfa-3", `${personBase}.nacionalidad`));
-        if (persona.correo && !/^[^@]+@[^.]+\..+/.test(text(persona.correo))) errors.push(issue("ses.xsd.pattern", "correo no cumple patron XSD", `${personBase}.correo`));
+        if (persona.sexo && !max(persona.sexo, 1)) errors.push(issue("ses.xsd.maxLength", "sexo excede 1 caracter", `${personBase}.sexo`));
+        if (persona.sexo && !oneOf(persona.sexo, SEX_VALUES)) errors.push(issue("ses.catalog.sex", "sexo no está en el catálogo admitido", `${personBase}.sexo`));
+        if (persona.correo && (!min(persona.correo, 1) || !max(persona.correo, 250) || !/^[^@]+@[^.]+\..+/.test(text(persona.correo)))) errors.push(issue("ses.xsd.pattern", "correo no cumple patrón XSD", `${personBase}.correo`));
         if (persona.telefono && !max(persona.telefono, 20)) errors.push(issue("ses.xsd.maxLength", "telefono excede 20 caracteres", `${personBase}.telefono`));
+        if (persona.telefono2 && !max(persona.telefono2, 20)) errors.push(issue("ses.xsd.maxLength", "telefono2 excede 20 caracteres", `${personBase}.telefono2`));
+        if (persona.parentesco && !max(persona.parentesco, 2)) errors.push(issue("ses.xsd.maxLength", "parentesco excede 2 caracteres", `${personBase}.parentesco`));
+        if (persona.parentesco && !oneOf(persona.parentesco, RELATIONSHIP_VALUES)) errors.push(issue("ses.catalog.relationship", "parentesco no está en el catálogo admitido", `${personBase}.parentesco`));
         const direccion = persona.direccion ?? {};
         ["direccion", "codigoPostal", "pais"].forEach((field) => requireField(errors, direccion, field, `${personBase}.direccion`));
+        if (direccion.direccion && !max(direccion.direccion, 100)) errors.push(issue("ses.xsd.maxLength", "direccion excede 100 caracteres", `${personBase}.direccion.direccion`));
+        if (direccion.direccionComplementaria && !max(direccion.direccionComplementaria, 100)) errors.push(issue("ses.xsd.maxLength", "direccionComplementaria excede 100 caracteres", `${personBase}.direccion.direccionComplementaria`));
         if (direccion.codigoMunicipio && !/^[0-9]{5}$/.test(text(direccion.codigoMunicipio))) errors.push(issue("ses.xsd.pattern", "codigoMunicipio debe tener 5 dígitos", `${personBase}.direccion.codigoMunicipio`));
+        if (direccion.nombreMunicipio && !max(direccion.nombreMunicipio, 100)) errors.push(issue("ses.xsd.maxLength", "nombreMunicipio excede 100 caracteres", `${personBase}.direccion.nombreMunicipio`));
+        if (direccion.codigoPostal && !max(direccion.codigoPostal, 20)) errors.push(issue("ses.xsd.maxLength", "codigoPostal excede 20 caracteres", `${personBase}.direccion.codigoPostal`));
         if (direccion.pais && !isIso3(direccion.pais)) errors.push(issue("ses.xsd.pattern", "pais debe ser ISO alfa-3", `${personBase}.direccion.pais`));
+        if (text(direccion.pais).toUpperCase() === "ESP" && !text(direccion.codigoMunicipio)) errors.push(issue("ses.business.municipalityCode.required", "codigoMunicipio es obligatorio cuando pais es ESP", `${personBase}.direccion.codigoMunicipio`));
       });
     });
   } catch (error) {
