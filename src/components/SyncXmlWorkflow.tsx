@@ -884,10 +884,15 @@ function PrivacyModeCard({ onClear, hasData }: { onClear: () => void; hasData: b
 function ConsentPanel({ consents, onChange }: { consents: boolean[]; onChange: (next: boolean[]) => void }) {
   const { dictionary: t } = usePreferences();
   const items = [t.consentAuthorised, t.consentNoLegalAdvice, t.consentReview, t.consentMinimisation, t.consentPrivateMode];
+  const allSelected = consents.every(Boolean);
   return (
     <div className="mt-6 rounded-lg border border-app bg-surface-elevated p-4">
       <h2 className="font-heading text-base font-bold">{t.consentTitle}</h2>
       <p className="mt-1 text-sm text-muted">{t.consentIntro}</p>
+      <label className="checkbox-row mt-4 rounded-lg border border-app bg-surface-elevated p-3 font-bold">
+        <input type="checkbox" checked={allSelected} onChange={(event) => onChange(consents.map(() => event.target.checked))} />
+        {t.selectAllConfirmations}
+      </label>
       <div className="mt-4 space-y-3">
         {items.map((item, index) => (
           <label key={item} className="checkbox-row">
