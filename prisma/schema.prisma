@@ -125,6 +125,26 @@ model AuditEvent {
   createdAt     DateTime     @default(now())
 }
 
+model IneMunicipio {
+  id                    String   @id @default(cuid())
+  codigoMunicipio       String   @unique
+  codigoProvincia       String
+  codigoMunicipioCorto  String
+  nombre                String
+  nombreNormalizado     String
+  fuente                String   @default("INE")
+  ineId                 Int?
+  ineVariableId         Int?
+  ineJerarquiaPadres    Json?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  lastSyncedAt          DateTime
+
+  @@index([codigoProvincia])
+  @@index([nombreNormalizado])
+  @@index([codigoProvincia, nombreNormalizado])
+}
+
 enum ReservationStatus {
   DRAFT
   IMPORTED

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Download, Search, Trash2 } from "lucide-react";
+import { Download, RefreshCw, Search, Trash2 } from "lucide-react";
 import { formatDashboardDateTime } from "@/lib/dateFormat";
 import { usePreferences } from "./AppPreferencesProvider";
 import { maskDocument, maskEmail, maskPhone } from "@/lib/privacy/masking";
@@ -13,6 +13,8 @@ export function ReservationDashboard() {
   const [selected, setSelected] = useState<any | null>(null);
   const [busyAction, setBusyAction] = useState<"load" | "delete" | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [ineBusy, setIneBusy] = useState(false);
+  const [ineResult, setIneResult] = useState<any | null>(null);
 
   const load = useCallback(async (q = query, showMessage = true) => {
     setBusyAction("load");
@@ -37,8 +39,48 @@ export function ReservationDashboard() {
 
   useEffect(() => { void load(""); }, [load]);
 
+  async function syncMunicipiosIne() {
+    setIneBusy(true);
+    setIneResult(null);
+    setMessage(null);
+    try {
+      const response = await fetch("/api/admin/ine/municipios/sync", { method: "POST" });
+      const data = await response.json();
+      setIneResult({ ...data, httpOk: response.ok });
+    } catch {
+      setIneResult({ ok: false, message: t.ineSyncFailed, errors: [{ reason: t.actionFailed }] });
+    } finally {
+      setIneBusy(false);
+    }
+  }
+
   return (
-    <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
+    <div className="space-y-6">
+      <section className="panel p-5">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h2 className="font-heading text-xl font-bold">{t.ineMunicipiosTitle}</h2>
+            <p className="mt-1 max-w-3xl text-sm text-muted">{t.ineMunicipiosCopy}</p>
+          </div>
+          <button className="btn-primary" disabled={ineBusy} onClick={syncMunicipiosIne}>
+            {ineBusy ? <><span className="spinner" aria-hidden="true" />{t.ineSyncing}</> : <><RefreshCw className="h-4 w-4" />{t.ineMunicipiosButton}</>}
+          </button>
+        </div>
+        {ineResult && (
+          <div className={`mt-4 rounded-lg border p-4 ${ineResult.ok ? "border-emerald-500/30" : "border-red-500/40"}`}>
+            <p className="font-heading text-sm font-bold">{ineResult.ok ? t.ineSyncOk : t.ineSyncFailed}</p>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
+              <Metric label={t.ineFetched} value={String(ineResult.totalFetched ?? 0)} />
+              <Metric label={t.ineInserted} value={String(ineResult.inserted ?? 0)} />
+              <Metric label={t.ineUpdated} value={String(ineResult.updated ?? 0)} />
+              <Metric label={t.ineSkipped} value={String(ineResult.skipped ?? 0)} />
+              <Metric label={t.ineErrors} value={String(ineResult.errors?.length ?? 0)} />
+              <Metric label={t.ineLastSync} value={ineResult.lastSyncedAt ? new Date(ineResult.lastSyncedAt).toLocaleString() : "-"} />
+            </div>
+          </div>
+        )}
+      </section>
+      <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
       <section className="panel overflow-hidden">
         <div className="border-b border-app p-5">
           <h1 className="font-heading text-2xl font-black">{t.dashboard}</h1>
@@ -105,6 +147,7 @@ export function ReservationDashboard() {
           </div>
         ) : <p className="text-sm text-muted">{t.empty}</p>}
       </section>
+      </div>
     </div>
   );
 }
