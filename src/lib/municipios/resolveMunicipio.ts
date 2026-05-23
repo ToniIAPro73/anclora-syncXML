@@ -43,7 +43,11 @@ export async function resolveParsedMunicipiosFromDb(parsed: ParsedExcel, reposit
   const provinces = Array.from(new Set(parsed.guests.map((guest) => provinceCodeFromPostalCode(guest.postalCode)).filter((province): province is string => Boolean(province))));
   const byProvince = new Map<string, MunicipioCatalogRecord[]>();
   await Promise.all(provinces.map(async (province) => {
-    byProvince.set(province, await repository.findByProvince(province));
+    try {
+      byProvince.set(province, await repository.findByProvince(province));
+    } catch {
+      byProvince.set(province, []);
+    }
   }));
 
   const guests = parsed.guests.map((guest) => {
