@@ -458,6 +458,40 @@ button[aria-disabled="true"]:hover {
   line-height: 1.45;
 }
 
+.manual-correction-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.manual-correction-card {
+  min-width: 0;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface-elevated) 78%, transparent);
+  padding: 1rem;
+}
+
+.manual-correction-fields {
+  margin-top: 0.9rem;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.manual-field {
+  display: grid;
+  min-width: 0;
+  gap: 0.35rem;
+}
+
+.manual-field span {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
 .break-anywhere {
   overflow-wrap: anywhere;
 }
@@ -651,6 +685,7 @@ button[aria-disabled="true"]:hover {
 
   .trace-grid,
   .xml-branch,
+  .manual-correction-grid,
   .summary-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -668,6 +703,8 @@ button[aria-disabled="true"]:hover {
   .trace-grid,
   .xml-branch,
   .xml-guest-grid,
+  .manual-correction-grid,
+  .manual-correction-fields,
   .summary-grid {
     grid-template-columns: 1fr;
   }
