@@ -149,7 +149,7 @@ a.btn-danger {
 
 button:disabled,
 label:has(input[type="file"]:disabled) {
-  cursor: wait;
+  cursor: not-allowed;
 }
 
 button[aria-disabled="true"]:not(:disabled),
