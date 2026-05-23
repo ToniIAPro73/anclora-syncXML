@@ -6,13 +6,14 @@
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build",
-    "vercel-build": "DATABASE_URL=${DATABASE_URL:-$DIRECT_URL} prisma migrate deploy && DATABASE_URL=${DATABASE_URL:-$DIRECT_URL} prisma generate && DATABASE_URL=${DATABASE_URL:-$DIRECT_URL} next build",
+    "vercel-build": "DATABASE_URL=${DATABASE_URL:-$DIRECT_URL} prisma generate && DATABASE_URL=${DATABASE_URL:-$DIRECT_URL} next build",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "preview": "next start",
     "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev"
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:deploy": "DATABASE_URL=${DATABASE_URL:-$DIRECT_URL} prisma migrate deploy"
   },
   "dependencies": {
     "@prisma/client": "^6.19.0",
