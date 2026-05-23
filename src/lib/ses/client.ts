@@ -114,9 +114,9 @@ export function buildCatalogoEnvelope(catalog: string) {
 export async function sendParteHospedajeXml(xml: string, options: SesRequestOptions = {}) {
   const config = getSesConfig(options.environment);
   const dryRun = options.dryRun ?? true;
-  assertSesConfig(config, { requireCredentials: !dryRun });
+  assertSesConfig(config, { requireCredentials: !dryRun, requireLandlordCode: !dryRun });
   const zippedXmlBase64 = zipXmlBase64(xml, "altaParteHospedaje.xml");
-  const soapXml = buildComunicacionEnvelope({ config, operation: "A", communicationType: "PV", zippedXmlBase64 });
+  const soapXml = buildComunicacionEnvelope({ config: { ...config, landlordCode: config.landlordCode || "PENDING" }, operation: "A", communicationType: "PV", zippedXmlBase64 });
   if (dryRun) return { dryRun: true, environment: config.environment, endpoint: config.endpoint, soapXml };
   return postSoap(soapXml, config, options.fetchImpl ?? fetch);
 }
@@ -126,7 +126,7 @@ export const sendReservaHospedajeXml = sendParteHospedajeXml;
 export async function querySesLote(loteCodes: string[], options: SesRequestOptions = {}) {
   const config = getSesConfig(options.environment);
   const dryRun = options.dryRun ?? true;
-  assertSesConfig(config, { requireCredentials: !dryRun });
+  assertSesConfig(config, { requireCredentials: !dryRun, requireLandlordCode: false });
   const soapXml = buildConsultaLoteEnvelope(loteCodes);
   if (dryRun) return { dryRun: true, environment: config.environment, endpoint: config.endpoint, soapXml };
   return postSoap(soapXml, config, options.fetchImpl ?? fetch);
@@ -135,7 +135,7 @@ export async function querySesLote(loteCodes: string[], options: SesRequestOptio
 export async function querySesComunicacion(communicationCodes: string[], options: SesRequestOptions = {}) {
   const config = getSesConfig(options.environment);
   const dryRun = options.dryRun ?? true;
-  assertSesConfig(config, { requireCredentials: !dryRun });
+  assertSesConfig(config, { requireCredentials: !dryRun, requireLandlordCode: false });
   const soapXml = buildConsultaComunicacionEnvelope(communicationCodes);
   if (dryRun) return { dryRun: true, environment: config.environment, endpoint: config.endpoint, soapXml };
   return postSoap(soapXml, config, options.fetchImpl ?? fetch);
@@ -144,7 +144,7 @@ export async function querySesComunicacion(communicationCodes: string[], options
 export async function cancelSesLote(loteCode: string, options: SesRequestOptions = {}) {
   const config = getSesConfig(options.environment);
   const dryRun = options.dryRun ?? true;
-  assertSesConfig(config, { requireCredentials: !dryRun });
+  assertSesConfig(config, { requireCredentials: !dryRun, requireLandlordCode: false });
   const soapXml = buildAnulacionLoteEnvelope(loteCode);
   if (dryRun) return { dryRun: true, environment: config.environment, endpoint: config.endpoint, soapXml };
   return postSoap(soapXml, config, options.fetchImpl ?? fetch);
@@ -153,7 +153,7 @@ export async function cancelSesLote(loteCode: string, options: SesRequestOptions
 export async function querySesCatalog(catalog: string, options: SesRequestOptions = {}) {
   const config = getSesConfig(options.environment);
   const dryRun = options.dryRun ?? true;
-  assertSesConfig(config, { requireCredentials: !dryRun });
+  assertSesConfig(config, { requireCredentials: !dryRun, requireLandlordCode: false });
   const soapXml = buildCatalogoEnvelope(catalog);
   if (dryRun) return { dryRun: true, environment: config.environment, endpoint: config.endpoint, soapXml };
   return postSoap(soapXml, config, options.fetchImpl ?? fetch);
