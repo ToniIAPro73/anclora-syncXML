@@ -292,7 +292,7 @@ export function SyncXmlWorkflow() {
               <button
                 className="btn-primary"
                 disabled={!selectedFile || busy}
-                aria-disabled={!consentAccepted}
+                aria-disabled={Boolean(selectedFile && !consentAccepted)}
                 onClick={() => {
                   if (!consentAccepted) {
                     requireConsentNotice();

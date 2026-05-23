@@ -157,6 +157,18 @@ button[aria-disabled="true"]:not(:disabled),
   cursor: not-allowed;
 }
 
+button:disabled,
+button[aria-disabled="true"],
+label:has(input[type="file"]:disabled) {
+  opacity: 0.48;
+  filter: saturate(0.75);
+}
+
+button:disabled:hover,
+button[aria-disabled="true"]:hover {
+  transform: none;
+}
+
 .btn-primary { background: var(--accent); color: var(--accent-contrast); }
 .btn-secondary { border: 1px solid var(--border); background: var(--surface-elevated); color: var(--fg); }
 .btn-danger { background: color-mix(in srgb, var(--error) 18%, transparent); color: var(--error); border: 1px solid color-mix(in srgb, var(--error) 35%, transparent); }
