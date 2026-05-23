@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 import type { MunicipioCatalogRecord } from "@/lib/municipios/resolveMunicipio";
 import { normalizeMunicipioName, provinceCodeFromPostalCode } from "@/lib/municipios/normalize";
-import { resolveMunicipioForGuest } from "@/lib/municipios/resolveMunicipio";
+import { resolveMunicipioForGuest, resolveParsedMunicipiosFromDb } from "@/lib/municipios/resolveMunicipio";
 import { normalizeIneMunicipio, syncIneMunicipios } from "@/lib/ine/municipios";
+import type { ParsedExcel } from "@/lib/domain";
 
 const catalog: MunicipioCatalogRecord[] = [
   { codigoMunicipio: "46248", codigoProvincia: "46", codigoMunicipioCorto: "248", nombre: "Polinyà de Xúquer", nombreNormalizado: normalizeMunicipioName("Polinyà de Xúquer") },
@@ -59,6 +60,43 @@ describe("municipio resolution", () => {
   it("returns not found without a candidate", () => {
     const result = resolveMunicipioForGuest({ postalCode: "46417", municipality: "No existe", countryIso3: "ESP" }, catalog);
     expect(result.status).toBe("not_found");
+  });
+
+  it("does not block parsing when the municipality catalog is unavailable", async () => {
+    const parsed: ParsedExcel = {
+      fileName: "test.xlsx",
+      sheets: ["Sheet1"],
+      reservation: { reference: "R1", checkInDate: "2026-05-01", checkOutDate: "2026-05-03", guestCount: 1 },
+      property: { establishmentCode: "0001", countryIso3: "ESP" },
+      payment: { paymentType: "PLATF" },
+      guests: [{
+        sourceRow: 2,
+        role: "VI",
+        firstName: "Ana",
+        surname1: "Garcia",
+        birthDate: "1990-01-01",
+        nationalityIso3: "ESP",
+        documentType: "NIF",
+        documentNumber: "12345678Z",
+        postalCode: "46417",
+        countryIso3: "ESP",
+        validationStatus: "WARNING",
+        errors: [],
+        warnings: [],
+      }],
+      ignoredRows: [],
+      rawRows: [],
+      validation: { status: "VALID", errors: [], warnings: [] },
+    };
+
+    const resolved = await resolveParsedMunicipiosFromDb(parsed, {
+      async findByProvince() {
+        throw new Error("relation does not exist");
+      },
+    });
+
+    expect(resolved.guests).toHaveLength(1);
+    expect(resolved.validation.errors.some((error) => error.code === "ses.readiness.municipalityCode.required")).toBe(true);
   });
 });
 
