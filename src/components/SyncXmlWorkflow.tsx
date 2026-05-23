@@ -3,8 +3,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ComponentType, ReactNode } from "react";
 import { Ban, CheckCircle2, ClipboardCheck, Download, Eye, EyeOff, FileSpreadsheet, FileText, RadioTower, SearchCheck, Send, ShieldCheck, Trash2, UploadCloud } from "lucide-react";
-import type { DuplicateResolution, GeneratedXmlResult, ParsedExcel, ValidationIssue } from "@/lib/domain";
-import { smartValidateParsedExcel } from "@/lib/validation";
+import type { DuplicateResolution, GeneratedXmlResult, GuestRecord, ParsedExcel, ValidationIssue } from "@/lib/domain";
+import { smartValidateParsedExcel, validateGuest } from "@/lib/validation";
 import { buildXmlDownloadFileName } from "@/lib/xml/fileName";
 import { usePreferences } from "./AppPreferencesProvider";
 import { unresolvedDuplicates } from "@/lib/duplicates";
@@ -19,6 +19,7 @@ type SesStatus = {
   hasLandlordCode: boolean;
   endpoint: string;
 };
+type GuestCorrectionPatch = Partial<Pick<GuestRecord, "municipalityCode" | "sex" | "relationship" | "documentSupport" | "phone" | "email">>;
 
 async function fetchJson(url: string, init: RequestInit, timeoutMs = 25000) {
   const controller = new AbortController();
@@ -229,6 +230,23 @@ export function SyncXmlWorkflow() {
     setGenerated(null);
   }
 
+  function updateGuestCorrection(sourceRow: number, patch: GuestCorrectionPatch) {
+    setParsed((current) => {
+      if (!current) return current;
+      const guests = current.guests.map((guest) => {
+        const editableGuest = toEditableGuest(guest);
+        const nextGuest = guest.sourceRow === sourceRow ? { ...editableGuest, ...patch } : editableGuest;
+        return validateGuest(nextGuest);
+      });
+      return smartValidateParsedExcel({ ...current, guests });
+    });
+    setGenerated(null);
+    setConsolidated(false);
+    setSmartValidated(true);
+    setPreviewReviewed(false);
+    setMessage(t.manualCorrectionApplied);
+  }
+
   return (
     <div className="space-y-6">
       <ProcessRail
@@ -346,6 +364,7 @@ export function SyncXmlWorkflow() {
           mappingReviewed={mappingReviewed}
           onMappingReviewedChange={setMappingReviewed}
           onDuplicateResolution={updateDuplicateResolution}
+          onGuestCorrection={updateGuestCorrection}
         />
       )}
 
@@ -408,6 +427,7 @@ function ExcelReview({
   mappingReviewed,
   onMappingReviewedChange,
   onDuplicateResolution,
+  onGuestCorrection,
 }: {
   parsed: ParsedExcel;
   validGuests: number;
@@ -423,6 +443,7 @@ function ExcelReview({
   mappingReviewed: boolean;
   onMappingReviewedChange: (value: boolean) => void;
   onDuplicateResolution: (id: string, resolution: DuplicateResolution) => void;
+  onGuestCorrection: (sourceRow: number, patch: GuestCorrectionPatch) => void;
 }) {
   const { dictionary: t } = usePreferences();
   const duplicateBlockers = unresolvedDuplicates(parsed);
@@ -478,6 +499,8 @@ function ExcelReview({
       </section>
 
       <IssuePanel title={t.warnings} issues={parsed.validation.warnings} />
+
+      <ManualCorrectionPanel parsed={parsed} onGuestCorrection={onGuestCorrection} />
 
       <section className="grid items-start gap-4 lg:grid-cols-2">
         <IssuePanel title={t.errors} issues={parsed.validation.errors} />
@@ -916,8 +939,162 @@ function fieldState(guest: ParsedExcel["guests"][number], fields: string[], smar
   return smartValidated ? "valid" : "neutral";
 }
 
+function toEditableGuest(guest: GuestRecord): Omit<GuestRecord, "validationStatus" | "errors" | "warnings"> {
+  return {
+    sourceRow: guest.sourceRow,
+    role: guest.role,
+    firstName: guest.firstName,
+    surname1: guest.surname1,
+    surname2: guest.surname2,
+    birthDate: guest.birthDate,
+    nationalityIso3: guest.nationalityIso3,
+    documentType: guest.documentType,
+    documentNumber: guest.documentNumber,
+    documentSupport: guest.documentSupport,
+    sex: guest.sex,
+    address: guest.address,
+    addressComplement: guest.addressComplement,
+    municipality: guest.municipality,
+    municipalityCode: guest.municipalityCode,
+    postalCode: guest.postalCode,
+    countryIso3: guest.countryIso3,
+    phone: guest.phone,
+    phone2: guest.phone2,
+    email: guest.email,
+    relationship: guest.relationship,
+    arrivalDate: guest.arrivalDate,
+    departureDate: guest.departureDate,
+  };
+}
+
 function FieldCell({ state, children }: { state: "error" | "warning" | "valid" | "neutral"; children: ReactNode }) {
   return <td className={`field-cell is-${state}`}>{children}</td>;
+}
+
+function ManualCorrectionPanel({
+  parsed,
+  onGuestCorrection,
+}: {
+  parsed: ParsedExcel;
+  onGuestCorrection: (sourceRow: number, patch: GuestCorrectionPatch) => void;
+}) {
+  const { dictionary: t } = usePreferences();
+  const guestsWithIssues = parsed.guests.filter((guest) => guest.errors.length || guest.warnings.length);
+  return (
+    <section className="panel p-5">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h3 className="font-heading text-lg font-bold">{t.manualCorrectionsTitle}</h3>
+          <p className="mt-1 max-w-3xl text-sm text-muted">{t.manualCorrectionsCopy}</p>
+        </div>
+        <span className={`status-pill ${parsed.validation.errors.length ? "is-error" : "is-valid"}`}>
+          {parsed.validation.errors.length ? `${parsed.validation.errors.length} ${t.errors}` : "OK"}
+        </span>
+      </div>
+      {guestsWithIssues.length ? (
+        <div className="manual-correction-grid mt-5">
+          {guestsWithIssues.map((guest) => (
+            <article className="manual-correction-card" key={guest.sourceRow}>
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-xs font-bold uppercase text-muted">{t.row} {guest.sourceRow}</p>
+                  <h4 className="break-anywhere font-heading font-bold">{guest.firstName} {guest.surname1} {guest.surname2}</h4>
+                </div>
+                <StatusPill status={guest.validationStatus} />
+              </div>
+              <div className="manual-correction-fields">
+                <CorrectionInput
+                  label={t.municipalityCode}
+                  value={guest.municipalityCode}
+                  onChange={(value) => onGuestCorrection(guest.sourceRow, { municipalityCode: value })}
+                />
+                <CorrectionSelect
+                  label={t.sex}
+                  value={guest.sex}
+                  options={[
+                    ["", t.selectValue],
+                    ["H", "H"],
+                    ["M", "M"],
+                    ["O", "O"],
+                  ]}
+                  onChange={(value) => onGuestCorrection(guest.sourceRow, { sex: value as GuestRecord["sex"] | undefined })}
+                />
+                <CorrectionInput
+                  label={t.relationship}
+                  value={guest.relationship}
+                  maxLength={2}
+                  onChange={(value) => onGuestCorrection(guest.sourceRow, { relationship: value?.toUpperCase() })}
+                />
+                <CorrectionInput
+                  label={t.documentSupport}
+                  value={guest.documentSupport}
+                  maxLength={9}
+                  onChange={(value) => onGuestCorrection(guest.sourceRow, { documentSupport: value })}
+                />
+                <CorrectionInput
+                  label={t.phone}
+                  value={guest.phone}
+                  onChange={(value) => onGuestCorrection(guest.sourceRow, { phone: value })}
+                />
+                <CorrectionInput
+                  label={t.email}
+                  value={guest.email}
+                  onChange={(value) => onGuestCorrection(guest.sourceRow, { email: value })}
+                />
+              </div>
+            </article>
+          ))}
+        </div>
+      ) : (
+        <p className="mt-4 rounded-lg border border-app bg-surface-elevated p-4 text-sm text-muted">{t.noManualCorrections}</p>
+      )}
+    </section>
+  );
+}
+
+function CorrectionInput({
+  label,
+  value,
+  maxLength,
+  onChange,
+}: {
+  label: string;
+  value?: string;
+  maxLength?: number;
+  onChange: (value: string | undefined) => void;
+}) {
+  return (
+    <label className="manual-field">
+      <span>{label}</span>
+      <input
+        className="input"
+        value={value ?? ""}
+        maxLength={maxLength}
+        onChange={(event) => onChange(event.target.value.trim() || undefined)}
+      />
+    </label>
+  );
+}
+
+function CorrectionSelect({
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  label: string;
+  value?: string;
+  options: Array<[string, string]>;
+  onChange: (value: string | undefined) => void;
+}) {
+  return (
+    <label className="manual-field">
+      <span>{label}</span>
+      <select className="input" value={value ?? ""} onChange={(event) => onChange(event.target.value || undefined)}>
+        {options.map(([optionValue, optionLabel]) => <option key={optionValue || "empty"} value={optionValue}>{optionLabel}</option>)}
+      </select>
+    </label>
+  );
 }
 
 function GuestTable({ guests, smartValidated, showFullData }: { guests: ParsedExcel["guests"]; smartValidated: boolean; showFullData: boolean }) {
