@@ -86,6 +86,7 @@ export function parseExcelBuffer(buffer: Buffer, fileName?: string): ParsedExcel
           else if (key === "FECHA DE CONTRATO") reservation.contractDate = parseDate(value);
           else if (key === "NUMERO DE PERSONAS") reservation.guestCount = Number.parseInt(value, 10);
           else if (key === "TIPO DE PAGO") payment.paymentType = normalizePaymentType(value);
+          else if (key.includes("IBAN")) payment.iban = value.replace(/\s+/g, "").toUpperCase();
           else ignoredRows.push({ rowNumber: i + 1, values: row, reason: "No clasificada" });
         }
       }
