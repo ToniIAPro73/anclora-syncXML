@@ -55,6 +55,10 @@ export function SyncXmlWorkflow() {
     setMessage(null);
   }
 
+  function requireConsentNotice() {
+    setMessage(t.consentRequiredNotice);
+  }
+
   async function upload(file = selectedFile) {
     if (!file) return;
     setBusyAction("upload");
@@ -234,21 +238,34 @@ export function SyncXmlWorkflow() {
             <ConsentPanel consents={consents} onChange={setConsents} />
             <button
               type="button"
-              className={`upload-zone mt-6 ${dragActive ? "is-dragging" : ""}`}
-              disabled={busy || !consentAccepted}
-              onClick={() => fileInputRef.current?.click()}
+              className={`upload-zone mt-6 ${dragActive ? "is-dragging" : ""} ${!consentAccepted ? "is-blocked" : ""}`}
+              disabled={busy}
+              aria-disabled={!consentAccepted}
+              onClick={() => {
+                if (!consentAccepted) {
+                  requireConsentNotice();
+                  return;
+                }
+                fileInputRef.current?.click();
+              }}
               onDragEnter={(event) => {
                 event.preventDefault();
+                if (!consentAccepted) return;
                 setDragActive(true);
               }}
               onDragOver={(event) => {
                 event.preventDefault();
+                if (!consentAccepted) return;
                 setDragActive(true);
               }}
               onDragLeave={() => setDragActive(false)}
               onDrop={(event) => {
                 event.preventDefault();
                 setDragActive(false);
+                if (!consentAccepted) {
+                  requireConsentNotice();
+                  return;
+                }
                 chooseFile(event.dataTransfer.files.item(0));
               }}
             >
@@ -259,7 +276,18 @@ export function SyncXmlWorkflow() {
             </button>
             <input ref={fileInputRef} className="hidden" type="file" accept=".xlsx" disabled={busy || !consentAccepted} onChange={(event) => chooseFile(event.target.files?.[0])} />
             <div className="mt-5 flex justify-end">
-              <button className="btn-primary" disabled={!selectedFile || busy || !consentAccepted} onClick={() => upload()}>
+              <button
+                className="btn-primary"
+                disabled={!selectedFile || busy}
+                aria-disabled={!consentAccepted}
+                onClick={() => {
+                  if (!consentAccepted) {
+                    requireConsentNotice();
+                    return;
+                  }
+                  void upload();
+                }}
+              >
                 {busyAction === "upload" ? <WorkingLabel label={t.processing} /> : t.importAction}
               </button>
             </div>
