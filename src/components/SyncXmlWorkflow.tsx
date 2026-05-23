@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { ComponentType, ReactNode } from "react";
 import { Ban, CheckCircle2, ClipboardCheck, Download, Eye, EyeOff, FileSpreadsheet, FileText, RadioTower, SearchCheck, Send, ShieldCheck, Trash2, UploadCloud } from "lucide-react";
 import type { DuplicateResolution, GeneratedXmlResult, ParsedExcel } from "@/lib/domain";
@@ -13,6 +13,12 @@ import { maskAddress, maskDocument, maskEmail, maskPayment, maskPhone } from "@/
 type BusyAction = "upload" | "validate" | "generate" | "consolidate" | null;
 type WorkflowStep = 1 | 2 | 3 | 4;
 type SesUiAction = "validate" | "prepare" | "sendPre" | "queryLot" | "queryCommunication" | "cancelLot" | "catalog" | null;
+type SesStatus = {
+  readyForPreproduction: boolean;
+  hasCredentials: boolean;
+  hasLandlordCode: boolean;
+  endpoint: string;
+};
 
 async function fetchJson(url: string, init: RequestInit, timeoutMs = 25000) {
   const controller = new AbortController();
@@ -537,6 +543,17 @@ function SesIntegrationPanel({ xml }: { xml: string }) {
   const [lotCode, setLotCode] = useState("");
   const [communicationCode, setCommunicationCode] = useState("");
   const [catalog, setCatalog] = useState("");
+  const [sesStatus, setSesStatus] = useState<SesStatus | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    void fetchJson("/api/ses/status", { method: "GET" }).then(({ response, data }) => {
+      if (active && response.ok) setSesStatus(data.status);
+    }).catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, []);
 
   async function run(action: SesUiAction, request: () => Promise<string>) {
     setBusyAction(action);
@@ -570,7 +587,7 @@ function SesIntegrationPanel({ xml }: { xml: string }) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ xml, environment: "pre", dryRun: true }),
       });
-      if (!response.ok) return data.error ?? t.actionFailed;
+      if (!response.ok) return sesErrorMessage(data.error, t);
       setSchemaOk(true);
       return `${data.message ?? t.sesPreparedOk} ${data.xmlHash ? `${t.sesXmlHash}: ${data.xmlHash.slice(0, 12)}...` : ""}`;
     });
@@ -578,13 +595,17 @@ function SesIntegrationPanel({ xml }: { xml: string }) {
 
   async function sendPreproduction() {
     if (!window.confirm(t.sesPreSendConfirm)) return;
+    if (!sesStatus?.readyForPreproduction) {
+      setResult(t.sesConfigMissing);
+      return;
+    }
     await run("sendPre", async () => {
       const { response, data } = await fetchJson("/api/ses/communicate", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ xml, environment: "pre", dryRun: false }),
       }, 45000);
-      if (!response.ok) return data.error ?? t.actionFailed;
+      if (!response.ok) return sesErrorMessage(data.error, t);
       return data.response?.ok ? t.sesPreSendOk : `${t.sesPreSendFailed}: ${data.response?.status ?? "-"}`;
     });
   }
@@ -592,13 +613,14 @@ function SesIntegrationPanel({ xml }: { xml: string }) {
   async function queryLot() {
     const value = lotCode.trim();
     if (!value) return setResult(t.sesCodeRequired);
+    if (!sesStatus?.hasCredentials) return setResult(t.sesCredentialsMissing);
     await run("queryLot", async () => {
       const { response, data } = await fetchJson("/api/ses/lote", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ loteCodes: [value], environment: "pre", dryRun: false }),
       }, 45000);
-      if (!response.ok) return data.error ?? t.actionFailed;
+      if (!response.ok) return sesErrorMessage(data.error, t);
       return `${t.sesQueryCompleted}: ${data.status ?? "OK"}`;
     });
   }
@@ -606,13 +628,14 @@ function SesIntegrationPanel({ xml }: { xml: string }) {
   async function queryCommunication() {
     const value = communicationCode.trim();
     if (!value) return setResult(t.sesCodeRequired);
+    if (!sesStatus?.hasCredentials) return setResult(t.sesCredentialsMissing);
     await run("queryCommunication", async () => {
       const { response, data } = await fetchJson("/api/ses/comunicacion", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ communicationCodes: [value], environment: "pre", dryRun: false }),
       }, 45000);
-      if (!response.ok) return data.error ?? t.actionFailed;
+      if (!response.ok) return sesErrorMessage(data.error, t);
       return `${t.sesQueryCompleted}: ${data.status ?? "OK"}`;
     });
   }
@@ -620,6 +643,7 @@ function SesIntegrationPanel({ xml }: { xml: string }) {
   async function cancelLot() {
     const value = lotCode.trim();
     if (!value) return setResult(t.sesCodeRequired);
+    if (!sesStatus?.hasCredentials) return setResult(t.sesCredentialsMissing);
     if (!window.confirm(t.sesCancelConfirm)) return;
     await run("cancelLot", async () => {
       const { response, data } = await fetchJson("/api/ses/anulacion-lote", {
@@ -627,7 +651,7 @@ function SesIntegrationPanel({ xml }: { xml: string }) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ loteCode: value, environment: "pre", dryRun: false }),
       }, 45000);
-      if (!response.ok) return data.error ?? t.actionFailed;
+      if (!response.ok) return sesErrorMessage(data.error, t);
       return `${t.sesCancelCompleted}: ${data.status ?? "OK"}`;
     });
   }
@@ -635,13 +659,14 @@ function SesIntegrationPanel({ xml }: { xml: string }) {
   async function queryCatalog() {
     const value = catalog.trim();
     if (!value) return setResult(t.sesCatalogRequired);
+    if (!sesStatus?.hasCredentials) return setResult(t.sesCredentialsMissing);
     await run("catalog", async () => {
       const { response, data } = await fetchJson("/api/ses/catalogo", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ catalog: value, environment: "pre", dryRun: false }),
       }, 45000);
-      if (!response.ok) return data.error ?? t.actionFailed;
+      if (!response.ok) return sesErrorMessage(data.error, t);
       return `${t.sesQueryCompleted}: ${data.status ?? "OK"}`;
     });
   }
@@ -668,6 +693,13 @@ function SesIntegrationPanel({ xml }: { xml: string }) {
         </div>
       </div>
 
+      {sesStatus && !sesStatus.readyForPreproduction && (
+        <div className="ses-config-alert mt-4">
+          <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />
+          <span>{t.sesConfigMissing}</span>
+        </div>
+      )}
+
       <div className="mt-5 grid gap-4 xl:grid-cols-[1fr_1fr]">
         <div className="ses-card">
           <h4 className="font-heading text-base font-bold">{t.sesTransmission}</h4>
@@ -679,7 +711,7 @@ function SesIntegrationPanel({ xml }: { xml: string }) {
             <button type="button" className="btn-secondary" disabled={working} onClick={prepareRequest}>
               {busyAction === "prepare" ? <WorkingLabel label={t.processing} /> : <><ShieldCheck className="h-4 w-4" />{t.sesPrepareDryRun}</>}
             </button>
-            <button type="button" className="btn-primary" disabled={working || schemaOk === false} onClick={sendPreproduction}>
+            <button type="button" className="btn-primary" disabled={working || schemaOk === false || !sesStatus?.readyForPreproduction} onClick={sendPreproduction}>
               {busyAction === "sendPre" ? <WorkingLabel label={t.processing} /> : <><Send className="h-4 w-4" />{t.sesSendPreproduction}</>}
             </button>
           </div>
@@ -703,10 +735,10 @@ function SesIntegrationPanel({ xml }: { xml: string }) {
             </label>
           </div>
           <div className="mt-4 flex flex-wrap gap-2">
-            <button type="button" className="btn-secondary" disabled={working} onClick={queryLot}>{busyAction === "queryLot" ? <WorkingLabel label={t.processing} /> : t.sesQueryLot}</button>
-            <button type="button" className="btn-secondary" disabled={working} onClick={queryCommunication}>{busyAction === "queryCommunication" ? <WorkingLabel label={t.processing} /> : t.sesQueryCommunication}</button>
-            <button type="button" className="btn-secondary" disabled={working} onClick={queryCatalog}>{busyAction === "catalog" ? <WorkingLabel label={t.processing} /> : t.sesQueryCatalog}</button>
-            <button type="button" className="btn-danger" disabled={working} onClick={cancelLot}>{busyAction === "cancelLot" ? <WorkingLabel label={t.processing} /> : t.sesCancelLot}</button>
+            <button type="button" className="btn-secondary" disabled={working || !sesStatus?.hasCredentials} onClick={queryLot}>{busyAction === "queryLot" ? <WorkingLabel label={t.processing} /> : t.sesQueryLot}</button>
+            <button type="button" className="btn-secondary" disabled={working || !sesStatus?.hasCredentials} onClick={queryCommunication}>{busyAction === "queryCommunication" ? <WorkingLabel label={t.processing} /> : t.sesQueryCommunication}</button>
+            <button type="button" className="btn-secondary" disabled={working || !sesStatus?.hasCredentials} onClick={queryCatalog}>{busyAction === "catalog" ? <WorkingLabel label={t.processing} /> : t.sesQueryCatalog}</button>
+            <button type="button" className="btn-danger" disabled={working || !sesStatus?.hasCredentials} onClick={cancelLot}>{busyAction === "cancelLot" ? <WorkingLabel label={t.processing} /> : t.sesCancelLot}</button>
           </div>
         </div>
       </div>
@@ -715,6 +747,12 @@ function SesIntegrationPanel({ xml }: { xml: string }) {
       <p className="mt-4 text-xs leading-5 text-muted">{t.sesPrivacyNote}</p>
     </section>
   );
+}
+
+function sesErrorMessage(error: unknown, t: ReturnType<typeof usePreferences>["dictionary"]) {
+  if (typeof error === "string" && error.includes("Missing SES.HOSPEDAJES configuration")) return t.sesConfigMissing;
+  if (typeof error === "string" && error.includes("production sending is blocked")) return t.sesProductionBlocked;
+  return typeof error === "string" ? error : t.actionFailed;
 }
 
 function ProcessRail({ activeStep, parsed, generated, consolidated, busyAction, onStepClick }: { activeStep: WorkflowStep; parsed: ParsedExcel | null; generated: GeneratedXmlResult | null; consolidated: boolean; busyAction: BusyAction; onStepClick: (step: WorkflowStep) => void }) {
