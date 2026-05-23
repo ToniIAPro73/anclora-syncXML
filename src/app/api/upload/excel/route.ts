@@ -4,6 +4,8 @@ import { requireAuth } from "@/lib/auth";
 import { hashBuffer, pseudonymizeSession, recordAuditEvent } from "@/lib/audit";
 import { validateUploadFile } from "@/lib/security/files";
 import { getRateLimitKey, sensitiveRateLimiter } from "@/lib/security/rateLimit";
+import { resolveParsedMunicipiosFromDb } from "@/lib/municipios/resolveMunicipio";
+import { prismaMunicipioRepository } from "@/lib/db/municipios";
 
 export async function POST(request: Request) {
   const rateLimit = sensitiveRateLimiter.check(`upload:${getRateLimitKey(request)}`);
@@ -21,7 +23,8 @@ export async function POST(request: Request) {
   }
   const buffer = Buffer.from(await file.arrayBuffer());
   try {
-    const result = parseExcelBuffer(buffer, fileValidation.safeName);
+    const parsed = parseExcelBuffer(buffer, fileValidation.safeName);
+    const result = await resolveParsedMunicipiosFromDb(parsed, prismaMunicipioRepository);
     recordAuditEvent({
       eventType: result.validation.errors.length ? "validation_error_detected" : "file_import_validated",
       pseudonymousSessionId: pseudonymizeSession(request.headers.get("cookie")),

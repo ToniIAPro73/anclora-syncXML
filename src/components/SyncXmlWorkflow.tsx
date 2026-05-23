@@ -9,6 +9,7 @@ import { buildXmlDownloadFileName } from "@/lib/xml/fileName";
 import { usePreferences } from "./AppPreferencesProvider";
 import { unresolvedDuplicates } from "@/lib/duplicates";
 import { maskAddress, maskDocument, maskEmail, maskPayment, maskPhone } from "@/lib/privacy/masking";
+import { provinceCodeFromPostalCode } from "@/lib/municipios/normalize";
 
 type BusyAction = "upload" | "validate" | "generate" | "consolidate" | null;
 type WorkflowStep = 1 | 2 | 3 | 4;
@@ -20,6 +21,7 @@ type SesStatus = {
   endpoint: string;
 };
 type GuestCorrectionPatch = Partial<Pick<GuestRecord, "municipalityCode" | "sex" | "relationship" | "documentSupport" | "phone" | "email">>;
+type MunicipioOption = { codigoMunicipio: string; codigoProvincia: string; nombre: string; nombreNormalizado: string };
 
 async function fetchJson(url: string, init: RequestInit, timeoutMs = 25000) {
   const controller = new AbortController();
@@ -979,7 +981,31 @@ function ManualCorrectionPanel({
   onGuestCorrection: (sourceRow: number, patch: GuestCorrectionPatch) => void;
 }) {
   const { dictionary: t } = usePreferences();
+  const [municipiosByProvince, setMunicipiosByProvince] = useState<Record<string, MunicipioOption[]>>({});
   const guestsWithIssues = parsed.guests.filter((guest) => guest.errors.length || guest.warnings.length);
+  const provinces = useMemo(() => Array.from(new Set(parsed.guests.map((guest) => provinceCodeFromPostalCode(guest.postalCode)).filter((province): province is string => Boolean(province)))), [parsed.guests]);
+
+  useEffect(() => {
+    let active = true;
+    async function loadMunicipios() {
+      const next: Record<string, MunicipioOption[]> = {};
+      await Promise.all(provinces.map(async (province) => {
+        try {
+          const response = await fetch(`/api/admin/ine/municipios?province=${encodeURIComponent(province)}`);
+          const data = await response.json();
+          next[province] = data.municipios ?? [];
+        } catch {
+          next[province] = [];
+        }
+      }));
+      if (active) setMunicipiosByProvince(next);
+    }
+    void loadMunicipios();
+    return () => {
+      active = false;
+    };
+  }, [provinces]);
+
   return (
     <section className="panel p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -1003,11 +1029,7 @@ function ManualCorrectionPanel({
                 <StatusPill status={guest.validationStatus} />
               </div>
               <div className="manual-correction-fields">
-                <CorrectionInput
-                  label={t.municipalityCode}
-                  value={guest.municipalityCode}
-                  onChange={(value) => onGuestCorrection(guest.sourceRow, { municipalityCode: value })}
-                />
+                <MunicipioCorrectionField guest={guest} municipios={municipiosByProvince[provinceCodeFromPostalCode(guest.postalCode) ?? ""] ?? []} onGuestCorrection={onGuestCorrection} />
                 <CorrectionSelect
                   label={t.sex}
                   value={guest.sex}
@@ -1049,6 +1071,44 @@ function ManualCorrectionPanel({
         <p className="mt-4 rounded-lg border border-app bg-surface-elevated p-4 text-sm text-muted">{t.noManualCorrections}</p>
       )}
     </section>
+  );
+}
+
+function MunicipioCorrectionField({
+  guest,
+  municipios,
+  onGuestCorrection,
+}: {
+  guest: GuestRecord;
+  municipios: MunicipioOption[];
+  onGuestCorrection: (sourceRow: number, patch: GuestCorrectionPatch) => void;
+}) {
+  const { dictionary: t } = usePreferences();
+  if (!municipios.length) {
+    return (
+      <CorrectionInput
+        label={t.municipalityCode}
+        value={guest.municipalityCode}
+        onChange={(value) => onGuestCorrection(guest.sourceRow, { municipalityCode: value })}
+      />
+    );
+  }
+  return (
+    <label className="manual-field">
+      <span>{t.selectMunicipio}</span>
+      <select
+        className="input"
+        value={guest.municipalityCode ?? ""}
+        onChange={(event) => onGuestCorrection(guest.sourceRow, { municipalityCode: event.target.value || undefined })}
+      >
+        <option value="">{t.selectMunicipio}</option>
+        {municipios.map((municipio) => (
+          <option key={municipio.codigoMunicipio} value={municipio.codigoMunicipio}>
+            {municipio.nombre} — {municipio.codigoMunicipio}
+          </option>
+        ))}
+      </select>
+    </label>
   );
 }
 
@@ -1197,6 +1257,7 @@ function translateIssueMessage(code: string, fallback: string, t: ReturnType<typ
   if (code === "guest.documentSupport.missing") return t.issueDocumentSupportMissing;
   if (code === "guest.municipalityCode.missing") return t.issueMunicipalityCodeMissing;
   if (code === "ses.readiness.municipalityCode.required") return t.issueSesMunicipalityCodeRequired;
+  if (code === "municipality.autoResolved") return t.municipioAutoResolved;
   return fallback;
 }
 
