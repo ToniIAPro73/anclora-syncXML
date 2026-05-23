@@ -70,7 +70,7 @@ export function validateSesHospedajesXml(xml: string, kind: SesSchemaKind = "alt
     }
     const parsed = parser.parse(xml);
     const root = rootPeticion(parsed);
-    if (!root) errors.push(issue("ses.xsd.root", "La raiz debe ser peticion", "peticion"));
+    if (!root) errors.push(issue("ses.xsd.root", "La raíz debe ser peticion", "peticion"));
     const peticion = root?.value ?? {};
     const namespace = peticion["@_xmlns:ns2"] || peticion["@_xmlns"] || "";
     if (namespace && !String(namespace).includes(kind)) {
@@ -84,7 +84,7 @@ export function validateSesHospedajesXml(xml: string, kind: SesSchemaKind = "alt
     }
 
     const comunicaciones = asArray<Record<string, any>>(solicitud.comunicacion);
-    if (!comunicaciones.length) errors.push(issue("ses.xsd.required", "Debe existir al menos una comunicacion", "solicitud.comunicacion"));
+    if (!comunicaciones.length) errors.push(issue("ses.xsd.required", "Debe existir al menos una comunicación", "solicitud.comunicacion"));
 
     comunicaciones.forEach((comunicacion, communicationIndex) => {
       const base = `solicitud.comunicacion[${communicationIndex}]`;
@@ -102,7 +102,7 @@ export function validateSesHospedajesXml(xml: string, kind: SesSchemaKind = "alt
       const personas = asArray<Record<string, any>>(comunicacion.persona);
       if (!personas.length) errors.push(issue("ses.xsd.required", "Debe existir al menos una persona", `${base}.persona`));
       if (isInt(contrato.numPersonas) && Number(contrato.numPersonas) !== personas.length) {
-        errors.push(issue("ses.xsd.numPersonas", "numPersonas no coincide con el numero de personas", `${base}.contrato.numPersonas`));
+        errors.push(issue("ses.xsd.numPersonas", "numPersonas no coincide con el número de personas", `${base}.contrato.numPersonas`));
       }
 
       personas.forEach((persona, personIndex) => {
@@ -118,12 +118,12 @@ export function validateSesHospedajesXml(xml: string, kind: SesSchemaKind = "alt
         if (persona.telefono && !max(persona.telefono, 20)) errors.push(issue("ses.xsd.maxLength", "telefono excede 20 caracteres", `${personBase}.telefono`));
         const direccion = persona.direccion ?? {};
         ["direccion", "codigoPostal", "pais"].forEach((field) => requireField(errors, direccion, field, `${personBase}.direccion`));
-        if (direccion.codigoMunicipio && !/^[0-9]{5}$/.test(text(direccion.codigoMunicipio))) errors.push(issue("ses.xsd.pattern", "codigoMunicipio debe tener 5 digitos", `${personBase}.direccion.codigoMunicipio`));
+        if (direccion.codigoMunicipio && !/^[0-9]{5}$/.test(text(direccion.codigoMunicipio))) errors.push(issue("ses.xsd.pattern", "codigoMunicipio debe tener 5 dígitos", `${personBase}.direccion.codigoMunicipio`));
         if (direccion.pais && !isIso3(direccion.pais)) errors.push(issue("ses.xsd.pattern", "pais debe ser ISO alfa-3", `${personBase}.direccion.pais`));
       });
     });
   } catch (error) {
-    errors.push(issue("ses.xml.validation_failed", error instanceof Error ? error.message : "Validacion SES no completada"));
+    errors.push(issue("ses.xml.validation_failed", error instanceof Error ? error.message : "Validación SES no completada"));
   }
 
   return { ok: errors.length === 0, schemaVersion: SES_SCHEMA_VERSION, kind, errors };

@@ -723,15 +723,18 @@ function SesIntegrationPanel({ xml }: { xml: string }) {
           <div className="mt-4 grid gap-3 md:grid-cols-2">
             <label className="space-y-1">
               <span className="text-xs font-bold uppercase text-muted">{t.sesLotCode}</span>
-              <input className="input" value={lotCode} onChange={(event) => setLotCode(event.target.value)} placeholder="Lote" />
+              <input className="input" value={lotCode} onChange={(event) => setLotCode(event.target.value)} placeholder={t.sesLotPlaceholder} />
             </label>
             <label className="space-y-1">
               <span className="text-xs font-bold uppercase text-muted">{t.sesCommunicationCode}</span>
-              <input className="input" value={communicationCode} onChange={(event) => setCommunicationCode(event.target.value)} placeholder="Codigo" />
+              <input className="input" value={communicationCode} onChange={(event) => setCommunicationCode(event.target.value)} placeholder={t.sesCommunicationPlaceholder} />
             </label>
             <label className="space-y-1 md:col-span-2">
               <span className="text-xs font-bold uppercase text-muted">{t.sesCatalog}</span>
-              <input className="input" value={catalog} onChange={(event) => setCatalog(event.target.value)} placeholder="TIPO_DOCUMENTO" />
+              <input className="input" value={catalog} onChange={(event) => setCatalog(event.target.value)} placeholder={t.sesCatalogPlaceholder} list="ses-catalog-options" />
+              <datalist id="ses-catalog-options">
+                <option value="TIPO_DOCUMENTO" />
+              </datalist>
             </label>
           </div>
           <div className="mt-4 flex flex-wrap gap-2">
@@ -884,7 +887,7 @@ function CompactIssueList({ issues }: { issues: Array<{ code: string; message: s
     <div className="space-y-1">
       {issues.slice(0, 3).map((issue) => (
         <p key={issue.code + issue.field} className={issue.severity === "error" ? "text-error" : "text-warning"}>
-          {translateIssueMessage(issue.code, issue.message, t).replace(" no informado", "").replace(" not provided", "").replace("Telefono", "Tel.").replace("Phone", "Tel.").replace("Codigo de municipio", "Cod. mun.").replace("Municipality code", "Mun. code").replace("Gemeindecode", "Gemeinde").replace("Soporte de documento", "Soporte doc.").replace("Document support", "Doc. support").replace("Dokumentnachweis", "Dok.")}
+          {translateIssueMessage(issue.code, issue.message, t).replace(" no informado", "").replace(" not provided", "").replace("Teléfono", "Tel.").replace("Phone", "Tel.").replace("Código de municipio", "Cod. mun.").replace("Municipality code", "Mun. code").replace("Gemeindecode", "Gemeinde").replace("Soporte de documento", "Soporte doc.").replace("Document support", "Doc. support").replace("Dokumentnachweis", "Dok.")}
         </p>
       ))}
       {issues.length > 3 && <p className="text-muted">+{issues.length - 3}</p>}

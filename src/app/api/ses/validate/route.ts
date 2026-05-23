@@ -11,7 +11,7 @@ export async function POST(request: Request) {
   if (unauthorized) return unauthorized;
   const body = await request.json().catch(() => ({}));
   const parsed = z.object({ xml: z.string().min(1), kind: z.enum(["altaParteHospedaje", "altaReservaHospedaje"]).optional() }).safeParse(body);
-  if (!parsed.success) return NextResponse.json({ error: "Payload invalido" }, { status: 400 });
+  if (!parsed.success) return NextResponse.json({ error: "Payload inválido" }, { status: 400 });
   const validation = validateSesHospedajesXml(parsed.data.xml, parsed.data.kind ?? "altaParteHospedaje");
   return NextResponse.json({ validation });
 }
