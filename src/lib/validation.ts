@@ -141,6 +141,17 @@ export function validateParsedExcel(parsed: Omit<ParsedExcel, "validation">): Pa
     errors.push(...guest.errors);
     warnings.push(...guest.warnings);
   }
+  for (const guest of parsed.guests) {
+    if (guest.countryIso3 === "ESP" && !guest.municipalityCode) {
+      errors.push(issue(
+        "error",
+        "ses.readiness.municipalityCode.required",
+        "No se puede generar un XML válido para SES: el código de municipio INE es obligatorio cuando el país es ESP.",
+        "municipalityCode",
+        guest.sourceRow,
+      ));
+    }
+  }
   const withValidation = { ...parsed, validation: { status: statusFrom(errors, warnings), errors, warnings } };
   return { ...withValidation, duplicates: parsed.duplicates ?? detectDuplicates(withValidation) };
 }

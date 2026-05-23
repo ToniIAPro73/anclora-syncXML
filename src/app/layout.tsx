@@ -10,6 +10,9 @@ const sora = Sora({ subsets: ["latin"], variable: "--font-sora" });
 export const metadata: Metadata = {
   title: "Anclora SyncXML",
   description: "Excel seguro de reservas a XML de hospedaje por reserva.",
+  icons: {
+    icon: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

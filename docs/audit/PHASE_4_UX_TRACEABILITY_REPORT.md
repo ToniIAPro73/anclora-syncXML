@@ -4,50 +4,54 @@
 
 - Date: 2026-05-23
 - Branch: `feat/syncxml-phased-hardening`
-- Status: Partially covered by previous responsibility hardening; not fully executed in this phase sequence.
+- Status: Implemented for review, visual traceability and XML gating. Correction editor and durable history remain deferred.
 
-## Current State
+## Implemented
 
-The application already includes important UX and traceability elements from earlier hardening work:
+- Added an operation traceability panel visible throughout the workflow.
+- Added state milestones for import, validation, preview review, mapping review, duplicate resolution, XML generation and consolidation.
+- Added a visual XML tree with request, contract, payment and guest/person nodes.
+- Added per-guest status indicators in the XML visual view.
+- Highlighted generated guests as new records in the XML visual view.
+- Reworked the final operation summary into scan-friendly metric tiles.
+- Added a human review gate before consolidation.
+- Blocked XML download when the generated XML has critical validation issues.
+- Added XML issue rendering in the XML review phase, so manual upload and assisted SES submission use the same blocking criteria.
+- Kept SES production sending blocked while credentials and pre-production evidence remain pending.
+- Added ES/EN/DE text for the new traceability and XML review UI.
 
-- Step-based workflow.
-- Private no-storage mode banner.
-- Informed import consent.
-- Masked guest preview by default.
-- Validation issue cards.
-- Duplicate review.
-- XML preview.
-- Consolidation gating.
-- Session clearing.
-- Footer legal links.
-- Audit events without PII.
-- Dark/light theme and ES/EN/DE i18n.
+## Validation Evidence
 
-Fase 2 preserved these gates and moved critical checks server-side, but did not redesign the entire workflow.
+- `npm run test`: passed, 38 tests.
+- `npm run lint`: passed.
+- `npm run typecheck`: passed.
+- `npm run build`: passed.
+- Playwright browser check on `http://localhost:3002`:
+  - Authenticated local session.
+  - Import screen rendered in Spanish/dark.
+  - Bulk consent selector enabled upload.
+  - Reference Excel import reached review phase.
+  - Traceability panel updated after import.
+  - XML phase showed the visual XML tree and SES panel.
+  - Stricter SES validation surfaced critical XML issues and blocked consolidation.
 
-## Not Implemented in This Pass
+## Not Implemented
 
-The following Fase 4 items remain open:
-
-- Full visual XML tree/card renderer.
 - Inline correction editor before XML generation.
-- Searchable durable history tied to an approved retention model.
-- Exportable validation report in CSV/PDF.
-- Highlighting newly added records in a persisted consolidated XML.
-- Complete tablet/desktop visual QA after the latest backend changes.
+- Searchable durable history beyond the existing dashboard.
+- CSV/PDF validation report export.
+- Full visual screenshot archive for every viewport/language/theme combination.
 
-## Why This Phase Is Partial
+## Rationale
 
-Fase 4 depends on the Fase 2 backend gates remaining stable. It also depends on decisions from Fase 6 if history or persistence becomes durable. Building richer history before deciding retention could increase privacy risk.
+Durable history and inline editing touch personal-data retention and mutation workflows. They should be implemented after the retention/DPA decision is closed, otherwise the product could accidentally move from transformation layer to system of record.
 
-## Recommended Next Implementation
+## Residual Risks
 
-1. Keep consolidation disabled unless backend validation passes.
-2. Add a visual XML tree using generated XML as source, not duplicated client state.
-3. Add field correction UI backed by the same backend validation rules.
-4. Add validation report export without PII leakage where possible.
-5. Only implement persistent history after a retention decision.
+- The current Excel lacks fields required for a fully compliant SES XML, especially Spanish municipality codes for guest addresses.
+- The app now blocks download/consolidation when XML validation finds critical issues, but users still need a correction workflow to resolve missing SES fields without editing the source Excel manually.
+- Full XSD engine validation against every imported schema is still pending; the current validator implements the relevant local SES rules directly.
 
-## Residual Risk
+## Recommended Next Step
 
-The UX is usable and safer than the initial state, but a non-technical user still needs clearer correction workflows and a visual XML view before production use.
+Implement a controlled correction workspace for missing SES fields, starting with municipality code, document support, sex and relationship. Each correction must update the same parsed data model used by backend validation and XML generation.
