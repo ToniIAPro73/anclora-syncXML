@@ -731,10 +731,10 @@ function SesIntegrationPanel({ xml }: { xml: string }) {
             </label>
             <label className="space-y-1 md:col-span-2">
               <span className="text-xs font-bold uppercase text-muted">{t.sesCatalog}</span>
-              <input className="input" value={catalog} onChange={(event) => setCatalog(event.target.value)} placeholder={t.sesCatalogPlaceholder} list="ses-catalog-options" />
-              <datalist id="ses-catalog-options">
-                <option value="TIPO_DOCUMENTO" />
-              </datalist>
+              <select className="input" value={catalog} onChange={(event) => setCatalog(event.target.value)} aria-label={t.sesCatalog}>
+                <option value="" disabled>{t.sesCatalogPlaceholder}</option>
+                <option value="TIPO_DOCUMENTO">{t.sesCatalogDocumentType}</option>
+              </select>
             </label>
           </div>
           <div className="mt-4 flex flex-wrap gap-2">
