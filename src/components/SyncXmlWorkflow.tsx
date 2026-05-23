@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ComponentType, ReactNode } from "react";
 import { Ban, CheckCircle2, ClipboardCheck, Download, Eye, EyeOff, FileSpreadsheet, FileText, RadioTower, SearchCheck, Send, ShieldCheck, Trash2, UploadCloud } from "lucide-react";
-import type { DuplicateResolution, GeneratedXmlResult, ParsedExcel } from "@/lib/domain";
+import type { DuplicateResolution, GeneratedXmlResult, ParsedExcel, ValidationIssue } from "@/lib/domain";
 import { smartValidateParsedExcel } from "@/lib/validation";
 import { buildXmlDownloadFileName } from "@/lib/xml/fileName";
 import { usePreferences } from "./AppPreferencesProvider";
@@ -557,6 +557,7 @@ function SesIntegrationPanel({ xml }: { xml: string }) {
   const [communicationCode, setCommunicationCode] = useState("");
   const [catalog, setCatalog] = useState("");
   const [sesStatus, setSesStatus] = useState<SesStatus | null>(null);
+  const [sesIssues, setSesIssues] = useState<ValidationIssue[]>([]);
 
   useEffect(() => {
     let active = true;
@@ -571,6 +572,7 @@ function SesIntegrationPanel({ xml }: { xml: string }) {
   async function run(action: SesUiAction, request: () => Promise<string>) {
     setBusyAction(action);
     setResult(null);
+    setSesIssues([]);
     try {
       setResult(await request());
     } catch {
@@ -589,6 +591,7 @@ function SesIntegrationPanel({ xml }: { xml: string }) {
       });
       const ok = Boolean(response.ok && data.validation?.ok);
       setSchemaOk(ok);
+      setSesIssues(ok ? [] : (data.validation?.errors ?? []));
       return ok ? t.sesValidationOk : `${t.sesValidationFailed}: ${data.validation?.errors?.length ?? 0}`;
     });
   }
@@ -600,7 +603,10 @@ function SesIntegrationPanel({ xml }: { xml: string }) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ xml, environment: "pre", dryRun: true }),
       });
-      if (!response.ok) return sesErrorMessage(data.error, t);
+      if (!response.ok) {
+        setSesIssues(data.validation?.errors ?? []);
+        return sesErrorMessage(data.error, t);
+      }
       setSchemaOk(true);
       return `${data.message ?? t.sesPreparedOk} ${data.xmlHash ? `${t.sesXmlHash}: ${data.xmlHash.slice(0, 12)}...` : ""}`;
     });
@@ -760,6 +766,7 @@ function SesIntegrationPanel({ xml }: { xml: string }) {
       </div>
 
       {result && <div className="ses-result mt-4" role="status">{result}</div>}
+      {sesIssues.length > 0 && <div className="mt-4"><IssuePanel title={t.xmlValidationIssues} issues={sesIssues} /></div>}
       <p className="mt-4 text-xs leading-5 text-muted">{t.sesPrivacyNote}</p>
     </section>
   );
