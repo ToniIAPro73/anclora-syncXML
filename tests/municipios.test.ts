@@ -96,7 +96,7 @@ describe("municipio resolution", () => {
     });
 
     expect(resolved.guests).toHaveLength(1);
-    expect(resolved.validation.errors.some((error) => error.code === "ses.readiness.municipalityCode.required")).toBe(true);
+    expect(resolved.validation.errors.some((error) => error.code === "guest.municipalityCode.required")).toBe(true);
   });
 });
 

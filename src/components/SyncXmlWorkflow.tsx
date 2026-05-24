@@ -20,7 +20,7 @@ type SesStatus = {
   hasLandlordCode: boolean;
   endpoint: string;
 };
-type GuestCorrectionPatch = Partial<Pick<GuestRecord, "municipalityCode" | "sex" | "relationship" | "documentSupport" | "phone" | "email">>;
+type GuestCorrectionPatch = Partial<Pick<GuestRecord, "surname2" | "documentType" | "documentNumber" | "municipality" | "municipalityCode" | "postalCode" | "sex" | "relationship" | "documentSupport" | "phone" | "phone2" | "email" | "address">>;
 type MunicipioOption = { codigoMunicipio: string; codigoProvincia: string; nombre: string; nombreNormalizado: string };
 
 async function fetchJson(url: string, init: RequestInit, timeoutMs = 25000) {
@@ -108,6 +108,17 @@ export function SyncXmlWorkflow() {
   async function generate() {
     if (!parsed) {
       setActiveStep(1);
+      return;
+    }
+    const validated = smartValidateParsedExcel(parsed);
+    if (validated.validation.errors.length) {
+      setParsed(validated);
+      setGenerated(null);
+      setConsolidated(false);
+      setSmartValidated(true);
+      setPreviewReviewed(false);
+      setActiveStep(2);
+      setMessage(t.smartValidationErrors);
       return;
     }
     setBusyAction("generate");
@@ -260,7 +271,7 @@ export function SyncXmlWorkflow() {
         onStepClick={handleStepClick}
       />
 
-      {message && <div className="process-message" role="status">{message}</div>}
+      {message && <div className={`process-message ${processMessageTone(message, t)}`} role="status">{message}</div>}
       {busy && <div className="process-message is-working" role="status">{t.processing}</div>}
       <PrivacyModeCard onClear={clearOperation} hasData={Boolean(parsed || generated || selectedFile)} />
       <TraceabilityPanel
@@ -986,10 +997,17 @@ function needsMunicipioCorrection(guest: GuestRecord) {
 
 function hasManualCorrectionFields(guest: GuestRecord) {
   return needsMunicipioCorrection(guest)
+    || hasIssueForField(guest, "municipality")
+    || hasIssueForField(guest, "address")
+    || hasIssueForField(guest, "postalCode")
+    || hasIssueForField(guest, "surname2")
+    || hasIssueForField(guest, "documentType")
+    || hasIssueForField(guest, "documentNumber")
     || hasIssueForField(guest, "sex")
     || hasIssueForField(guest, "relationship")
     || hasIssueForField(guest, "documentSupport")
     || hasIssueForField(guest, "phone")
+    || hasIssueForField(guest, "phone2")
     || hasIssueForField(guest, "email");
 }
 
@@ -1029,6 +1047,60 @@ function ManualCorrectionPanel({
                 {needsMunicipioCorrection(guest) && (
                   <MunicipioCorrectionField guest={guest} onGuestCorrection={onGuestCorrection} />
                 )}
+                {hasIssueForField(guest, "municipality") && guest.countryIso3 !== "ESP" && (
+                  <CorrectionInput
+                    label={t.municipality}
+                    value={guest.municipality}
+                    maxLength={100}
+                    onChange={(value) => onGuestCorrection(guest.sourceRow, { municipality: value })}
+                  />
+                )}
+                {hasIssueForField(guest, "address") && (
+                  <CorrectionInput
+                    label={t.address}
+                    value={guest.address}
+                    maxLength={100}
+                    onChange={(value) => onGuestCorrection(guest.sourceRow, { address: value })}
+                  />
+                )}
+                {hasIssueForField(guest, "postalCode") && (
+                  <CorrectionInput
+                    label={t.postalCode}
+                    value={guest.postalCode}
+                    maxLength={20}
+                    onChange={(value) => onGuestCorrection(guest.sourceRow, { postalCode: value })}
+                  />
+                )}
+                {hasIssueForField(guest, "surname2") && (
+                  <CorrectionInput
+                    label={`${t.name} 2`}
+                    value={guest.surname2}
+                    maxLength={50}
+                    onChange={(value) => onGuestCorrection(guest.sourceRow, { surname2: value })}
+                  />
+                )}
+                {hasIssueForField(guest, "documentType") && (
+                  <CorrectionSelect
+                    label={t.document}
+                    value={guest.documentType}
+                    options={[
+                      ["", t.selectValue],
+                      ["NIF", "NIF"],
+                      ["NIE", "NIE"],
+                      ["PAS", "PAS"],
+                      ["OTRO", "OTRO"],
+                    ]}
+                    onChange={(value) => onGuestCorrection(guest.sourceRow, { documentType: value as GuestRecord["documentType"] | undefined })}
+                  />
+                )}
+                {hasIssueForField(guest, "documentNumber") && (
+                  <CorrectionInput
+                    label={t.document}
+                    value={guest.documentNumber}
+                    maxLength={15}
+                    onChange={(value) => onGuestCorrection(guest.sourceRow, { documentNumber: value?.toUpperCase() })}
+                  />
+                )}
                 {hasIssueForField(guest, "sex") && (
                   <CorrectionSelect
                     label={t.sex}
@@ -1063,6 +1135,14 @@ function ManualCorrectionPanel({
                     label={t.phone}
                     value={guest.phone}
                     onChange={(value) => onGuestCorrection(guest.sourceRow, { phone: value })}
+                  />
+                )}
+                {hasIssueForField(guest, "phone2") && (
+                  <CorrectionInput
+                    label={`${t.phone} 2`}
+                    value={guest.phone2}
+                    maxLength={20}
+                    onChange={(value) => onGuestCorrection(guest.sourceRow, { phone2: value })}
                   />
                 )}
                 {hasIssueForField(guest, "email") && (
@@ -1407,7 +1487,7 @@ function GuestTable({ guests, smartValidated, showFullData }: { guests: ParsedEx
               <FieldCell state={fieldState(guest, ["documentNumber", "documentType"], smartValidated)}><span className="text-muted">{guest.documentType}</span><br />{showFullData ? guest.documentNumber : maskDocument(guest.documentNumber)}</FieldCell>
               <FieldCell state={fieldState(guest, ["birthDate", "nationalityIso3"], smartValidated)}><span className="text-muted">{t.birthShort}</span> {guest.birthDate}<br /><span className="text-muted">{t.countryShort}</span> {guest.nationalityIso3}</FieldCell>
               <FieldCell state={fieldState(guest, ["email", "phone"], smartValidated)}><span className="break-anywhere">{showFullData ? guest.email || "-" : maskEmail(guest.email)}</span><br /><span className="text-muted">{showFullData ? guest.phone || "-" : maskPhone(guest.phone)}</span></FieldCell>
-              <FieldCell state={fieldState(guest, ["address", "postalCode", "municipalityCode"], smartValidated)}><span className="break-anywhere">{showFullData ? guest.address : maskAddress(guest.address)}</span></FieldCell>
+              <FieldCell state={fieldState(guest, ["address", "postalCode", "municipality", "municipalityCode"], smartValidated)}><span className="break-anywhere">{showFullData ? guest.address : maskAddress(guest.address)}</span></FieldCell>
               <td><CompactIssueList issues={guest.errors.concat(guest.warnings)} /></td>
             </tr>
           ))}
@@ -1420,6 +1500,23 @@ function GuestTable({ guests, smartValidated, showFullData }: { guests: ParsedEx
 
 function WorkingLabel({ label }: { label: string }) {
   return <><span className="spinner" aria-hidden="true" />{label}</>;
+}
+
+function processMessageTone(message: string, t: ReturnType<typeof usePreferences>["dictionary"]) {
+  const errorMessages = [
+    t.actionFailed,
+    t.smartValidationErrors,
+    t.xmlGeneratedWithIssues,
+    t.criticalErrorsBlocked,
+    t.unresolvedDuplicatesBlocked,
+    t.xmlPreviewRequired,
+    t.previewReviewRequired,
+    t.mappingReviewRequired,
+    t.consentRequiredNotice,
+  ] as string[];
+  if (errorMessages.includes(message) || message.includes(t.criticalErrorsBlocked)) return "is-error";
+  if (message === t.smartValidationApplied || message === t.manualCorrectionApplied) return "is-warning";
+  return "is-success";
 }
 
 function InfoCard({ title, rows }: { title: string; rows: Array<[string, string | number | undefined]> }) {
@@ -1498,7 +1595,12 @@ function translateIssueMessage(code: string, fallback: string, t: ReturnType<typ
   if (code === "guest.relationship.missing") return t.issueRelationshipMissing;
   if (code === "guest.sex.missing") return t.issueSexMissing;
   if (code === "guest.documentSupport.missing") return t.issueDocumentSupportMissing;
+  if (code === "guest.documentSupport.required") return t.issueDocumentSupportRequired;
   if (code === "guest.municipalityCode.missing") return t.issueMunicipalityCodeMissing;
+  if (code === "guest.municipality.required") return t.issueMunicipalityRequired;
+  if (code === "guest.postalCode.required") return t.issuePostalCodeRequired;
+  if (code === "guest.postalCode.invalid") return t.issuePostalCodeInvalid;
+  if (code === "guest.contact.required") return t.issueContactRequired;
   if (code === "ses.readiness.municipalityCode.required") return t.issueSesMunicipalityCodeRequired;
   if (code === "municipality.autoResolved") return t.municipioAutoResolved;
   return fallback;

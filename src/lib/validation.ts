@@ -1,5 +1,16 @@
 import type { GuestRecord, ParsedExcel, ValidationIssue, ValidationStatus } from "./domain";
 import { detectDuplicates } from "./duplicates";
+import {
+  HOSPEDAJES_DOCUMENT_TYPES,
+  HOSPEDAJES_LIMITS,
+  HOSPEDAJES_PAYMENT_TYPES,
+  HOSPEDAJES_RELATIONSHIP_VALUES,
+  HOSPEDAJES_SEX_VALUES,
+  isAdultBirthDate,
+  isMinorBirthDate,
+  isSpanishCountry,
+  requiresSpanishDocumentSupport,
+} from "./ses/hospedajesRules";
 
 const DNI_CONTROL = "TRWAGMYFPDXBNJZSQVHLCKE";
 const IBAN_LENGTHS: Record<string, number> = {
@@ -75,10 +86,6 @@ const IBAN_LENGTHS: Record<string, number> = {
   VG: 24,
   XK: 20,
 };
-const ALLOWED_PAYMENT_TYPES = new Set(["DESTI", "EFECT", "TARJT", "PLATF", "TRANS", "MOVIL", "TREG", "OTRO"]);
-const ALLOWED_DOCUMENT_TYPES = new Set(["NIF", "NIE", "PAS", "OTRO"]);
-const ALLOWED_SEX_VALUES = new Set(["H", "M", "O"]);
-
 function issue(severity: "error" | "warning", code: string, message: string, field?: string, sourceRow?: number): ValidationIssue {
   return { severity, code, message, field, sourceRow };
 }
@@ -92,28 +99,44 @@ function statusFrom(errors: ValidationIssue[], warnings: ValidationIssue[]): Val
 export function validateGuest(guest: Omit<GuestRecord, "validationStatus" | "errors" | "warnings">): GuestRecord {
   const errors: ValidationIssue[] = [];
   const warnings: ValidationIssue[] = [];
+  const adult = isAdultBirthDate(guest.birthDate);
+  const minor = isMinorBirthDate(guest.birthDate);
+  const countryIso3 = guest.countryIso3 ?? guest.nationalityIso3;
   if (!guest.firstName) errors.push(issue("error", "guest.firstName.required", "Nombre obligatorio", "firstName", guest.sourceRow));
-  else if (guest.firstName.length > 50) errors.push(issue("error", "guest.firstName.maxLength", "Nombre superior a 50 caracteres", "firstName", guest.sourceRow));
+  else if (guest.firstName.length > HOSPEDAJES_LIMITS.firstName) errors.push(issue("error", "guest.firstName.maxLength", "Nombre superior a 50 caracteres", "firstName", guest.sourceRow));
   if (!guest.surname1) errors.push(issue("error", "guest.surname1.required", "Primer apellido obligatorio", "surname1", guest.sourceRow));
-  else if (guest.surname1.length > 50) errors.push(issue("error", "guest.surname1.maxLength", "Primer apellido superior a 50 caracteres", "surname1", guest.sourceRow));
-  if (guest.surname2 && guest.surname2.length > 50) errors.push(issue("error", "guest.surname2.maxLength", "Segundo apellido superior a 50 caracteres", "surname2", guest.sourceRow));
-  if (!guest.documentNumber) errors.push(issue("error", "guest.documentNumber.required", "Documento obligatorio", "documentNumber", guest.sourceRow));
-  else if (normalizedDocument(guest.documentNumber).length > 15) errors.push(issue("error", "guest.documentNumber.maxLength", "Documento superior a 15 caracteres", "documentNumber", guest.sourceRow));
-  if (!guest.documentType) errors.push(issue("error", "guest.documentType.required", "Tipo de documento obligatorio", "documentType", guest.sourceRow));
-  else if (!ALLOWED_DOCUMENT_TYPES.has(guest.documentType)) errors.push(issue("error", "guest.documentType.invalid", "Tipo de documento no admitido", "documentType", guest.sourceRow));
+  else if (guest.surname1.length > HOSPEDAJES_LIMITS.surname) errors.push(issue("error", "guest.surname1.maxLength", "Primer apellido superior a 50 caracteres", "surname1", guest.sourceRow));
+  if (guest.surname2 && guest.surname2.length > HOSPEDAJES_LIMITS.surname) errors.push(issue("error", "guest.surname2.maxLength", "Segundo apellido superior a 50 caracteres", "surname2", guest.sourceRow));
+  if (guest.documentType === "NIF" && !guest.surname2) errors.push(issue("error", "guest.surname2.requiredForNif", "Segundo apellido obligatorio cuando el documento es NIF", "surname2", guest.sourceRow));
+  if (adult && !guest.documentNumber) errors.push(issue("error", "guest.documentNumber.required", "Documento obligatorio para personas mayores de edad", "documentNumber", guest.sourceRow));
+  else if (guest.documentNumber && normalizedDocument(guest.documentNumber).length > HOSPEDAJES_LIMITS.documentNumber) errors.push(issue("error", "guest.documentNumber.maxLength", "Documento superior a 15 caracteres", "documentNumber", guest.sourceRow));
+  if (adult && !guest.documentType) errors.push(issue("error", "guest.documentType.required", "Tipo de documento obligatorio para personas mayores de edad", "documentType", guest.sourceRow));
+  else if (guest.documentType && !HOSPEDAJES_DOCUMENT_TYPES.has(guest.documentType)) errors.push(issue("error", "guest.documentType.invalid", "Tipo de documento no admitido", "documentType", guest.sourceRow));
   if (!guest.birthDate) errors.push(issue("error", "guest.birthDate.invalid", "Fecha de nacimiento inválida", "birthDate", guest.sourceRow));
   if (!guest.nationalityIso3) errors.push(issue("error", "guest.nationality.required", "Nacionalidad obligatoria", "nationalityIso3", guest.sourceRow));
-  if (guest.sex && !ALLOWED_SEX_VALUES.has(guest.sex)) errors.push(issue("error", "guest.sex.invalid", "Sexo no admitido", "sex", guest.sourceRow));
-  if (guest.address && guest.address.length > 100) errors.push(issue("error", "guest.address.maxLength", "Dirección superior a 100 caracteres", "address", guest.sourceRow));
-  if (guest.addressComplement && guest.addressComplement.length > 100) errors.push(issue("error", "guest.addressComplement.maxLength", "Dirección complementaria superior a 100 caracteres", "addressComplement", guest.sourceRow));
-  if (guest.documentSupport && guest.documentSupport.length > 9) errors.push(issue("error", "guest.documentSupport.maxLength", "Soporte de documento superior a 9 caracteres", "documentSupport", guest.sourceRow));
-  if (guest.relationship && guest.relationship.length > 2) warnings.push(issue("warning", "guest.relationship.maxLength", "Parentesco superior a 2 caracteres", "relationship", guest.sourceRow));
-  if (!guest.phone) warnings.push(issue("warning", "guest.phone.missing", "Teléfono no informado", "phone", guest.sourceRow));
-  if (!guest.email) warnings.push(issue("warning", "guest.email.missing", "Email no informado", "email", guest.sourceRow));
-  if (!guest.relationship) warnings.push(issue("warning", "guest.relationship.missing", "Parentesco no informado", "relationship", guest.sourceRow));
-  if (!guest.sex) warnings.push(issue("warning", "guest.sex.missing", "Sexo no informado", "sex", guest.sourceRow));
-  if (!guest.documentSupport) warnings.push(issue("warning", "guest.documentSupport.missing", "Soporte de documento no informado", "documentSupport", guest.sourceRow));
-  if (guest.countryIso3 === "ESP" && !guest.municipalityCode) warnings.push(issue("warning", "guest.municipalityCode.missing", "Código de municipio no informado", "municipalityCode", guest.sourceRow));
+  if (guest.sex && !HOSPEDAJES_SEX_VALUES.has(guest.sex)) errors.push(issue("error", "guest.sex.invalid", "Sexo no admitido", "sex", guest.sourceRow));
+  if (!guest.address) errors.push(issue("error", "guest.address.required", "Dirección de residencia obligatoria", "address", guest.sourceRow));
+  else if (guest.address.length > HOSPEDAJES_LIMITS.address) errors.push(issue("error", "guest.address.maxLength", "Dirección superior a 100 caracteres", "address", guest.sourceRow));
+  if (guest.addressComplement && guest.addressComplement.length > HOSPEDAJES_LIMITS.addressComplement) errors.push(issue("error", "guest.addressComplement.maxLength", "Dirección complementaria superior a 100 caracteres", "addressComplement", guest.sourceRow));
+  if (!guest.postalCode) errors.push(issue("error", "guest.postalCode.required", "Código postal obligatorio para generar el XML SES", "postalCode", guest.sourceRow));
+  else if (guest.postalCode.length > HOSPEDAJES_LIMITS.postalCode) errors.push(issue("error", "guest.postalCode.maxLength", "Código postal superior a 20 caracteres", "postalCode", guest.sourceRow));
+  if (!countryIso3) errors.push(issue("error", "guest.country.required", "País de residencia obligatorio", "countryIso3", guest.sourceRow));
+  if (isSpanishCountry(countryIso3)) {
+    if (!guest.municipalityCode) errors.push(issue("error", "guest.municipalityCode.required", "Código de municipio INE obligatorio para residentes en España", "municipalityCode", guest.sourceRow));
+  } else if (!guest.municipality) {
+    errors.push(issue("error", "guest.municipality.required", "Municipio o ciudad obligatorio para residentes fuera de España", "municipality", guest.sourceRow));
+  } else if (guest.municipality.length > HOSPEDAJES_LIMITS.municipalityName) {
+    errors.push(issue("error", "guest.municipality.maxLength", "Municipio o ciudad superior a 100 caracteres", "municipality", guest.sourceRow));
+  }
+  if (requiresSpanishDocumentSupport(guest.documentType) && !guest.documentSupport) errors.push(issue("error", "guest.documentSupport.required", "Soporte de documento obligatorio para NIF/NIE", "documentSupport", guest.sourceRow));
+  if (guest.documentSupport && guest.documentSupport.length > HOSPEDAJES_LIMITS.documentSupport) errors.push(issue("error", "guest.documentSupport.maxLength", "Soporte de documento superior a 9 caracteres", "documentSupport", guest.sourceRow));
+  if (guest.relationship && guest.relationship.length > HOSPEDAJES_LIMITS.relationship) errors.push(issue("error", "guest.relationship.maxLength", "Parentesco superior a 2 caracteres", "relationship", guest.sourceRow));
+  if (guest.relationship && !HOSPEDAJES_RELATIONSHIP_VALUES.has(guest.relationship.toUpperCase())) errors.push(issue("error", "guest.relationship.invalid", "Parentesco no admitido por el catálogo SES", "relationship", guest.sourceRow));
+  if (minor && !guest.relationship) errors.push(issue("error", "guest.relationship.requiredForMinor", "Parentesco obligatorio cuando la persona es menor de edad", "relationship", guest.sourceRow));
+  if (!guest.phone && !guest.phone2 && !guest.email) errors.push(issue("error", "guest.contact.required", "Debe informarse al menos un teléfono o email de contacto", "phone", guest.sourceRow));
+  if (guest.phone && guest.phone.length > HOSPEDAJES_LIMITS.phone) errors.push(issue("error", "guest.phone.maxLength", "Teléfono superior a 20 caracteres", "phone", guest.sourceRow));
+  if (guest.phone2 && guest.phone2.length > HOSPEDAJES_LIMITS.phone) errors.push(issue("error", "guest.phone2.maxLength", "Segundo teléfono superior a 20 caracteres", "phone2", guest.sourceRow));
+  if (guest.email && guest.email.length > HOSPEDAJES_LIMITS.email) errors.push(issue("error", "guest.email.maxLength", "Email superior a 250 caracteres", "email", guest.sourceRow));
   return { ...guest, validationStatus: statusFrom(errors, warnings), errors, warnings };
 }
 
@@ -125,32 +148,20 @@ export function validateParsedExcel(parsed: Omit<ParsedExcel, "validation">): Pa
   if (!parsed.reservation.checkInDate || !parsed.reservation.checkOutDate) errors.push(issue("error", "reservation.dates.invalid", "Fechas de entrada/salida inválidas", "dates"));
   if (!parsed.property.establishmentCode) errors.push(issue("error", "property.establishmentCode.required", "Código de establecimiento ausente", "establishmentCode"));
   else if (parsed.property.establishmentCode.length > 10) errors.push(issue("error", "property.establishmentCode.maxLength", "Código de establecimiento superior a 10 caracteres", "establishmentCode"));
-  const validGuests = parsed.guests.filter((guest) => guest.errors.length === 0);
-  if (parsed.reservation.guestCount && parsed.reservation.guestCount !== validGuests.length) {
+  if (parsed.reservation.guestCount && parsed.reservation.guestCount !== parsed.guests.length) {
     errors.push(issue("error", "reservation.guestCount.mismatch", "El número de personas no coincide con los huéspedes válidos", "guestCount"));
   }
-  if (parsed.payment.paymentType && !ALLOWED_PAYMENT_TYPES.has(parsed.payment.paymentType)) {
+  if (parsed.payment.paymentType && !HOSPEDAJES_PAYMENT_TYPES.has(parsed.payment.paymentType)) {
     errors.push(issue("error", "payment.type.invalid", "Tipo de pago no permitido", "paymentType"));
   }
   const seen = new Map<string, number>();
   for (const guest of parsed.guests) {
+    errors.push(...guest.errors);
+    warnings.push(...guest.warnings);
     if (!guest.documentNumber) continue;
     const existing = seen.get(guest.documentNumber);
     if (existing) warnings.push(issue("warning", "guest.document.duplicate", `Documento duplicado entre filas ${existing} y ${guest.sourceRow}`, "documentNumber", guest.sourceRow));
     seen.set(guest.documentNumber, guest.sourceRow);
-    errors.push(...guest.errors);
-    warnings.push(...guest.warnings);
-  }
-  for (const guest of parsed.guests) {
-    if (guest.countryIso3 === "ESP" && !guest.municipalityCode) {
-      errors.push(issue(
-        "error",
-        "ses.readiness.municipalityCode.required",
-        "No se puede generar un XML válido para SES: el código de municipio INE es obligatorio cuando el país es ESP.",
-        "municipalityCode",
-        guest.sourceRow,
-      ));
-    }
   }
   const withValidation = { ...parsed, validation: { status: statusFrom(errors, warnings), errors, warnings } };
   return { ...withValidation, duplicates: parsed.duplicates ?? detectDuplicates(withValidation) };
@@ -228,6 +239,34 @@ function pushIfMissing(issues: ValidationIssue[], next: ValidationIssue) {
   if (!issues.some((item) => item.code === next.code && item.field === next.field && item.sourceRow === next.sourceRow)) issues.push(next);
 }
 
+function toValidationInput(guest: GuestRecord): Omit<GuestRecord, "validationStatus" | "errors" | "warnings"> {
+  return {
+    sourceRow: guest.sourceRow,
+    role: guest.role,
+    firstName: guest.firstName,
+    surname1: guest.surname1,
+    surname2: guest.surname2,
+    birthDate: guest.birthDate,
+    nationalityIso3: guest.nationalityIso3,
+    documentType: guest.documentType,
+    documentNumber: guest.documentNumber,
+    documentSupport: guest.documentSupport,
+    sex: guest.sex,
+    address: guest.address,
+    addressComplement: guest.addressComplement,
+    municipality: guest.municipality,
+    municipalityCode: guest.municipalityCode,
+    postalCode: guest.postalCode,
+    countryIso3: guest.countryIso3,
+    phone: guest.phone,
+    phone2: guest.phone2,
+    email: guest.email,
+    relationship: guest.relationship,
+    arrivalDate: guest.arrivalDate,
+    departureDate: guest.departureDate,
+  };
+}
+
 function findIbans(parsed: ParsedExcel) {
   const candidates: Array<{ value: string; row?: number }> = [];
   if (parsed.payment.iban) candidates.push({ value: parsed.payment.iban });
@@ -241,8 +280,9 @@ function findIbans(parsed: ParsedExcel) {
 
 export function smartValidateParsedExcel(parsed: ParsedExcel): ParsedExcel {
   const guests = parsed.guests.map((guest) => {
-    const errors = [...guest.errors];
-    const warnings = [...guest.warnings];
+    const baseGuest = validateGuest(toValidationInput(guest));
+    const errors = [...baseGuest.errors];
+    const warnings = [...baseGuest.warnings];
     const document = normalizedDocument(guest.documentNumber);
 
     if (guest.documentType === "NIF" || guest.documentType === "NIE") {
@@ -266,7 +306,7 @@ export function smartValidateParsedExcel(parsed: ParsedExcel): ParsedExcel {
       errors.push(issue("error", "guest.nationality.iso.invalid", "Nacionalidad no normalizada como ISO3", "nationalityIso3", guest.sourceRow));
     }
     if (guest.countryIso3 === "ESP" && guest.postalCode && !isValidSpanishPostalCode(guest.postalCode)) {
-      warnings.push(issue("warning", "guest.postalCode.invalid", "Código postal español no válido", "postalCode", guest.sourceRow));
+      errors.push(issue("error", "guest.postalCode.invalid", "Código postal español no válido", "postalCode", guest.sourceRow));
     }
     if (guest.birthDate && isValidIsoDate(guest.birthDate)) {
       const age = getAge(guest.birthDate);
@@ -276,7 +316,7 @@ export function smartValidateParsedExcel(parsed: ParsedExcel): ParsedExcel {
       errors.push(issue("error", "guest.birthDate.format.invalid", "Fecha de nacimiento con formato inválido", "birthDate", guest.sourceRow));
     }
 
-    return { ...guest, errors, warnings, validationStatus: statusFrom(errors, warnings) };
+    return { ...baseGuest, errors, warnings, validationStatus: statusFrom(errors, warnings) };
   });
 
   const base = validateParsedExcel({ ...parsed, guests });
