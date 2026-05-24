@@ -98,6 +98,17 @@ export function normalizeNationality(value: unknown): string | undefined {
 export function normalizePaymentType(value: unknown): string | undefined {
   const raw = cleanText(value).toUpperCase();
   if (!raw) return undefined;
+  const numericCatalog: Record<string, string> = {
+    "1": "DESTI",
+    "2": "EFECT",
+    "3": "TARJT",
+    "4": "PLATF",
+    "5": "TRANS",
+    "6": "MOVIL",
+    "7": "TREG",
+    "8": "OTRO",
+  };
+  if (numericCatalog[raw]) return numericCatalog[raw];
   if (raw.includes("PLATAFORMA") || raw.includes("PLATFORM")) return "PLATF";
   if (raw.includes("EFECT")) return "EFECT";
   if (raw.includes("TARJ")) return "TARJT";

@@ -2,7 +2,7 @@
 
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import type { ComponentType, ReactNode } from "react";
-import { Ban, CheckCircle2, ClipboardCheck, Database, Download, Eye, EyeOff, FileSpreadsheet, FileText, RadioTower, RefreshCw, SearchCheck, Send, ShieldCheck, Trash2, UploadCloud } from "lucide-react";
+import { Ban, CheckCircle2, ClipboardCheck, Database, Download, Eye, EyeOff, FileSpreadsheet, FileText, RadioTower, RefreshCw, Search, SearchCheck, Send, ShieldCheck, Trash2, UploadCloud } from "lucide-react";
 import type { DuplicateResolution, GeneratedXmlResult, GuestRecord, ParsedExcel, ValidationIssue } from "@/lib/domain";
 import { smartValidateParsedExcel, validateGuest } from "@/lib/validation";
 import { buildXmlDownloadFileName } from "@/lib/xml/fileName";
@@ -976,6 +976,23 @@ function FieldCell({ state, children }: { state: "error" | "warning" | "valid" |
   return <td className={`field-cell is-${state}`}>{children}</td>;
 }
 
+function hasIssueForField(guest: GuestRecord, field: keyof GuestCorrectionPatch) {
+  return guest.errors.concat(guest.warnings).some((issue) => issue.field === field);
+}
+
+function needsMunicipioCorrection(guest: GuestRecord) {
+  return guest.countryIso3 === "ESP" && (hasIssueForField(guest, "municipalityCode") || !guest.municipalityCode);
+}
+
+function hasManualCorrectionFields(guest: GuestRecord) {
+  return needsMunicipioCorrection(guest)
+    || hasIssueForField(guest, "sex")
+    || hasIssueForField(guest, "relationship")
+    || hasIssueForField(guest, "documentSupport")
+    || hasIssueForField(guest, "phone")
+    || hasIssueForField(guest, "email");
+}
+
 function ManualCorrectionPanel({
   parsed,
   onGuestCorrection,
@@ -984,30 +1001,7 @@ function ManualCorrectionPanel({
   onGuestCorrection: (sourceRow: number, patch: GuestCorrectionPatch) => void;
 }) {
   const { dictionary: t } = usePreferences();
-  const [municipiosByProvince, setMunicipiosByProvince] = useState<Record<string, MunicipioOption[]>>({});
-  const guestsWithIssues = parsed.guests.filter((guest) => guest.errors.length || guest.warnings.length);
-  const provinces = useMemo(() => Array.from(new Set(parsed.guests.map((guest) => provinceCodeFromPostalCode(guest.postalCode)).filter((province): province is string => Boolean(province)))), [parsed.guests]);
-
-  useEffect(() => {
-    let active = true;
-    async function loadMunicipios() {
-      const next: Record<string, MunicipioOption[]> = {};
-      await Promise.all(provinces.map(async (province) => {
-        try {
-          const response = await fetch(`/api/admin/ine/municipios?province=${encodeURIComponent(province)}`);
-          const data = await response.json();
-          next[province] = data.municipios ?? [];
-        } catch {
-          next[province] = [];
-        }
-      }));
-      if (active) setMunicipiosByProvince(next);
-    }
-    void loadMunicipios();
-    return () => {
-      active = false;
-    };
-  }, [provinces]);
+  const guestsWithIssues = parsed.guests.filter(hasManualCorrectionFields);
 
   return (
     <section className="panel p-5">
@@ -1016,8 +1010,8 @@ function ManualCorrectionPanel({
           <h3 className="font-heading text-lg font-bold">{t.manualCorrectionsTitle}</h3>
           <p className="mt-1 max-w-3xl text-sm text-muted">{t.manualCorrectionsCopy}</p>
         </div>
-        <span className={`status-pill ${parsed.validation.errors.length ? "is-error" : "is-valid"}`}>
-          {parsed.validation.errors.length ? `${parsed.validation.errors.length} ${t.errors}` : "OK"}
+        <span className={`status-pill ${parsed.validation.errors.length ? "is-error" : guestsWithIssues.length ? "is-warning" : "is-valid"}`}>
+          {parsed.validation.errors.length ? `${parsed.validation.errors.length} ${t.errors}` : guestsWithIssues.length ? `${guestsWithIssues.length} ${t.warnings}` : "OK"}
         </span>
       </div>
       {guestsWithIssues.length ? (
@@ -1032,40 +1026,52 @@ function ManualCorrectionPanel({
                 <StatusPill status={guest.validationStatus} />
               </div>
               <div className="manual-correction-fields">
-                <MunicipioCorrectionField guest={guest} municipios={municipiosByProvince[provinceCodeFromPostalCode(guest.postalCode) ?? ""] ?? []} onGuestCorrection={onGuestCorrection} />
-                <CorrectionSelect
-                  label={t.sex}
-                  value={guest.sex}
-                  options={[
-                    ["", t.selectValue],
-                    ["H", "H"],
-                    ["M", "M"],
-                    ["O", "O"],
-                  ]}
-                  onChange={(value) => onGuestCorrection(guest.sourceRow, { sex: value as GuestRecord["sex"] | undefined })}
-                />
-                <CorrectionInput
-                  label={t.relationship}
-                  value={guest.relationship}
-                  maxLength={2}
-                  onChange={(value) => onGuestCorrection(guest.sourceRow, { relationship: value?.toUpperCase() })}
-                />
-                <CorrectionInput
-                  label={t.documentSupport}
-                  value={guest.documentSupport}
-                  maxLength={9}
-                  onChange={(value) => onGuestCorrection(guest.sourceRow, { documentSupport: value })}
-                />
-                <CorrectionInput
-                  label={t.phone}
-                  value={guest.phone}
-                  onChange={(value) => onGuestCorrection(guest.sourceRow, { phone: value })}
-                />
-                <CorrectionInput
-                  label={t.email}
-                  value={guest.email}
-                  onChange={(value) => onGuestCorrection(guest.sourceRow, { email: value })}
-                />
+                {needsMunicipioCorrection(guest) && (
+                  <MunicipioCorrectionField guest={guest} onGuestCorrection={onGuestCorrection} />
+                )}
+                {hasIssueForField(guest, "sex") && (
+                  <CorrectionSelect
+                    label={t.sex}
+                    value={guest.sex}
+                    options={[
+                      ["", t.selectValue],
+                      ["H", "H"],
+                      ["M", "M"],
+                      ["O", "O"],
+                    ]}
+                    onChange={(value) => onGuestCorrection(guest.sourceRow, { sex: value as GuestRecord["sex"] | undefined })}
+                  />
+                )}
+                {hasIssueForField(guest, "relationship") && (
+                  <CorrectionInput
+                    label={t.relationship}
+                    value={guest.relationship}
+                    maxLength={2}
+                    onChange={(value) => onGuestCorrection(guest.sourceRow, { relationship: value?.toUpperCase() })}
+                  />
+                )}
+                {hasIssueForField(guest, "documentSupport") && (
+                  <CorrectionInput
+                    label={t.documentSupport}
+                    value={guest.documentSupport}
+                    maxLength={9}
+                    onChange={(value) => onGuestCorrection(guest.sourceRow, { documentSupport: value })}
+                  />
+                )}
+                {hasIssueForField(guest, "phone") && (
+                  <CorrectionInput
+                    label={t.phone}
+                    value={guest.phone}
+                    onChange={(value) => onGuestCorrection(guest.sourceRow, { phone: value })}
+                  />
+                )}
+                {hasIssueForField(guest, "email") && (
+                  <CorrectionInput
+                    label={t.email}
+                    value={guest.email}
+                    onChange={(value) => onGuestCorrection(guest.sourceRow, { email: value })}
+                  />
+                )}
               </div>
             </article>
           ))}
@@ -1079,16 +1085,16 @@ function ManualCorrectionPanel({
 
 function MunicipioCorrectionField({
   guest,
-  municipios,
   onGuestCorrection,
 }: {
   guest: GuestRecord;
-  municipios: MunicipioOption[];
   onGuestCorrection: (sourceRow: number, patch: GuestCorrectionPatch) => void;
 }) {
   const { dictionary: t } = usePreferences();
   const uid = useId();
   const [query, setQuery] = useState("");
+  const [options, setOptions] = useState<MunicipioOption[]>([]);
+  const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const [focusIdx, setFocusIdx] = useState(-1);
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -1096,6 +1102,13 @@ function MunicipioCorrectionField({
   const listRef = useRef<HTMLUListElement>(null);
 
   const provinceCode = provinceCodeFromPostalCode(guest.postalCode) ?? "";
+  const selected = useMemo(() => options.find((m) => m.codigoMunicipio === guest.municipalityCode)
+    ?? (guest.municipalityCode ? {
+      codigoMunicipio: guest.municipalityCode,
+      codigoProvincia: guest.municipalityCode.slice(0, 2),
+      nombre: guest.municipality || guest.municipalityCode,
+      nombreNormalizado: normalizeMunicipioName(guest.municipality || guest.municipalityCode),
+    } : undefined), [guest.municipality, guest.municipalityCode, options]);
 
   // Close on outside click
   useEffect(() => {
@@ -1116,16 +1129,36 @@ function MunicipioCorrectionField({
     }
   }, [focusIdx]);
 
-  const filtered = useMemo(() => {
-    if (!municipios.length) return [];
-    if (!query) return municipios;
-    const isDigits = /^\d+$/.test(query);
-    if (isDigits) return municipios.filter((m) => m.codigoMunicipio.slice(2).startsWith(query));
-    const q = normalizeMunicipioName(query);
-    return municipios.filter((m) => m.nombreNormalizado.includes(q));
-  }, [municipios, query]);
+  useEffect(() => {
+    const cleaned = query.trim();
+    if (!open || cleaned.length < 2) {
+      setOptions(selected ? [selected] : []);
+      setLoading(false);
+      return;
+    }
+    let active = true;
+    const timeout = window.setTimeout(async () => {
+      setLoading(true);
+      try {
+        const params = new URLSearchParams({ q: cleaned, limit: "30" });
+        if (provinceCode) params.set("province", provinceCode);
+        const response = await fetch(`/api/admin/ine/municipios?${params.toString()}`);
+        const data = await response.json();
+        const fetched: MunicipioOption[] = data.municipios ?? [];
+        if (active) setOptions(fetched);
+      } catch {
+        if (active) setOptions([]);
+      } finally {
+        if (active) setLoading(false);
+      }
+    }, 220);
+    return () => {
+      active = false;
+      window.clearTimeout(timeout);
+    };
+  }, [open, provinceCode, query, selected]);
 
-  const selected = municipios.find((m) => m.codigoMunicipio === guest.municipalityCode);
+  const visibleOptions = options.slice(0, 30);
 
   function select(m: MunicipioOption) {
     onGuestCorrection(guest.sourceRow, { municipalityCode: m.codigoMunicipio });
@@ -1142,27 +1175,17 @@ function MunicipioCorrectionField({
 
   function onKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (!open && (e.key === "ArrowDown" || e.key === "Enter")) { setOpen(true); setFocusIdx(0); e.preventDefault(); return; }
-    if (e.key === "ArrowDown") { setFocusIdx((i) => Math.min(i + 1, filtered.length - 1)); e.preventDefault(); }
+    if (e.key === "ArrowDown") { setFocusIdx((i) => Math.min(i + 1, visibleOptions.length - 1)); e.preventDefault(); }
     else if (e.key === "ArrowUp") { setFocusIdx((i) => Math.max(i - 1, 0)); e.preventDefault(); }
-    else if (e.key === "Enter" && focusIdx >= 0) { const m = filtered[focusIdx]; if (m) select(m); e.preventDefault(); }
+    else if (e.key === "Enter" && focusIdx >= 0) { const m = visibleOptions[focusIdx]; if (m) select(m); e.preventDefault(); }
     else if (e.key === "Escape") { setOpen(false); setFocusIdx(-1); }
-  }
-
-  // Fall back to plain input when catalog not loaded
-  if (!municipios.length) {
-    return (
-      <CorrectionInput
-        label={t.municipalityCode}
-        value={guest.municipalityCode}
-        onChange={(value) => onGuestCorrection(guest.sourceRow, { municipalityCode: value })}
-      />
-    );
   }
 
   return (
     <div ref={wrapperRef} className="manual-field relative">
       <span className="text-xs font-bold uppercase text-muted">{t.selectMunicipio}</span>
-      <div className="flex items-center gap-1.5 rounded-lg border border-input bg-surface px-2.5 py-1.5 focus-within:ring-2 focus-within:ring-accent/40 transition-shadow">
+      <div className="municipio-searchbox flex items-center gap-1.5 rounded-lg border border-input px-2.5 py-1.5 focus-within:ring-2 focus-within:ring-accent/40 transition-shadow">
+        <Search className="h-4 w-4 shrink-0 text-muted" aria-hidden="true" />
         {provinceCode && (
           <span className="shrink-0 rounded bg-accent/15 px-1.5 py-0.5 font-mono text-xs font-bold text-accent select-none">
             {provinceCode}
@@ -1177,7 +1200,7 @@ function MunicipioCorrectionField({
           ref={inputRef}
           id={uid}
           className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted"
-          placeholder={selected ? selected.nombre : t.selectMunicipio}
+          placeholder={selected ? selected.nombre : t.municipality}
           value={query}
           autoComplete="off"
           onChange={(e) => { setQuery(e.target.value); setOpen(true); setFocusIdx(0); }}
@@ -1196,14 +1219,14 @@ function MunicipioCorrectionField({
           </button>
         )}
       </div>
-      {open && filtered.length > 0 && (
+      {open && query.trim().length >= 2 && visibleOptions.length > 0 && (
         <ul
           ref={listRef}
           id={`${uid}-list`}
           role="listbox"
-          className="absolute left-0 right-0 top-full z-50 mt-1 max-h-52 overflow-y-auto rounded-xl border border-app bg-surface shadow-2xl"
+          className="municipio-options mt-2 max-h-64 overflow-y-auto rounded-lg border border-app bg-surface shadow-2xl"
         >
-          {filtered.map((m, idx) => (
+          {visibleOptions.map((m, idx) => (
             <li
               key={m.codigoMunicipio}
               id={`${uid}-opt-${idx}`}
@@ -1221,9 +1244,14 @@ function MunicipioCorrectionField({
           ))}
         </ul>
       )}
-      {open && query.length > 0 && filtered.length === 0 && (
-        <div className="absolute left-0 right-0 top-full z-50 mt-1 rounded-xl border border-app bg-surface px-3 py-2.5 text-sm text-muted shadow-2xl">
+      {open && query.trim().length >= 2 && !loading && visibleOptions.length === 0 && (
+        <div className="municipio-options mt-2 rounded-lg border border-app bg-surface px-3 py-2.5 text-sm text-muted shadow-2xl">
           {t.municipioAutoResolveFailed}
+        </div>
+      )}
+      {open && query.trim().length >= 2 && loading && (
+        <div className="municipio-options mt-2 rounded-lg border border-app bg-surface px-3 py-2.5 text-sm text-muted shadow-2xl">
+          {t.processing}
         </div>
       )}
     </div>
@@ -1476,6 +1504,10 @@ function translateIssueMessage(code: string, fallback: string, t: ReturnType<typ
   return fallback;
 }
 
+function issueRecommendedAction(issue: { severity: string }, t: ReturnType<typeof usePreferences>["dictionary"]) {
+  return issue.severity === "error" ? t.fixBeforeConsolidating : t.reviewWarningAction;
+}
+
 function PrivacyModeCard({ onClear, hasData }: { onClear: () => void; hasData: boolean }) {
   const { dictionary: t } = usePreferences();
   return (
@@ -1550,8 +1582,8 @@ function UnifiedIssuesPanel({
     <div className="panel overflow-hidden">
       <div className="flex items-center justify-between border-b border-app p-5">
         <div>
-          <h3 className="font-heading font-bold">{t.warnings}</h3>
-          <p className="mt-1 text-sm text-muted">{t.issueSummary}: {allRows.length}</p>
+          <h3 className="font-heading font-bold">{t.validations}</h3>
+          <p className="mt-1 text-sm text-muted">{t.errors}: {errors.length} · {t.warnings}: {warnings.length} · {t.duplicates}: {duplicates.length}</p>
         </div>
         {errors.length > 0 && <span className="status-pill is-error">{errors.length} {t.errors}</span>}
       </div>
@@ -1578,7 +1610,7 @@ function UnifiedIssuesPanel({
                         <td>{issue.sourceRow ?? "-"}</td>
                         <td>{issue.field || "-"}</td>
                         <td>{translateIssueMessage(issue.code, issue.message, t)}</td>
-                        <td>{t.fixBeforeConsolidating}</td>
+                        <td>{issueRecommendedAction(issue, t)}</td>
                       </tr>
                     );
                   }
@@ -1605,39 +1637,6 @@ function UnifiedIssuesPanel({
         </>
       ) : <p className="p-5 text-sm text-muted">OK</p>}
     </div>
-  );
-}
-
-function DuplicatePanel({ duplicates, onResolve }: { duplicates: NonNullable<ParsedExcel["duplicates"]>; onResolve: (id: string, resolution: DuplicateResolution) => void }) {
-  const { dictionary: t } = usePreferences();
-  if (!duplicates.length) return <section className="panel p-5"><h3 className="font-heading font-bold">{t.duplicates}</h3><p className="mt-2 text-sm text-muted">OK</p></section>;
-  return (
-    <section className="panel overflow-hidden">
-      <div className="border-b border-app p-5">
-        <h3 className="font-heading font-bold">{t.duplicates}</h3>
-        <p className="mt-1 text-sm text-warning">{t.reviewBeforeConsolidation}</p>
-      </div>
-      <div className="overflow-x-auto">
-        <table className="data-table">
-          <thead><tr><th>{t.status}</th><th>{t.row}</th><th>{t.explanation}</th><th>{t.recommendedAction}</th></tr></thead>
-          <tbody>
-            {duplicates.map((duplicate) => (
-              <tr key={duplicate.id}>
-                <td><span className={`status-pill ${duplicate.classification === "likely" ? "is-error" : "is-warning"}`}>{duplicate.classification === "likely" ? t.likelyDuplicate : t.possibleDuplicate}</span></td>
-                <td>{duplicate.sourceRows.join(", ")}</td>
-                <td>{duplicate.reasonCodes.join(", ")}</td>
-                <td>
-                  <div className="flex flex-wrap gap-2">
-                    <button type="button" className={`tab ${duplicate.resolution === "skip_new" ? "is-active" : ""}`} onClick={() => onResolve(duplicate.id, "skip_new")}>{t.skipNewRecord}</button>
-                    <button type="button" className={`tab ${duplicate.resolution === "keep_both" ? "is-active" : ""}`} onClick={() => onResolve(duplicate.id, "keep_both")}>{t.keepBothRecords}</button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </section>
   );
 }
 

@@ -42,4 +42,14 @@ describe("smartValidateParsedExcel", () => {
 
     expect(validated.validation.errors.some((error) => error.code === "payment.iban.invalid")).toBe(true);
   });
+
+  it("does not require Spanish municipality codes or infer IBANs for EU-only guests", () => {
+    const parsed = parseExcelBuffer(readFileSync("test-data/test2-eu-solo.xlsx"), "test2-eu-solo.xlsx");
+    const validated = smartValidateParsedExcel(parsed);
+
+    expect(validated.validation.errors).toHaveLength(0);
+    expect(validated.validation.status).toBe("WARNING");
+    expect(validated.guests.every((guest) => guest.countryIso3 !== "ESP" && !guest.municipalityCode)).toBe(true);
+    expect(validated.validation.warnings.some((warning) => warning.code === "guest.phone.missing" && warning.sourceRow === 23)).toBe(true);
+  });
 });
