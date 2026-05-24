@@ -45,10 +45,16 @@ export function ReservationDashboard() {
     setMessage(null);
     try {
       const response = await fetch("/api/admin/ine/municipios/sync", { method: "POST" });
-      const data = await response.json();
+      const text = await response.text();
+      let data: any;
+      try {
+        data = text ? JSON.parse(text) : {};
+      } catch {
+        data = { ok: false, message: t.ineSyncFailed, errors: [{ reason: `Respuesta no válida del servidor (${response.status}).` }] };
+      }
       setIneResult({ ...data, httpOk: response.ok });
-    } catch {
-      setIneResult({ ok: false, message: t.ineSyncFailed, errors: [{ reason: t.actionFailed }] });
+    } catch (error) {
+      setIneResult({ ok: false, message: t.ineSyncFailed, errors: [{ reason: error instanceof Error ? error.message : t.actionFailed }] });
     } finally {
       setIneBusy(false);
     }
