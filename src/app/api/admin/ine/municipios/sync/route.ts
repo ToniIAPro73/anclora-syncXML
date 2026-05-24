@@ -4,6 +4,9 @@ import { hasDatabase } from "@/lib/db/prisma";
 import { syncIneMunicipios } from "@/lib/ine/municipios";
 import { getRateLimitKey, sensitiveRateLimiter } from "@/lib/security/rateLimit";
 
+// Allow up to 5 minutes — the INE API can be slow
+export const maxDuration = 300;
+
 export async function POST(request: Request) {
   const rateLimit = sensitiveRateLimiter.check(`ine-sync:${getRateLimitKey(request)}`);
   if (!rateLimit.allowed) return NextResponse.json({ ok: false, message: "Demasiadas solicitudes", errors: [{ reason: "rate_limited" }] }, { status: 429 });
