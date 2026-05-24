@@ -319,12 +319,27 @@ button[aria-disabled="true"]:hover {
 }
 
 .process-message {
-  border: 1px solid color-mix(in srgb, var(--success) 32%, var(--border));
   border-radius: 8px;
-  background: color-mix(in srgb, var(--success) 11%, var(--surface));
+  border: 1px solid var(--border);
+  background: var(--surface-elevated);
   padding: 0.9rem 1rem;
   color: var(--secondary);
   font-size: 0.9rem;
+}
+
+.process-message.is-success {
+  border-color: color-mix(in srgb, var(--success) 32%, var(--border));
+  background: color-mix(in srgb, var(--success) 11%, var(--surface));
+}
+
+.process-message.is-warning {
+  border-color: color-mix(in srgb, var(--warning) 38%, var(--border));
+  background: color-mix(in srgb, var(--warning) 11%, var(--surface));
+}
+
+.process-message.is-error {
+  border-color: color-mix(in srgb, var(--error) 42%, var(--border));
+  background: color-mix(in srgb, var(--error) 12%, var(--surface));
 }
 
 .process-message.is-working {

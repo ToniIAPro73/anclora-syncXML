@@ -1,6 +1,6 @@
 import * as XLSX from "xlsx";
 import type { ParsedExcel } from "../domain";
-import { cleanText, extractPostalCode, normalizeDocumentType, normalizeNationality, normalizePaymentType, normalizePhone, normalizeTime, parseDate } from "../normalizers";
+import { cleanText, extractPostalCode, extractResidenceMunicipality, extractResidencePostalCode, normalizeDocumentType, normalizeNationality, normalizePaymentType, normalizePhone, normalizeTime, parseDate } from "../normalizers";
 import { validateGuest, validateParsedExcel } from "../validation";
 import { detectDuplicates } from "../duplicates";
 
@@ -24,7 +24,7 @@ function isGuestHeader(row: string[]) {
 }
 
 function isGuestRow(row: string[], header: string[]) {
-  return Boolean(get(row, header, "Nombre") && get(row, header, "1. Apellido") && get(row, header, "Número de documento"));
+  return Boolean(get(row, header, "Nombre") && get(row, header, "1. Apellido") && (get(row, header, "Número de documento") || get(row, header, "Fecha de nacimiento")));
 }
 
 export function parseExcelBuffer(buffer: Buffer, fileName?: string): ParsedExcel {
@@ -73,6 +73,8 @@ export function parseExcelBuffer(buffer: Buffer, fileName?: string): ParsedExcel
         if (isGuestRow(row, header)) {
           const address = get(row, header, "Dirección de residencia");
           const nationality = normalizeNationality(get(row, header, "Nationality"));
+          const countryIso3 = nationality === "ESP" ? "ESP" : nationality;
+          const postalCode = extractResidencePostalCode(address, countryIso3);
           guests.push(validateGuest({
             sourceRow: i + 1,
             role: "VI",
@@ -86,8 +88,9 @@ export function parseExcelBuffer(buffer: Buffer, fileName?: string): ParsedExcel
             email: get(row, header, "Correo electrónico") || undefined,
             phone: normalizePhone(get(row, header, "Número de teléfono")),
             address,
-            postalCode: extractPostalCode(address),
-            countryIso3: nationality === "ESP" ? "ESP" : nationality,
+            municipality: extractResidenceMunicipality(address, countryIso3, postalCode),
+            postalCode,
+            countryIso3,
             arrivalDate: parseDate(get(row, header, "Fecha de llegada")),
             departureDate: parseDate(get(row, header, "Fecha de salida")),
             relationship: get(row, header, "Parentesco") || undefined,
