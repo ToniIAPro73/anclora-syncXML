@@ -19,6 +19,9 @@ coverage
 .env.*
 !.env.example
 
+# Temporary agent handoff notes
+docs/SESION_*.md
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
