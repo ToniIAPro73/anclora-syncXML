@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ComponentType, ReactNode } from "react";
-import { Ban, CheckCircle2, ClipboardCheck, Download, Eye, EyeOff, FileSpreadsheet, FileText, RadioTower, SearchCheck, Send, ShieldCheck, Trash2, UploadCloud } from "lucide-react";
+import { Ban, CheckCircle2, ClipboardCheck, Database, Download, Eye, EyeOff, FileSpreadsheet, FileText, RadioTower, RefreshCw, SearchCheck, Send, ShieldCheck, Trash2, UploadCloud } from "lucide-react";
 import type { DuplicateResolution, GeneratedXmlResult, GuestRecord, ParsedExcel, ValidationIssue } from "@/lib/domain";
 import { smartValidateParsedExcel, validateGuest } from "@/lib/validation";
 import { buildXmlDownloadFileName } from "@/lib/xml/fileName";
@@ -341,11 +341,14 @@ export function SyncXmlWorkflow() {
               </button>
             </div>
           </div>
-          <div className="panel border-accent/30 p-6">
-            <div className="flex gap-3">
-              <ShieldCheck className="mt-1 h-5 w-5 shrink-0 text-accent" />
-              <p className="text-sm leading-6 text-secondary">{t.privacyNotice}</p>
+          <div className="space-y-4">
+            <div className="panel border-accent/30 p-6">
+              <div className="flex gap-3">
+                <ShieldCheck className="mt-1 h-5 w-5 shrink-0 text-accent" />
+                <p className="text-sm leading-6 text-secondary">{t.privacyNotice}</p>
+              </div>
             </div>
+            <IneSyncPanel />
           </div>
         </section>
       )}
@@ -1084,31 +1087,113 @@ function MunicipioCorrectionField({
   onGuestCorrection: (sourceRow: number, patch: GuestCorrectionPatch) => void;
 }) {
   const { dictionary: t } = usePreferences();
-  if (!municipios.length) {
-    return (
-      <CorrectionInput
-        label={t.municipalityCode}
-        value={guest.municipalityCode}
-        onChange={(value) => onGuestCorrection(guest.sourceRow, { municipalityCode: value })}
-      />
-    );
+  const datalistId = `municipios-row-${guest.sourceRow}`;
+
+  function handleChange(raw: string) {
+    const trimmed = raw.trim();
+    // Accept "Nombre — 46250" format (from datalist selection) or raw 5-digit code
+    const matchFull = trimmed.match(/—\s*(\d{5})$/);
+    if (matchFull) {
+      onGuestCorrection(guest.sourceRow, { municipalityCode: matchFull[1] });
+      return;
+    }
+    onGuestCorrection(guest.sourceRow, { municipalityCode: trimmed || undefined });
   }
+
+  // Resolve display value: if current code matches a known municipio, show "Nombre — code"
+  const currentDisplay = (() => {
+    if (!guest.municipalityCode) return "";
+    const found = municipios.find((m) => m.codigoMunicipio === guest.municipalityCode);
+    return found ? `${found.nombre} — ${found.codigoMunicipio}` : guest.municipalityCode;
+  })();
+
   return (
     <label className="manual-field">
       <span>{t.selectMunicipio}</span>
-      <select
+      <input
         className="input"
-        value={guest.municipalityCode ?? ""}
-        onChange={(event) => onGuestCorrection(guest.sourceRow, { municipalityCode: event.target.value || undefined })}
-      >
-        <option value="">{t.selectMunicipio}</option>
-        {municipios.map((municipio) => (
-          <option key={municipio.codigoMunicipio} value={municipio.codigoMunicipio}>
-            {municipio.nombre} — {municipio.codigoMunicipio}
-          </option>
-        ))}
-      </select>
+        list={municipios.length ? datalistId : undefined}
+        placeholder={municipios.length ? t.selectMunicipio : t.municipalityCode}
+        defaultValue={currentDisplay}
+        key={currentDisplay}
+        onChange={(event) => handleChange(event.target.value)}
+      />
+      {municipios.length > 0 && (
+        <datalist id={datalistId}>
+          {municipios.map((municipio) => (
+            <option key={municipio.codigoMunicipio} value={`${municipio.nombre} — ${municipio.codigoMunicipio}`} />
+          ))}
+        </datalist>
+      )}
     </label>
+  );
+}
+
+function IneSyncPanel() {
+  const { dictionary: t } = usePreferences();
+  const [busy, setBusy] = useState(false);
+  const [result, setResult] = useState<any | null>(null);
+  const [open, setOpen] = useState(false);
+
+  async function sync() {
+    setBusy(true);
+    setResult(null);
+    try {
+      const response = await fetch("/api/admin/ine/municipios/sync", { method: "POST" });
+      const data = await response.json();
+      setResult({ ...data, httpOk: response.ok });
+    } catch {
+      setResult({ ok: false, message: t.ineSyncFailed, errors: [{ reason: t.actionFailed }] });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="rounded-lg border border-app bg-surface-elevated">
+      <button
+        type="button"
+        className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left"
+        onClick={() => setOpen((v) => !v)}
+      >
+        <div className="flex items-center gap-2 text-sm text-muted">
+          <Database className="h-4 w-4 shrink-0" />
+          <span>{t.ineMunicipiosTitle}</span>
+        </div>
+        <span className="text-xs text-muted">{open ? "▲" : "▼"}</span>
+      </button>
+      {open && (
+        <div className="border-t border-app px-4 pb-4 pt-3">
+          <p className="mb-3 text-xs text-muted">{t.ineMunicipiosCopy}</p>
+          <button
+            type="button"
+            className="btn-secondary text-sm"
+            disabled={busy}
+            onClick={sync}
+          >
+            {busy
+              ? <><span className="spinner" aria-hidden="true" />{t.ineSyncing}</>
+              : <><RefreshCw className="h-4 w-4" />{t.ineMunicipiosButton}</>
+            }
+          </button>
+          {result && (
+            <div className={`mt-3 rounded-md border p-3 text-xs ${result.ok ? "border-emerald-500/30" : "border-red-500/40"}`}>
+              <p className="font-bold">{result.ok ? t.ineSyncOk : t.ineSyncFailed}</p>
+              <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 sm:grid-cols-3">
+                <span>{t.ineFetched}: <b>{result.totalFetched ?? 0}</b></span>
+                <span>{t.ineInserted}: <b>{result.inserted ?? 0}</b></span>
+                <span>{t.ineUpdated}: <b>{result.updated ?? 0}</b></span>
+                <span>{t.ineSkipped}: <b>{result.skipped ?? 0}</b></span>
+                <span>{t.ineErrors}: <b>{result.errors?.length ?? 0}</b></span>
+                {result.lastSyncedAt && (
+                  <span className="col-span-2 sm:col-span-1">{t.ineLastSync}: <b>{new Date(result.lastSyncedAt).toLocaleString()}</b></span>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 
