@@ -9,10 +9,11 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const province = searchParams.get("province") || provinceCodeFromPostalCode(searchParams.get("postalCode") ?? undefined);
   const q = searchParams.get("q");
+  const limit = Number.parseInt(searchParams.get("limit") ?? "80", 10);
   const municipios = await listMunicipios({
     codigoProvincia: province,
     q: q ? normalizeMunicipioName(q) : null,
-    limit: 120,
+    limit: Number.isFinite(limit) ? limit : 80,
   });
   const lastSyncedAt = await getMunicipiosLastSync();
   return NextResponse.json({ municipios, lastSyncedAt: lastSyncedAt?.toISOString() ?? null });
