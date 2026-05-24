@@ -54,6 +54,10 @@ export function SyncXmlWorkflow() {
   const [temporaryCleared, setTemporaryCleared] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }, [activeStep]);
+
   const validGuests = useMemo(() => parsed?.guests.filter((guest) => guest.errors.length === 0) ?? [], [parsed]);
   const consentAccepted = consents.every(Boolean);
   const duplicateBlockers = useMemo(() => (parsed ? unresolvedDuplicates(parsed) : []), [parsed]);
