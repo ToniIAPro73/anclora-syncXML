@@ -8,18 +8,20 @@ describe("smartValidateParsedExcel", () => {
     const parsed = parseExcelBuffer(readFileSync("docs/registro_huespedes.xlsx"), "registro_huespedes.xlsx");
     const validated = smartValidateParsedExcel(parsed);
 
-    expect(validated.validation.errors.filter((error) => error.code === "ses.readiness.municipalityCode.required")).toHaveLength(7);
-    expect(validated.guests.every((guest) => guest.validationStatus !== "ERROR")).toBe(true);
+    expect(validated.validation.errors.filter((error) => error.code === "guest.municipalityCode.required")).toHaveLength(7);
+    expect(validated.validation.errors.filter((error) => error.code === "guest.documentSupport.required")).toHaveLength(7);
+    expect(validated.guests.every((guest) => guest.validationStatus === "ERROR")).toBe(true);
   });
 
   it("allows SES readiness when Spanish municipality codes are present", () => {
     const parsed = parseExcelBuffer(readFileSync("docs/registro_huespedes.xlsx"), "registro_huespedes.xlsx");
     const validated = smartValidateParsedExcel({
       ...parsed,
-      guests: parsed.guests.map((guest) => ({ ...guest, municipalityCode: "07040" })),
+      guests: parsed.guests.map((guest) => ({ ...guest, municipalityCode: "07040", documentSupport: "123456789" })),
     });
 
-    expect(validated.validation.errors.some((error) => error.code === "ses.readiness.municipalityCode.required")).toBe(false);
+    expect(validated.validation.errors.some((error) => error.code === "guest.municipalityCode.required")).toBe(false);
+    expect(validated.validation.errors.some((error) => error.code === "guest.documentSupport.required")).toBe(false);
     expect(validated.guests.every((guest) => guest.validationStatus !== "ERROR")).toBe(true);
   });
 
@@ -51,6 +53,6 @@ describe("smartValidateParsedExcel", () => {
     expect(validated.validation.errors[0]).toMatchObject({ code: "guest.postalCode.required", sourceRow: 20 });
     expect(validated.validation.status).toBe("ERROR");
     expect(validated.guests.every((guest) => guest.countryIso3 !== "ESP" && !guest.municipalityCode)).toBe(true);
-    expect(validated.validation.warnings.some((warning) => warning.code === "guest.phone.missing" && warning.sourceRow === 23)).toBe(true);
+    expect(validated.validation.warnings.some((warning) => warning.code === "guest.phone.missing" && warning.sourceRow === 23)).toBe(false);
   });
 });

@@ -2,9 +2,22 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { parseExcelBuffer } from "@/lib/excel/parseExcel";
 import { generateHospitalityXml } from "@/lib/xml/generateHospitalityXml";
+import { validateGuest } from "@/lib/validation";
 
 describe("generateHospitalityXml", () => {
-  const parsed = parseExcelBuffer(readFileSync("docs/registro_huespedes.xlsx"));
+  const parsed = (() => {
+    const imported = parseExcelBuffer(readFileSync("docs/registro_huespedes.xlsx"));
+    const guests = imported.guests.map((guest) => validateGuest({
+      ...guest,
+      municipalityCode: "07040",
+      documentSupport: "123456789",
+    }));
+    return {
+      ...imported,
+      guests,
+      validation: { status: "VALID" as const, errors: [], warnings: [] },
+    };
+  })();
   const template = readFileSync("docs/xml-plantilla.xml", "utf8");
   const generated = generateHospitalityXml(parsed, template);
 

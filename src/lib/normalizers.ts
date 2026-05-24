@@ -148,6 +148,24 @@ export function extractResidencePostalCode(value: unknown, countryIso3?: string)
   return undefined;
 }
 
+export function extractResidenceMunicipality(value: unknown, countryIso3?: string, postalCode?: string): string | undefined {
+  const raw = cleanText(value);
+  if (!raw || countryIso3 === "ESP") return undefined;
+  const segments = raw.split(",").map((segment) => cleanText(segment)).filter(Boolean);
+  if (!segments.length) return undefined;
+  const postal = postalCode ? postalCode.toUpperCase().replace(/\s+/g, " ") : undefined;
+  const postalIndex = postal
+    ? segments.findIndex((segment) => segment.toUpperCase().replace(/\s+/g, " ").includes(postal))
+    : -1;
+  const candidate = postalIndex > 0 ? segments[postalIndex - 1] : segments.at(-1);
+  const cleaned = cleanText(candidate?.replace(/\b\d{4}-\d{3}\b/g, "")
+    .replace(/\b\d{3}\s\d{2}\b/g, "")
+    .replace(/\b[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}\b/gi, "")
+    .replace(/\b\d{4,6}\b/g, ""));
+  if (!cleaned || /^\d+$/.test(cleaned)) return undefined;
+  return cleaned.slice(0, 100);
+}
+
 export function sanitizeFileName(name: string): string {
   const base = name.split(/[\\/]/).pop() ?? "archivo";
   return base.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9._-]+/g, "-").replace(/-+/g, "-").slice(0, 120);
