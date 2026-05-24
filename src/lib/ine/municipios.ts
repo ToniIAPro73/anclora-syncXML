@@ -124,7 +124,7 @@ export async function syncIneMunicipios(options: { repository?: IneMunicipioSync
 export async function fetchIneMunicipioPage(page: number, retries = 2): Promise<IneMunicipioRaw[]> {
   for (let attempt = 0; attempt <= retries; attempt += 1) {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 15_000);
+    const timeout = setTimeout(() => controller.abort(), 120_000);
     try {
       const response = await fetch(`${INE_MUNICIPIOS_URL}?page=${page}`, { signal: controller.signal });
       if (!response.ok) throw new Error(`INE respondió ${response.status}`);
