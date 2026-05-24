@@ -265,7 +265,7 @@ export function SyncXmlWorkflow() {
 
       {message && <div className={`process-message ${processMessageTone(message, t)}`} role="status">{message}</div>}
       {busy && <div className="process-message is-working" role="status">{t.processing}</div>}
-      {activeStep !== 1 && <PrivacyModeCard onClear={clearOperation} hasData={Boolean(parsed || generated || selectedFile)} />}
+      {activeStep !== 1 && activeStep !== 2 && <PrivacyModeCard onClear={clearOperation} hasData={Boolean(parsed || generated || selectedFile)} />}
 
       {activeStep === 1 && (
         <>
@@ -354,6 +354,8 @@ export function SyncXmlWorkflow() {
           onMappingReviewedChange={setMappingReviewed}
           onDuplicateResolution={updateDuplicateResolution}
           onGuestCorrection={updateGuestCorrection}
+          onClear={clearOperation}
+          hasData={Boolean(parsed || generated || selectedFile)}
         />
       )}
 
@@ -417,6 +419,8 @@ function ExcelReview({
   onMappingReviewedChange,
   onDuplicateResolution,
   onGuestCorrection,
+  onClear,
+  hasData,
 }: {
   parsed: ParsedExcel;
   validGuests: number;
@@ -433,33 +437,14 @@ function ExcelReview({
   onMappingReviewedChange: (value: boolean) => void;
   onDuplicateResolution: (id: string, resolution: DuplicateResolution) => void;
   onGuestCorrection: (sourceRow: number, patch: GuestCorrectionPatch) => void;
+  onClear: () => void;
+  hasData: boolean;
 }) {
   const { dictionary: t } = usePreferences();
   const duplicateBlockers = unresolvedDuplicates(parsed);
   return (
     <>
-      <section className="grid gap-4 md:grid-cols-3">
-        <InfoCard title={t.reservationSummary} rows={[
-          [t.reference, parsed.reservation.reference],
-          [t.checkIn, `${parsed.reservation.checkInDate ?? ""} ${parsed.reservation.checkInTime ?? ""}`],
-          [t.checkOut, `${parsed.reservation.checkOutDate ?? ""} ${parsed.reservation.checkOutTime ?? ""}`],
-          [t.guestCount, String(parsed.reservation.guestCount ?? validGuests)],
-        ]} />
-        <InfoCard title={t.property} rows={[
-          [t.code, parsed.property.establishmentCode],
-          [t.name, parsed.property.name],
-          [t.address, showFullData ? parsed.property.address : maskAddress(parsed.property.address)],
-          [t.municipality, `${parsed.property.postalCode ?? ""} ${parsed.property.municipality ?? ""}`],
-          [t.province, parsed.property.province],
-        ]} />
-        <InfoCard title={t.contractPayment} rows={[
-          [t.contract, parsed.reservation.contractDate],
-          [t.paymentType, parsed.payment.paymentType],
-          ["IBAN", maskPayment(parsed.payment.iban)],
-          ["Internet", String(parsed.reservation.internet ?? true)],
-        ]} />
-      </section>
-
+      {/* 3. Tabla de huéspedes */}
       <section className="panel overflow-hidden">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-app p-5">
           <div>
@@ -487,14 +472,42 @@ function ExcelReview({
         <GuestTable guests={parsed.guests} smartValidated={smartValidated} showFullData={showFullData} />
       </section>
 
+      {/* 4. Resumen reserva, establecimiento, contrato */}
+      <section className="grid gap-4 md:grid-cols-3">
+        <InfoCard title={t.reservationSummary} rows={[
+          [t.reference, parsed.reservation.reference],
+          [t.checkIn, `${parsed.reservation.checkInDate ?? ""} ${parsed.reservation.checkInTime ?? ""}`],
+          [t.checkOut, `${parsed.reservation.checkOutDate ?? ""} ${parsed.reservation.checkOutTime ?? ""}`],
+          [t.guestCount, String(parsed.reservation.guestCount ?? validGuests)],
+        ]} />
+        <InfoCard title={t.property} rows={[
+          [t.code, parsed.property.establishmentCode],
+          [t.name, parsed.property.name],
+          [t.address, showFullData ? parsed.property.address : maskAddress(parsed.property.address)],
+          [t.municipality, `${parsed.property.postalCode ?? ""} ${parsed.property.municipality ?? ""}`],
+          [t.province, parsed.property.province],
+        ]} />
+        <InfoCard title={t.contractPayment} rows={[
+          [t.contract, parsed.reservation.contractDate],
+          [t.paymentType, parsed.payment.paymentType],
+          ["IBAN", maskPayment(parsed.payment.iban)],
+          ["Internet", String(parsed.reservation.internet ?? true)],
+        ]} />
+      </section>
+
+      {/* 5. Revisión guiada */}
       <ManualCorrectionPanel parsed={parsed} onGuestCorrection={onGuestCorrection} />
 
+      {/* 6. Validaciones */}
       <UnifiedIssuesPanel
         warnings={parsed.validation.warnings}
         errors={parsed.validation.errors}
         duplicates={parsed.duplicates ?? []}
         onDuplicateResolve={onDuplicateResolution}
       />
+
+      {/* 7. Modo privado */}
+      <PrivacyModeCard onClear={onClear} hasData={hasData} />
     </>
   );
 }
