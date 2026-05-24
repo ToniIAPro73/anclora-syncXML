@@ -25,13 +25,24 @@ export const prismaMunicipioRepository: MunicipioLookupRepository = {
 export async function listMunicipios(params: { codigoProvincia?: string | null; q?: string | null; limit?: number } = {}): Promise<MunicipioCatalogRecord[]> {
   if (!hasDatabase()) return [];
   const q = params.q?.trim();
+  const isCodeSearch = Boolean(q && /^\d+$/.test(q));
   // When filtering by province return all (max ~400 per province). Only cap for open searches.
   const limit = params.codigoProvincia && !q ? undefined : Math.min(Math.max(params.limit ?? 80, 1), 500);
   try {
     return await prisma.ineMunicipio.findMany({
       where: {
         ...(params.codigoProvincia ? { codigoProvincia: params.codigoProvincia } : {}),
-        ...(q ? { nombreNormalizado: { contains: q } } : {}),
+        ...(q
+          ? {
+              OR: [
+                { nombreNormalizado: { contains: q } },
+                ...(isCodeSearch ? [
+                  { codigoMunicipio: { startsWith: q } },
+                  { codigoMunicipioCorto: { startsWith: q.padStart(3, "0") } },
+                ] : []),
+              ],
+            }
+          : {}),
       },
       orderBy: [{ codigoProvincia: "asc" }, { nombre: "asc" }],
       ...(limit !== undefined ? { take: limit } : {}),

@@ -44,6 +44,30 @@ export function parseExcelBuffer(buffer: Buffer, fileName?: string): ParsedExcel
     rows.forEach((row, idx) => rawRows.push({ rowNumber: idx + 1, values: row.map(cleanText) }));
 
     if (headerIndex >= 0) {
+      for (let i = 0; i < headerIndex; i += 1) {
+        const row = rows[i].map(cleanText);
+        if (!row.some(Boolean)) continue;
+        const key = row[0].toUpperCase();
+        const value = row[1] || "";
+        if (key.startsWith("CODIGO")) property.establishmentCode = key.replace(/[^0-9]/g, "") || value.replace(/[^0-9]/g, "");
+        else if (!property.name && row[0] && rows[i - 1]?.[0]?.toUpperCase().startsWith("CODIGO")) property.name = row[0];
+        else if (property.name && !property.address && row[0] && !row[0].includes("REFERENCIA")) property.address = row[0];
+        else if (property.address && !property.postalCode) {
+          property.postalCode = extractPostalCode(row[0]);
+          property.municipality = row[0].replace(/\b\d{5}\b/, "").trim() || undefined;
+        } else if (property.postalCode && !property.province) property.province = row[0];
+        else if (key === "REFERENCIA") reservation.reference = value;
+        else if (key === "FECHA DE ENTRADA") reservation.checkInDate = parseDate(value);
+        else if (key === "FECHA DE SALIDA") reservation.checkOutDate = parseDate(value);
+        else if (key === "HORA" && reservation.checkInDate && !reservation.checkInTime) reservation.checkInTime = normalizeTime(value);
+        else if (key === "HORA" && reservation.checkInTime && !reservation.checkOutTime) reservation.checkOutTime = normalizeTime(value);
+        else if (key === "FECHA DE CONTRATO") reservation.contractDate = parseDate(value);
+        else if (key === "NUMERO DE PERSONAS") reservation.guestCount = Number.parseInt(value, 10);
+        else if (key === "TIPO DE PAGO") payment.paymentType = normalizePaymentType(value);
+        else if (key.includes("IBAN")) payment.iban = value.replace(/\s+/g, "").toUpperCase();
+        else ignoredRows.push({ rowNumber: i + 1, values: row, reason: "No clasificada" });
+      }
+
       for (let i = headerIndex + 1; i < rows.length; i += 1) {
         const row = rows[i].map(cleanText);
         if (isGuestRow(row, header)) {
