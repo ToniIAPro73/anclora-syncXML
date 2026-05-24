@@ -2,7 +2,7 @@
 
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import type { ComponentType, ReactNode } from "react";
-import { Ban, CheckCircle2, ClipboardCheck, Download, Eye, EyeOff, FileSpreadsheet, FileText, RadioTower, Search, SearchCheck, Send, ShieldCheck, Trash2, UploadCloud } from "lucide-react";
+import { Ban, CheckCircle2, ClipboardCheck, Copy, Download, Eye, EyeOff, FileSpreadsheet, FileText, Link2, RadioTower, Search, SearchCheck, Send, ShieldCheck, Trash2, UploadCloud } from "lucide-react";
 import type { DuplicateResolution, GeneratedXmlResult, GuestRecord, ParsedExcel, ValidationIssue } from "@/lib/domain";
 import { smartValidateParsedExcel, validateGuest } from "@/lib/validation";
 import { buildXmlDownloadFileName } from "@/lib/xml/fileName";
@@ -10,6 +10,7 @@ import { usePreferences } from "./AppPreferencesProvider";
 import { unresolvedDuplicates } from "@/lib/duplicates";
 import { maskAddress, maskDocument, maskEmail, maskPayment, maskPhone } from "@/lib/privacy/masking";
 import { normalizeMunicipioName, provinceCodeFromPostalCode } from "@/lib/municipios/normalize";
+import { buildValidationReportCsv, buildValidationReportFileName } from "@/lib/validationReport";
 
 type BusyAction = "upload" | "validate" | "generate" | "consolidate" | null;
 type WorkflowStep = 1 | 2 | 3 | 4;
@@ -87,7 +88,7 @@ export function SyncXmlWorkflow() {
       if (data.consolidated) setConsolidated(true);
       if (data.activeStep) setActiveStep(data.activeStep);
     } catch { /* ignore */ }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   // Persist session on state changes
   useEffect(() => {
@@ -259,6 +260,17 @@ export function SyncXmlWorkflow() {
     URL.revokeObjectURL(url);
   }
 
+  function downloadValidationReport() {
+    if (!parsed) return;
+    const blob = new Blob([buildValidationReportCsv(parsed)], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = buildValidationReportFileName(parsed);
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   function clearOperation() {
     if (!window.confirm(t.clearOperationConfirm)) return;
     sessionStorage.removeItem(SESSION_KEY);
@@ -309,6 +321,16 @@ export function SyncXmlWorkflow() {
         consolidated={consolidated}
         busyAction={busyAction}
         onStepClick={handleStepClick}
+      />
+
+      <TraceabilityPanel
+        selectedFileName={selectedFile?.name ?? parsed?.fileName}
+        parsed={parsed}
+        generated={generated}
+        consolidated={consolidated}
+        smartValidated={smartValidated}
+        previewReviewed={previewReviewed}
+        mappingReviewed={mappingReviewed}
       />
 
       {message && <div className={`process-message ${processMessageTone(message, t)}`} role="status">{message}</div>}
@@ -393,6 +415,7 @@ export function SyncXmlWorkflow() {
           smartValidated={smartValidated}
           onSmartValidate={validateSmart}
           onGenerate={generate}
+          onDownloadValidationReport={downloadValidationReport}
           showFullData={showFullData}
           onShowFullDataChange={setShowFullData}
           previewReviewed={previewReviewed}
@@ -408,6 +431,7 @@ export function SyncXmlWorkflow() {
 
       {activeStep === 3 && generated && parsed && (
         <XmlViewer
+          parsed={parsed}
           generated={generated}
           activeView={activeView}
           busy={busy}
@@ -465,6 +489,7 @@ function ExcelReview({
   smartValidated,
   onSmartValidate,
   onGenerate,
+  onDownloadValidationReport,
   showFullData,
   onShowFullDataChange,
   previewReviewed,
@@ -483,6 +508,7 @@ function ExcelReview({
   smartValidated: boolean;
   onSmartValidate: () => void;
   onGenerate: () => void;
+  onDownloadValidationReport: () => void;
   showFullData: boolean;
   onShowFullDataChange: (value: boolean) => void;
   previewReviewed: boolean;
@@ -512,6 +538,9 @@ function ExcelReview({
             </button>
             <button disabled={busy} onClick={onSmartValidate} className="btn-secondary disabled:opacity-45">
               {busyAction === "validate" ? <WorkingLabel label={t.processing} /> : <><ShieldCheck className="h-4 w-4" />{t.smartValidate}</>}
+            </button>
+            <button type="button" className="btn-secondary" disabled={busy} onClick={onDownloadValidationReport}>
+              <Download className="h-4 w-4" />{t.downloadValidationReport}
             </button>
             <button disabled={Boolean(parsed.validation.errors.length) || Boolean(duplicateBlockers.length) || !previewReviewed || !mappingReviewed || busy} onClick={onGenerate} className="btn-primary disabled:opacity-45">
               {busyAction === "generate" ? <WorkingLabel label={t.processing} /> : t.generateXml}
@@ -567,6 +596,7 @@ function ExcelReview({
 }
 
 function XmlViewer({
+  parsed,
   generated,
   activeView,
   busy,
@@ -579,6 +609,7 @@ function XmlViewer({
   onClear,
   hasData,
 }: {
+  parsed: ParsedExcel;
   generated: GeneratedXmlResult;
   activeView: "visual" | "xml";
   busy: boolean;
@@ -637,9 +668,88 @@ function XmlViewer({
       {/* Servicios SES.HOSPEDAJES */}
       <SesIntegrationPanel xml={generated.xml} />
 
+      {/* Pre-check-in de prueba */}
+      <PrecheckinTestPanel parsed={parsed} />
+
       {/* Modo privado */}
       <PrivacyModeCard onClear={onClear} hasData={hasData} />
     </>
+  );
+}
+
+function PrecheckinTestPanel({ parsed }: { parsed: ParsedExcel }) {
+  const { dictionary: t } = usePreferences();
+  const [busy, setBusy] = useState(false);
+  const [link, setLink] = useState<string | null>(null);
+  const [status, setStatus] = useState<string | null>(null);
+
+  async function createLink() {
+    setBusy(true);
+    setStatus(null);
+    try {
+      const { response, data } = await fetchJson("/api/precheckin/test-session", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ parsed }),
+      });
+      if (!response.ok) {
+        setStatus(data.error ?? t.actionFailed);
+        return;
+      }
+      const nextLink = `${window.location.origin}${data.url}`;
+      setLink(nextLink);
+      setStatus(t.precheckinLinkReady);
+    } catch {
+      setStatus(t.actionFailed);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function copyLink() {
+    if (!link) return;
+    await navigator.clipboard.writeText(link);
+    setStatus(t.precheckinLinkCopied);
+  }
+
+  return (
+    <section className="ses-panel mt-6">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="flex min-w-0 gap-3">
+          <div className="icon-tile"><Link2 className="h-5 w-5" /></div>
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <h3 className="font-heading text-xl font-black">{t.precheckinPanelTitle}</h3>
+              <span className="status-pill is-warning">{t.precheckinTestMode}</span>
+            </div>
+            <p className="mt-2 max-w-3xl text-sm text-secondary">{t.precheckinPanelCopy}</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-5 grid gap-4 xl:grid-cols-[1fr_1fr]">
+        <div className="ses-card">
+          <h4 className="font-heading text-base font-bold">{t.precheckinGuestLink}</h4>
+          <p className="mt-1 text-sm text-muted">{t.precheckinGuestLinkCopy}</p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <button type="button" className="btn-secondary" disabled={busy} onClick={createLink}>
+              {busy ? <WorkingLabel label={t.processing} /> : <><Link2 className="h-4 w-4" />{t.precheckinCreateLink}</>}
+            </button>
+            <button type="button" className="btn-secondary" disabled={!link} onClick={copyLink}>
+              <Copy className="h-4 w-4" />{t.precheckinCopyLink}
+            </button>
+          </div>
+        </div>
+
+        <div className="ses-card">
+          <h4 className="font-heading text-base font-bold">{t.precheckinMetadataOnly}</h4>
+          <p className="mt-1 text-sm text-muted">{t.precheckinMetadataCopy}</p>
+          {link && <a className="mt-4 block overflow-hidden text-ellipsis whitespace-nowrap text-sm font-bold text-accent underline" href={link} target="_blank" rel="noreferrer">{link}</a>}
+        </div>
+      </div>
+
+      {status && <div className="ses-result mt-4" role="status">{status}</div>}
+    </section>
   );
 }
 
