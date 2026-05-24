@@ -126,6 +126,28 @@ export function extractPostalCode(value: unknown): string | undefined {
   return cleanText(value).match(/\b\d{5}\b/)?.[0];
 }
 
+export function extractResidencePostalCode(value: unknown, countryIso3?: string): string | undefined {
+  const raw = cleanText(value).toUpperCase();
+  if (!raw) return undefined;
+  if (countryIso3 === "ESP") return extractPostalCode(raw);
+
+  const segments = raw.split(",").map((segment) => segment.trim()).filter(Boolean).reverse();
+  const patterns = [
+    /\b\d{4}-\d{3}\b/,
+    /\b\d{3}\s\d{2}\b/,
+    /\b[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}\b/,
+    /\b\d{4,6}\b/,
+  ];
+
+  for (const segment of segments) {
+    for (const pattern of patterns) {
+      const match = segment.match(pattern)?.[0];
+      if (match) return match;
+    }
+  }
+  return undefined;
+}
+
 export function sanitizeFileName(name: string): string {
   const base = name.split(/[\\/]/).pop() ?? "archivo";
   return base.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9._-]+/g, "-").replace(/-+/g, "-").slice(0, 120);

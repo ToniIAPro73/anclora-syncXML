@@ -20,7 +20,7 @@ type SesStatus = {
   hasLandlordCode: boolean;
   endpoint: string;
 };
-type GuestCorrectionPatch = Partial<Pick<GuestRecord, "municipalityCode" | "sex" | "relationship" | "documentSupport" | "phone" | "email">>;
+type GuestCorrectionPatch = Partial<Pick<GuestRecord, "municipalityCode" | "postalCode" | "sex" | "relationship" | "documentSupport" | "phone" | "email">>;
 type MunicipioOption = { codigoMunicipio: string; codigoProvincia: string; nombre: string; nombreNormalizado: string };
 
 async function fetchJson(url: string, init: RequestInit, timeoutMs = 25000) {
@@ -108,6 +108,17 @@ export function SyncXmlWorkflow() {
   async function generate() {
     if (!parsed) {
       setActiveStep(1);
+      return;
+    }
+    const validated = smartValidateParsedExcel(parsed);
+    if (validated.validation.errors.length) {
+      setParsed(validated);
+      setGenerated(null);
+      setConsolidated(false);
+      setSmartValidated(true);
+      setPreviewReviewed(false);
+      setActiveStep(2);
+      setMessage(t.smartValidationErrors);
       return;
     }
     setBusyAction("generate");
@@ -260,7 +271,7 @@ export function SyncXmlWorkflow() {
         onStepClick={handleStepClick}
       />
 
-      {message && <div className="process-message" role="status">{message}</div>}
+      {message && <div className={`process-message ${processMessageTone(message, t)}`} role="status">{message}</div>}
       {busy && <div className="process-message is-working" role="status">{t.processing}</div>}
       <PrivacyModeCard onClear={clearOperation} hasData={Boolean(parsed || generated || selectedFile)} />
       <TraceabilityPanel
@@ -986,6 +997,7 @@ function needsMunicipioCorrection(guest: GuestRecord) {
 
 function hasManualCorrectionFields(guest: GuestRecord) {
   return needsMunicipioCorrection(guest)
+    || hasIssueForField(guest, "postalCode")
     || hasIssueForField(guest, "sex")
     || hasIssueForField(guest, "relationship")
     || hasIssueForField(guest, "documentSupport")
@@ -1028,6 +1040,14 @@ function ManualCorrectionPanel({
               <div className="manual-correction-fields">
                 {needsMunicipioCorrection(guest) && (
                   <MunicipioCorrectionField guest={guest} onGuestCorrection={onGuestCorrection} />
+                )}
+                {hasIssueForField(guest, "postalCode") && (
+                  <CorrectionInput
+                    label={t.postalCode}
+                    value={guest.postalCode}
+                    maxLength={20}
+                    onChange={(value) => onGuestCorrection(guest.sourceRow, { postalCode: value })}
+                  />
                 )}
                 {hasIssueForField(guest, "sex") && (
                   <CorrectionSelect
@@ -1422,6 +1442,23 @@ function WorkingLabel({ label }: { label: string }) {
   return <><span className="spinner" aria-hidden="true" />{label}</>;
 }
 
+function processMessageTone(message: string, t: ReturnType<typeof usePreferences>["dictionary"]) {
+  const errorMessages = [
+    t.actionFailed,
+    t.smartValidationErrors,
+    t.xmlGeneratedWithIssues,
+    t.criticalErrorsBlocked,
+    t.unresolvedDuplicatesBlocked,
+    t.xmlPreviewRequired,
+    t.previewReviewRequired,
+    t.mappingReviewRequired,
+    t.consentRequiredNotice,
+  ] as string[];
+  if (errorMessages.includes(message) || message.includes(t.criticalErrorsBlocked)) return "is-error";
+  if (message === t.smartValidationApplied || message === t.manualCorrectionApplied) return "is-warning";
+  return "is-success";
+}
+
 function InfoCard({ title, rows }: { title: string; rows: Array<[string, string | number | undefined]> }) {
   return <div className="panel p-5"><h3 className="font-heading text-lg font-bold">{title}</h3><dl className="mt-4 space-y-2">{rows.map(([key, value]) => <div key={key} className="flex justify-between gap-4 text-sm"><dt className="text-muted">{key}</dt><dd className="text-right font-semibold text-secondary">{value || "-"}</dd></div>)}</dl></div>;
 }
@@ -1499,6 +1536,8 @@ function translateIssueMessage(code: string, fallback: string, t: ReturnType<typ
   if (code === "guest.sex.missing") return t.issueSexMissing;
   if (code === "guest.documentSupport.missing") return t.issueDocumentSupportMissing;
   if (code === "guest.municipalityCode.missing") return t.issueMunicipalityCodeMissing;
+  if (code === "guest.postalCode.required") return t.issuePostalCodeRequired;
+  if (code === "guest.postalCode.invalid") return t.issuePostalCodeInvalid;
   if (code === "ses.readiness.municipalityCode.required") return t.issueSesMunicipalityCodeRequired;
   if (code === "municipality.autoResolved") return t.municipioAutoResolved;
   return fallback;
