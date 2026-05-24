@@ -88,19 +88,39 @@ function matchMunicipiosInAddress(rawAddress: string | undefined, normalizedAddr
     .filter((segment) => segment && !/^\d{5}$/.test(segment));
   if (segments.length < 2) return matches;
   const lastIndex = segments.length - 1;
-  const indexedMatches = matches.map((candidate) => {
+
+  // Score each candidate: prefer exact segment match over substring, and later segments (closer to province/city position)
+  const scored = matches.map((candidate) => {
     const variants = municipioNameVariants(candidate.nombreNormalizado || candidate.nombre);
-    const indexes = segments
-      .map((segment, index) => variants.some((variant) => segment === variant || segment.includes(variant)) ? index : -1)
-      .filter((index) => index >= 0);
-    return { candidate, indexes };
-  });
-  const hasEarlierMatch = indexedMatches.some((item) => item.indexes.some((index) => index < lastIndex));
+    let exactScore = -1;
+    let containsScore = -1;
+    segments.forEach((segment, index) => {
+      const isExact = variants.some((v) => segment === v);
+      const isContained = !isExact && variants.some((v) => v && segment.includes(v) && segment.split(" ").length - v.split(" ").length <= 2);
+      if (isExact && (exactScore === -1 || index > exactScore)) exactScore = index;
+      if (isContained && (containsScore === -1 || index > containsScore)) containsScore = index;
+    });
+    return { candidate, exactScore, containsScore, bestScore: exactScore >= 0 ? exactScore * 2 + 1 : containsScore >= 0 ? containsScore * 2 : -1 };
+  }).filter((item) => item.bestScore >= 0);
+
+  if (!scored.length) return matches;
+
+  // If any candidate has an exact match, discard those that only have substring matches
+  const hasExact = scored.some((item) => item.exactScore >= 0);
+  const preferred = hasExact ? scored.filter((item) => item.exactScore >= 0) : scored;
+  if (preferred.length === 1) return [preferred[0].candidate];
+
+  // Among ties, prefer the one matching a later segment (typically the city/province position)
+  const maxScore = Math.max(...preferred.map((item) => item.bestScore));
+  const best = preferred.filter((item) => item.bestScore === maxScore);
+  if (best.length === 1) return [best[0].candidate];
+
+  // Still ambiguous — fall back to original behaviour but only for earlier-segment matches
+  const hasEarlierMatch = preferred.some((item) => (item.exactScore >= 0 ? item.exactScore : item.containsScore) < lastIndex);
   if (!hasEarlierMatch) return matches;
-  const filtered = indexedMatches
-    .filter((item) => item.indexes.some((index) => index < lastIndex))
+  return preferred
+    .filter((item) => (item.exactScore >= 0 ? item.exactScore : item.containsScore) < lastIndex)
     .map((item) => item.candidate);
-  return filtered.length ? filtered : matches;
 }
 
 function infoIssue(code: string, message: string, field: string, sourceRow?: number): ValidationIssue {
