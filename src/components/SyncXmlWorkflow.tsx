@@ -1349,10 +1349,16 @@ function IneSyncPanel() {
     setResult(null);
     try {
       const response = await fetch("/api/admin/ine/municipios/sync", { method: "POST" });
-      const data = await response.json();
+      const text = await response.text();
+      let data: any;
+      try {
+        data = text ? JSON.parse(text) : {};
+      } catch {
+        data = { ok: false, message: t.ineSyncFailed, errors: [{ reason: `Respuesta no válida del servidor (${response.status}).` }] };
+      }
       setResult({ ...data, httpOk: response.ok });
-    } catch {
-      setResult({ ok: false, message: t.ineSyncFailed, errors: [{ reason: t.actionFailed }] });
+    } catch (error) {
+      setResult({ ok: false, message: t.ineSyncFailed, errors: [{ reason: error instanceof Error ? error.message : t.actionFailed }] });
     } finally {
       setBusy(false);
     }

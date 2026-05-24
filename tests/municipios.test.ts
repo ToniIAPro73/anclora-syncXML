@@ -110,19 +110,14 @@ describe("INE municipios sync", () => {
     });
   });
 
-  it("paginates, upserts and reports the summary", async () => {
-    const calls: number[] = [];
+  it("fetches once, upserts and reports the summary", async () => {
     const existing = new Set(["46250"]);
     const summary = await syncIneMunicipios({
-      fetchPage: async (page) => {
-        calls.push(page);
-        if (page === 1) return [
-          { Id: 1, FK_Variable: 19, Nombre: "València", Codigo: "46250" },
-          { Id: 2, FK_Variable: 19, Nombre: "Riola", Codigo: "46215" },
-        ];
-        if (page === 2) return [{ Id: 3, FK_Variable: 19, Nombre: "Polinyà de Xúquer", Codigo: "46248" }];
-        return [];
-      },
+      fetchAll: async () => [
+        { Id: 1, FK_Variable: 19, Nombre: "València", Codigo: "46250" },
+        { Id: 2, FK_Variable: 19, Nombre: "Riola", Codigo: "46215" },
+        { Id: 3, FK_Variable: 19, Nombre: "Polinyà de Xúquer", Codigo: "46248" },
+      ],
       repository: {
         async upsertMunicipio(record) {
           if (record.codigoMunicipio === "46215") return "updated";
@@ -133,7 +128,6 @@ describe("INE municipios sync", () => {
       },
     });
 
-    expect(calls).toEqual([1, 2, 3]);
     expect(summary.totalFetched).toBe(3);
     expect(summary.inserted).toBe(1);
     expect(summary.updated).toBe(1);
@@ -141,10 +135,31 @@ describe("INE municipios sync", () => {
     expect(summary.errors).toHaveLength(0);
   });
 
-  it("reports partial INE errors without throwing away the summary", async () => {
+  it("uses bulk replace repositories when available", async () => {
     const summary = await syncIneMunicipios({
-      fetchPage: async (page) => {
-        if (page === 1) return [{ Id: 1, FK_Variable: 19, Nombre: "Riola", Codigo: "46215" }];
+      fetchAll: async () => [
+        { Id: 1, FK_Variable: 19, Nombre: "Riola", Codigo: "46215" },
+        { Id: 2, FK_Variable: 19, Nombre: "Riola duplicado", Codigo: "46215" },
+      ],
+      repository: {
+        async upsertMunicipio() {
+          throw new Error("should use bulk replace");
+        },
+        async replaceMunicipios(records) {
+          expect(records).toHaveLength(1);
+          return { inserted: 0, updated: 1, skipped: 0 };
+        },
+      },
+    });
+
+    expect(summary.ok).toBe(true);
+    expect(summary.totalFetched).toBe(2);
+    expect(summary.updated).toBe(1);
+  });
+
+  it("reports INE fetch errors", async () => {
+    const summary = await syncIneMunicipios({
+      fetchAll: async () => {
         throw new Error("Timeout consultando INE");
       },
       repository: {
@@ -155,8 +170,24 @@ describe("INE municipios sync", () => {
     });
 
     expect(summary.ok).toBe(false);
-    expect(summary.totalFetched).toBe(1);
-    expect(summary.inserted).toBe(1);
-    expect(summary.errors[0]).toMatchObject({ page: 2, reason: "Timeout consultando INE" });
+    expect(summary.totalFetched).toBe(0);
+    expect(summary.errors[0]).toMatchObject({ reason: "Timeout consultando INE" });
+  });
+
+  it("does not replace the catalog when INE returns no valid municipalities", async () => {
+    const summary = await syncIneMunicipios({
+      fetchAll: async () => [{ Id: 1, FK_Variable: 19, Nombre: "", Codigo: "" }],
+      repository: {
+        async upsertMunicipio() {
+          throw new Error("should not write");
+        },
+        async replaceMunicipios() {
+          throw new Error("should not replace");
+        },
+      },
+    });
+
+    expect(summary.ok).toBe(false);
+    expect(summary.errors.some((error) => error.reason.includes("se conserva el catálogo actual"))).toBe(true);
   });
 });

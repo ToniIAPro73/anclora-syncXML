@@ -2,7 +2,7 @@ import { prisma } from "@/lib/db/prisma";
 import { normalizeMunicipioName } from "@/lib/municipios/normalize";
 
 const INE_MUNICIPIOS_URL = "https://servicios.ine.es/wstempus/js/ES/VALORES_VARIABLE/19";
-const MAX_PAGES = 300;
+const BULK_WRITE_SIZE = 1_000;
 
 export type IneMunicipioRaw = {
   Id?: number;
@@ -37,6 +37,7 @@ export type IneSyncSummary = {
 
 export type IneMunicipioSyncRepository = {
   upsertMunicipio(record: IneMunicipioRecord, syncedAt: Date): Promise<"inserted" | "updated" | "skipped">;
+  replaceMunicipios?(records: IneMunicipioRecord[], syncedAt: Date): Promise<Pick<IneSyncSummary, "inserted" | "updated" | "skipped">>;
 };
 
 export const prismaIneMunicipioSyncRepository: IneMunicipioSyncRepository = {
@@ -75,11 +76,61 @@ export const prismaIneMunicipioSyncRepository: IneMunicipioSyncRepository = {
     });
     return changed ? "updated" : "skipped";
   },
+  async replaceMunicipios(records, syncedAt) {
+    const existing = await prisma.ineMunicipio.findMany({
+      select: {
+        codigoMunicipio: true,
+        codigoProvincia: true,
+        codigoMunicipioCorto: true,
+        nombre: true,
+        nombreNormalizado: true,
+        ineId: true,
+        ineVariableId: true,
+      },
+    });
+    const existingByCode = new Map(existing.map((record) => [record.codigoMunicipio, record]));
+    let inserted = 0;
+    let updated = 0;
+    let skipped = 0;
+    for (const record of records) {
+      const current = existingByCode.get(record.codigoMunicipio);
+      if (!current) {
+        inserted += 1;
+      } else if (
+        current.nombre !== record.nombre
+        || current.nombreNormalizado !== record.nombreNormalizado
+        || current.codigoProvincia !== record.codigoProvincia
+        || current.codigoMunicipioCorto !== record.codigoMunicipioCorto
+        || current.ineId !== (record.ineId ?? null)
+        || current.ineVariableId !== (record.ineVariableId ?? null)
+      ) {
+        updated += 1;
+      } else {
+        skipped += 1;
+      }
+    }
+
+    await prisma.$transaction(async (tx) => {
+      await tx.ineMunicipio.deleteMany();
+      for (let index = 0; index < records.length; index += BULK_WRITE_SIZE) {
+        const chunk = records.slice(index, index + BULK_WRITE_SIZE);
+        await tx.ineMunicipio.createMany({
+          data: chunk.map((record) => ({
+            ...record,
+            ineJerarquiaPadres: record.ineJerarquiaPadres === undefined ? undefined : JSON.parse(JSON.stringify(record.ineJerarquiaPadres)),
+            lastSyncedAt: syncedAt,
+          })),
+        });
+      }
+    }, { timeout: 120_000 });
+
+    return { inserted, updated, skipped };
+  },
 };
 
-export async function syncIneMunicipios(options: { repository?: IneMunicipioSyncRepository; fetchPage?: (page: number) => Promise<IneMunicipioRaw[]> } = {}): Promise<IneSyncSummary> {
+export async function syncIneMunicipios(options: { repository?: IneMunicipioSyncRepository; fetchAll?: () => Promise<IneMunicipioRaw[]> } = {}): Promise<IneSyncSummary> {
   const repository = options.repository ?? prismaIneMunicipioSyncRepository;
-  const fetchPage = options.fetchPage ?? fetchIneMunicipioPage;
+  const fetchAll = options.fetchAll ?? fetchIneMunicipios;
   const syncedAt = new Date();
   const summary: IneSyncSummary = {
     ok: true,
@@ -92,41 +143,65 @@ export async function syncIneMunicipios(options: { repository?: IneMunicipioSync
     lastSyncedAt: syncedAt.toISOString(),
   };
 
-  for (let page = 1; page <= MAX_PAGES; page += 1) {
-    let rawPage: IneMunicipioRaw[];
-    try {
-      rawPage = await fetchPage(page);
-    } catch (error) {
-      summary.ok = false;
-      summary.errors.push({ page, reason: error instanceof Error ? error.message : "Error consultando INE" });
-      break;
+  let rawRecords: IneMunicipioRaw[];
+  try {
+    rawRecords = await fetchAll();
+  } catch (error) {
+    return {
+      ...summary,
+      ok: false,
+      errors: [{ reason: error instanceof Error ? error.message : "Error consultando INE" }],
+    };
+  }
+
+  summary.totalFetched = rawRecords.length;
+  const recordsByCode = new Map<string, IneMunicipioRecord>();
+  for (const raw of rawRecords) {
+    const record = normalizeIneMunicipio(raw);
+    if (!record) {
+      summary.errors.push({ code: raw.Codigo, reason: "Registro INE incompleto o inválido" });
+      continue;
     }
-    if (!rawPage.length) break;
-    summary.totalFetched += rawPage.length;
-    for (const raw of rawPage) {
-      const record = normalizeIneMunicipio(raw);
-      if (!record) {
-        summary.errors.push({ page, code: raw.Codigo, reason: "Registro INE incompleto o inválido" });
-        continue;
-      }
-      try {
+    recordsByCode.set(record.codigoMunicipio, record);
+  }
+
+  const records = Array.from(recordsByCode.values());
+  if (!records.length) {
+    return {
+      ...summary,
+      ok: false,
+      errors: [...summary.errors, { reason: "INE no devolvió municipios válidos; se conserva el catálogo actual." }],
+    };
+  }
+  try {
+    if (repository.replaceMunicipios) {
+      const result = await repository.replaceMunicipios(records, syncedAt);
+      summary.inserted = result.inserted;
+      summary.updated = result.updated;
+      summary.skipped = result.skipped;
+    } else {
+      for (const record of records) {
         const result = await repository.upsertMunicipio(record, syncedAt);
         summary[result] += 1;
-      } catch (error) {
-        summary.ok = false;
-        summary.errors.push({ page, code: record.codigoMunicipio, reason: error instanceof Error ? error.message : "Error guardando municipio" });
       }
     }
+  } catch (error) {
+    summary.ok = false;
+    summary.errors.push({ reason: error instanceof Error ? error.message : "Error guardando municipios" });
   }
+  if (summary.errors.length) summary.ok = false;
   return summary;
 }
 
-export async function fetchIneMunicipioPage(page: number, retries = 2): Promise<IneMunicipioRaw[]> {
+export async function fetchIneMunicipios(retries = 2): Promise<IneMunicipioRaw[]> {
   for (let attempt = 0; attempt <= retries; attempt += 1) {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 120_000);
+    const timeout = setTimeout(() => controller.abort(), 180_000);
     try {
-      const response = await fetch(`${INE_MUNICIPIOS_URL}?page=${page}`, { signal: controller.signal });
+      const response = await fetch(INE_MUNICIPIOS_URL, {
+        signal: controller.signal,
+        headers: { Accept: "application/json" },
+      });
       if (!response.ok) throw new Error(`INE respondió ${response.status}`);
       const data = await response.json();
       return Array.isArray(data) ? data as IneMunicipioRaw[] : [];
