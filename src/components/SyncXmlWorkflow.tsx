@@ -265,7 +265,6 @@ export function SyncXmlWorkflow() {
 
       {message && <div className={`process-message ${processMessageTone(message, t)}`} role="status">{message}</div>}
       {busy && <div className="process-message is-working" role="status">{t.processing}</div>}
-      {activeStep !== 1 && <PrivacyModeCard onClear={clearOperation} hasData={Boolean(parsed || generated || selectedFile)} />}
 
       {activeStep === 1 && (
         <>
@@ -354,6 +353,8 @@ export function SyncXmlWorkflow() {
           onMappingReviewedChange={setMappingReviewed}
           onDuplicateResolution={updateDuplicateResolution}
           onGuestCorrection={updateGuestCorrection}
+          onClear={clearOperation}
+          hasData={Boolean(parsed || generated || selectedFile)}
         />
       )}
 
@@ -368,25 +369,32 @@ export function SyncXmlWorkflow() {
           onConsolidate={consolidate}
           canConsolidate={!consolidationBlocker}
           consolidationBlocker={consolidationBlocker}
+          onClear={clearOperation}
+          hasData={Boolean(parsed || generated || selectedFile)}
         />
       )}
 
       {activeStep === 4 && (
-        <section className="panel p-6">
-          <div className="flex items-start gap-4">
-            <div className="icon-tile"><CheckCircle2 className="h-5 w-5" /></div>
-            <div>
-              <h2 className="font-heading text-2xl font-black">{t.processConsolidate}</h2>
-              <p className="mt-2 text-sm text-secondary">{message ?? t.consolidatedOk}</p>
+        <>
+          {/* Card consolidación */}
+          <section className="panel p-6">
+            <div className="flex items-start gap-4">
+              <div className="icon-tile"><CheckCircle2 className="h-5 w-5" /></div>
+              <div>
+                <h2 className="font-heading text-2xl font-black">{t.processConsolidate}</h2>
+                <p className="mt-2 text-sm text-secondary">{message ?? t.consolidatedOk}</p>
+              </div>
             </div>
-          </div>
-          {parsed && <OperationSummary parsed={parsed} temporaryCleared={temporaryCleared} />}
-          {generated && (
-            <div className="mt-5">
-              <button className="btn-secondary" onClick={downloadXml}><Download className="h-4 w-4" />{t.downloadXml}</button>
-            </div>
-          )}
-        </section>
+            {parsed && <OperationSummary parsed={parsed} temporaryCleared={temporaryCleared} />}
+            {generated && (
+              <div className="mt-5">
+                <button className="btn-secondary" onClick={downloadXml}><Download className="h-4 w-4" />{t.downloadXml}</button>
+              </div>
+            )}
+          </section>
+          {/* Modo privado */}
+          <PrivacyModeCard onClear={clearOperation} hasData={Boolean(parsed || generated || selectedFile)} />
+        </>
       )}
     </div>
   );
@@ -417,6 +425,8 @@ function ExcelReview({
   onMappingReviewedChange,
   onDuplicateResolution,
   onGuestCorrection,
+  onClear,
+  hasData,
 }: {
   parsed: ParsedExcel;
   validGuests: number;
@@ -433,33 +443,14 @@ function ExcelReview({
   onMappingReviewedChange: (value: boolean) => void;
   onDuplicateResolution: (id: string, resolution: DuplicateResolution) => void;
   onGuestCorrection: (sourceRow: number, patch: GuestCorrectionPatch) => void;
+  onClear: () => void;
+  hasData: boolean;
 }) {
   const { dictionary: t } = usePreferences();
   const duplicateBlockers = unresolvedDuplicates(parsed);
   return (
     <>
-      <section className="grid gap-4 md:grid-cols-3">
-        <InfoCard title={t.reservationSummary} rows={[
-          [t.reference, parsed.reservation.reference],
-          [t.checkIn, `${parsed.reservation.checkInDate ?? ""} ${parsed.reservation.checkInTime ?? ""}`],
-          [t.checkOut, `${parsed.reservation.checkOutDate ?? ""} ${parsed.reservation.checkOutTime ?? ""}`],
-          [t.guestCount, String(parsed.reservation.guestCount ?? validGuests)],
-        ]} />
-        <InfoCard title={t.property} rows={[
-          [t.code, parsed.property.establishmentCode],
-          [t.name, parsed.property.name],
-          [t.address, showFullData ? parsed.property.address : maskAddress(parsed.property.address)],
-          [t.municipality, `${parsed.property.postalCode ?? ""} ${parsed.property.municipality ?? ""}`],
-          [t.province, parsed.property.province],
-        ]} />
-        <InfoCard title={t.contractPayment} rows={[
-          [t.contract, parsed.reservation.contractDate],
-          [t.paymentType, parsed.payment.paymentType],
-          ["IBAN", maskPayment(parsed.payment.iban)],
-          ["Internet", String(parsed.reservation.internet ?? true)],
-        ]} />
-      </section>
-
+      {/* 3. Tabla de huéspedes */}
       <section className="panel overflow-hidden">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-app p-5">
           <div>
@@ -487,14 +478,42 @@ function ExcelReview({
         <GuestTable guests={parsed.guests} smartValidated={smartValidated} showFullData={showFullData} />
       </section>
 
+      {/* 4. Resumen reserva, establecimiento, contrato */}
+      <section className="grid gap-4 md:grid-cols-3">
+        <InfoCard title={t.reservationSummary} rows={[
+          [t.reference, parsed.reservation.reference],
+          [t.checkIn, `${parsed.reservation.checkInDate ?? ""} ${parsed.reservation.checkInTime ?? ""}`],
+          [t.checkOut, `${parsed.reservation.checkOutDate ?? ""} ${parsed.reservation.checkOutTime ?? ""}`],
+          [t.guestCount, String(parsed.reservation.guestCount ?? validGuests)],
+        ]} />
+        <InfoCard title={t.property} rows={[
+          [t.code, parsed.property.establishmentCode],
+          [t.name, parsed.property.name],
+          [t.address, showFullData ? parsed.property.address : maskAddress(parsed.property.address)],
+          [t.municipality, `${parsed.property.postalCode ?? ""} ${parsed.property.municipality ?? ""}`],
+          [t.province, parsed.property.province],
+        ]} />
+        <InfoCard title={t.contractPayment} rows={[
+          [t.contract, parsed.reservation.contractDate],
+          [t.paymentType, parsed.payment.paymentType],
+          ["IBAN", maskPayment(parsed.payment.iban)],
+          ["Internet", String(parsed.reservation.internet ?? true)],
+        ]} />
+      </section>
+
+      {/* 5. Revisión guiada */}
       <ManualCorrectionPanel parsed={parsed} onGuestCorrection={onGuestCorrection} />
 
+      {/* 6. Validaciones */}
       <UnifiedIssuesPanel
         warnings={parsed.validation.warnings}
         errors={parsed.validation.errors}
         duplicates={parsed.duplicates ?? []}
         onDuplicateResolve={onDuplicateResolution}
       />
+
+      {/* 7. Modo privado */}
+      <PrivacyModeCard onClear={onClear} hasData={hasData} />
     </>
   );
 }
@@ -509,6 +528,8 @@ function XmlViewer({
   onConsolidate,
   canConsolidate,
   consolidationBlocker,
+  onClear,
+  hasData,
 }: {
   generated: GeneratedXmlResult;
   activeView: "visual" | "xml";
@@ -519,44 +540,58 @@ function XmlViewer({
   onConsolidate: () => void;
   canConsolidate: boolean;
   consolidationBlocker: string | null;
+  onClear: () => void;
+  hasData: boolean;
 }) {
   const { dictionary: t } = usePreferences();
   const hasXmlErrors = generated.validation.errors.length > 0;
   return (
-    <section className="panel p-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h2 className="font-heading text-xl font-bold">XML</h2>
-          <p className="mt-1 text-sm text-muted">{t.xmlNote}</p>
-          <p className="mt-2 text-sm text-warning">{t.noticeBeforeExport}</p>
+    <>
+      {/* Card XML */}
+      <section className="panel p-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="font-heading text-xl font-bold">XML</h2>
+            <p className="mt-1 text-sm text-muted">{t.xmlNote}</p>
+            <p className="mt-2 text-sm text-warning">{t.noticeBeforeExport}</p>
+          </div>
+          <div className="flex gap-2">
+            <button className={`tab ${activeView === "visual" ? "is-active" : ""}`} onClick={() => onViewChange("visual")}>{t.visualView}</button>
+            <button className={`tab ${activeView === "xml" ? "is-active" : ""}`} onClick={() => onViewChange("xml")}>{t.rawXml}</button>
+          </div>
         </div>
-        <div className="flex gap-2">
-          <button className={`tab ${activeView === "visual" ? "is-active" : ""}`} onClick={() => onViewChange("visual")}>{t.visualView}</button>
-          <button className={`tab ${activeView === "xml" ? "is-active" : ""}`} onClick={() => onViewChange("xml")}>{t.rawXml}</button>
+        {activeView === "visual" ? (
+          <XmlTreeView generated={generated} />
+        ) : (
+          <pre className="mt-5 max-h-[520px] overflow-auto rounded-lg bg-black/45 p-4 text-xs text-emerald-200"><code>{generated.xml}</code></pre>
+        )}
+      </section>
+
+      {/* Card mensaje / incidencias */}
+      <section className="panel p-5">
+        <div className={`human-review-gate ${canConsolidate ? "is-valid" : "is-warning"}`}>
+          <ShieldCheck className="h-4 w-4" />
+          <span>{canConsolidate ? t.humanReviewReady : consolidationBlocker}</span>
         </div>
-      </div>
-      {activeView === "visual" ? (
-        <XmlTreeView generated={generated} />
-      ) : (
-        <pre className="mt-5 max-h-[520px] overflow-auto rounded-lg bg-black/45 p-4 text-xs text-emerald-200"><code>{generated.xml}</code></pre>
-      )}
-      <div className={`human-review-gate mt-5 ${canConsolidate ? "is-valid" : "is-warning"}`}>
-        <ShieldCheck className="h-4 w-4" />
-        <span>{canConsolidate ? t.humanReviewReady : consolidationBlocker}</span>
-      </div>
-      {hasXmlErrors && <div className="mt-5"><IssuePanel title={t.xmlValidationIssues} issues={generated.validation.errors} /></div>}
-      <div className="mt-5 flex flex-wrap gap-3">
-        <button className="btn-secondary" onClick={onDownload} disabled={hasXmlErrors} title={hasXmlErrors ? t.xmlDownloadBlocked : undefined}><Download className="h-4 w-4" />{t.downloadXml}</button>
-        <button
-          className="btn-primary"
-          onClick={onConsolidate}
-          disabled={busy || !canConsolidate}
-        >
-          {busyAction === "consolidate" ? <WorkingLabel label={t.processing} /> : <><CheckCircle2 className="h-4 w-4" />{t.consolidate}</>}
-        </button>
-      </div>
+        {hasXmlErrors && <div className="mt-4"><IssuePanel title={t.xmlValidationIssues} issues={generated.validation.errors} /></div>}
+      </section>
+
+      {/* Botones descargar y consolidar */}
+      <section className="panel p-5">
+        <div className="flex flex-wrap gap-3">
+          <button className="btn-secondary" onClick={onDownload} disabled={hasXmlErrors} title={hasXmlErrors ? t.xmlDownloadBlocked : undefined}><Download className="h-4 w-4" />{t.downloadXml}</button>
+          <button className="btn-primary" onClick={onConsolidate} disabled={busy || !canConsolidate}>
+            {busyAction === "consolidate" ? <WorkingLabel label={t.processing} /> : <><CheckCircle2 className="h-4 w-4" />{t.consolidate}</>}
+          </button>
+        </div>
+      </section>
+
+      {/* Servicios SES.HOSPEDAJES */}
       <SesIntegrationPanel xml={generated.xml} />
-    </section>
+
+      {/* Modo privado */}
+      <PrivacyModeCard onClear={onClear} hasData={hasData} />
+    </>
   );
 }
 
