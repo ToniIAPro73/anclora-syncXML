@@ -189,24 +189,16 @@ export function SyncXmlWorkflow() {
 
   function handleStepClick(step: WorkflowStep) {
     if (busy) return;
-    if (step === 1) {
-      setActiveStep(1);
-      return;
-    }
-    if (step === 2) {
-      setActiveStep(parsed ? 2 : 1);
-      return;
-    }
+    if (step === 1) { setActiveStep(1); return; }
+    if (step === 2) { setActiveStep(parsed ? 2 : 1); return; }
     if (step === 3) {
-      if (generated) setActiveStep(3);
-      else void generate();
+      if (generated) { setActiveStep(3); return; }
+      void generate();
       return;
     }
+    if (consolidated) { setActiveStep(4); return; }
     if (generated) void consolidate();
-    else {
-      setMessage(t.xmlPreviewRequired);
-      setActiveStep(parsed ? 2 : 1);
-    }
+    else { setMessage(t.xmlPreviewRequired); setActiveStep(parsed ? 2 : 1); }
   }
 
   function downloadXml() {
@@ -274,15 +266,6 @@ export function SyncXmlWorkflow() {
       {message && <div className={`process-message ${processMessageTone(message, t)}`} role="status">{message}</div>}
       {busy && <div className="process-message is-working" role="status">{t.processing}</div>}
       <PrivacyModeCard onClear={clearOperation} hasData={Boolean(parsed || generated || selectedFile)} />
-      <TraceabilityPanel
-        selectedFileName={selectedFile?.name}
-        parsed={parsed}
-        generated={generated}
-        consolidated={consolidated}
-        smartValidated={smartValidated}
-        previewReviewed={previewReviewed}
-        mappingReviewed={mappingReviewed}
-      />
 
       {activeStep === 1 && (
         <section className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
@@ -931,14 +914,16 @@ function ProcessRail({ activeStep, parsed, generated, consolidated, busyAction, 
       <div className="process-rail">
         {steps.map((item) => {
           const Icon = item.icon;
-          const state = item.busy ? "active" : item.done ? "done" : activeStep === item.step ? "active" : "pending";
+          const isActive = activeStep === item.step;
+          const state = item.busy ? "active" : isActive ? "active" : item.done ? "done" : "pending";
+          const navigable = !busyAction && (item.done || isActive);
           return (
-            <button key={item.step} type="button" className={`process-step is-${state}`} onClick={() => onStepClick(item.step)} disabled={Boolean(busyAction)}>
+            <button key={item.step} type="button" className={`process-step is-${state}${navigable && !isActive ? " cursor-pointer" : ""}`} onClick={() => onStepClick(item.step)} disabled={Boolean(busyAction)}>
               <div className="process-step-index">{item.step}</div>
               <div className="process-step-icon"><Icon className="h-4 w-4" /></div>
               <div className="min-w-0 text-left">
                 <p className="truncate font-heading text-sm font-bold">{item.label}</p>
-                <p className="text-xs text-muted">{state === "active" ? t.processActive : state === "done" ? t.processDone : t.processPending}</p>
+                <p className="text-xs text-muted">{isActive ? t.processActive : state === "done" ? t.processDone : t.processPending}</p>
               </div>
             </button>
           );
