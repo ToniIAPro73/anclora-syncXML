@@ -32,8 +32,10 @@ const validParteHospedajeXml = `<?xml version="1.0" encoding="UTF-8"?>
         <rol>VI</rol>
         <nombre>Ana</nombre>
         <apellido1>Garcia</apellido1>
+        <apellido2>Lopez</apellido2>
         <tipoDocumento>NIF</tipoDocumento>
         <numeroDocumento>12345678Z</numeroDocumento>
+        <soporteDocumento>123456789</soporteDocumento>
         <fechaNacimiento>1990-01-01+01:00</fechaNacimiento>
         <nacionalidad>ESP</nacionalidad>
         <direccion>
@@ -42,6 +44,7 @@ const validParteHospedajeXml = `<?xml version="1.0" encoding="UTF-8"?>
           <codigoPostal>07001</codigoPostal>
           <pais>ESP</pais>
         </direccion>
+        <telefono>666666666</telefono>
       </persona>
     </comunicacion>
   </solicitud>
@@ -82,6 +85,23 @@ describe("SES.HOSPEDAJES phase 3 integration", () => {
 
     expect(validation.ok).toBe(false);
     expect(validation.errors.some((error) => error.code === "ses.business.municipalityCode.required")).toBe(true);
+  });
+
+  it("requires nombreMunicipio instead of codigoMunicipio for foreign addresses", () => {
+    const foreignXml = validParteHospedajeXml
+      .replace("<codigoMunicipio>07040</codigoMunicipio>", "")
+      .replace("<pais>ESP</pais>", "<pais>FRA</pais>");
+    const validation = validateSesHospedajesXml(foreignXml);
+
+    expect(validation.ok).toBe(false);
+    expect(validation.errors.some((error) => error.code === "ses.business.nombreMunicipio.required")).toBe(true);
+  });
+
+  it("requires at least one contact value per traveller", () => {
+    const validation = validateSesHospedajesXml(validParteHospedajeXml.replace("<telefono>666666666</telefono>", ""));
+
+    expect(validation.ok).toBe(false);
+    expect(validation.errors.some((error) => error.code === "ses.business.contact.required")).toBe(true);
   });
 
   it("packages the XML as a ZIP container encoded in Base64", () => {
