@@ -1172,7 +1172,7 @@ function MunicipioCorrectionField({
           ref={inputRef}
           id={uid}
           className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted"
-          placeholder={selected ? selected.nombre : t.selectMunicipio}
+          placeholder={selected ? `${selected.codigoMunicipio.slice(2)} · ${selected.nombre}` : t.selectMunicipio}
           value={query}
           autoComplete="off"
           onChange={(e) => { setQuery(e.target.value); setOpen(true); setFocusIdx(0); }}
@@ -1184,11 +1184,6 @@ function MunicipioCorrectionField({
           aria-activedescendant={focusIdx >= 0 ? `${uid}-opt-${focusIdx}` : undefined}
           role="combobox"
         />
-        {selected && !query && (
-          <span className="shrink-0 rounded bg-surface-elevated px-1.5 py-0.5 font-mono text-xs text-muted select-none">
-            {selected.codigoMunicipio.slice(2)}
-          </span>
-        )}
         {selected && (
           <button type="button" aria-label="Borrar selección" onClick={clear}
             className="shrink-0 flex h-4 w-4 items-center justify-center rounded-full text-muted transition-colors hover:bg-error/20 hover:text-error text-xs leading-none">
@@ -1201,7 +1196,7 @@ function MunicipioCorrectionField({
           ref={listRef}
           id={`${uid}-list`}
           role="listbox"
-          className="absolute left-0 right-0 z-50 mt-1 max-h-52 overflow-y-auto rounded-xl border border-app bg-surface shadow-2xl"
+          className="absolute left-0 right-0 top-full z-50 mt-1 max-h-52 overflow-y-auto rounded-xl border border-app bg-surface shadow-2xl"
         >
           {filtered.map((m, idx) => (
             <li
@@ -1222,7 +1217,7 @@ function MunicipioCorrectionField({
         </ul>
       )}
       {open && query.length > 0 && filtered.length === 0 && (
-        <div className="absolute left-0 right-0 z-50 mt-1 rounded-xl border border-app bg-surface px-3 py-2.5 text-sm text-muted shadow-2xl">
+        <div className="absolute left-0 right-0 top-full z-50 mt-1 rounded-xl border border-app bg-surface px-3 py-2.5 text-sm text-muted shadow-2xl">
           {t.municipioAutoResolveFailed}
         </div>
       )}
