@@ -51,7 +51,7 @@ export function ReservationDashboard() {
           Continuar con la reserva en curso
         </Link>
       )}
-      <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
+      <div className="grid gap-6 lg:grid-cols-2">
       <section className="panel overflow-hidden">
         <div className="border-b border-app p-5">
           <h1 className="font-heading text-2xl font-black">{t.dashboard}</h1>

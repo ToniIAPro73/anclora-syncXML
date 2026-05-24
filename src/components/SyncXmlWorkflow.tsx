@@ -317,7 +317,7 @@ export function SyncXmlWorkflow() {
       {activeStep === 1 && (
         <>
           {/* Fila 2: Aceptación informada (izq) + Área de importación (dcha) */}
-          <section className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
+          <section className="grid gap-6 lg:grid-cols-2">
             <div className="panel p-6">
               <div className="flex items-start gap-4">
                 <div className="icon-tile"><FileSpreadsheet className="h-5 w-5" /></div>
