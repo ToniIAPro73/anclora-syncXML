@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import type { ComponentType, ReactNode } from "react";
 import { Ban, CheckCircle2, ClipboardCheck, Database, Download, Eye, EyeOff, FileSpreadsheet, FileText, RadioTower, RefreshCw, SearchCheck, Send, ShieldCheck, Trash2, UploadCloud } from "lucide-react";
 import type { DuplicateResolution, GeneratedXmlResult, GuestRecord, ParsedExcel, ValidationIssue } from "@/lib/domain";
@@ -9,7 +9,7 @@ import { buildXmlDownloadFileName } from "@/lib/xml/fileName";
 import { usePreferences } from "./AppPreferencesProvider";
 import { unresolvedDuplicates } from "@/lib/duplicates";
 import { maskAddress, maskDocument, maskEmail, maskPayment, maskPhone } from "@/lib/privacy/masking";
-import { provinceCodeFromPostalCode } from "@/lib/municipios/normalize";
+import { normalizeMunicipioName, provinceCodeFromPostalCode } from "@/lib/municipios/normalize";
 
 type BusyAction = "upload" | "validate" | "generate" | "consolidate" | null;
 type WorkflowStep = 1 | 2 | 3 | 4;
@@ -1087,45 +1087,146 @@ function MunicipioCorrectionField({
   onGuestCorrection: (sourceRow: number, patch: GuestCorrectionPatch) => void;
 }) {
   const { dictionary: t } = usePreferences();
-  const datalistId = `municipios-row-${guest.sourceRow}`;
+  const uid = useId();
+  const [query, setQuery] = useState("");
+  const [open, setOpen] = useState(false);
+  const [focusIdx, setFocusIdx] = useState(-1);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const listRef = useRef<HTMLUListElement>(null);
 
-  function handleChange(raw: string) {
-    const trimmed = raw.trim();
-    // Accept "Nombre — 46250" format (from datalist selection) or raw 5-digit code
-    const matchFull = trimmed.match(/—\s*(\d{5})$/);
-    if (matchFull) {
-      onGuestCorrection(guest.sourceRow, { municipalityCode: matchFull[1] });
-      return;
+  const provinceCode = provinceCodeFromPostalCode(guest.postalCode) ?? "";
+
+  // Close on outside click
+  useEffect(() => {
+    function onDown(e: MouseEvent) {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
+        setOpen(false);
+        setFocusIdx(-1);
+      }
     }
-    onGuestCorrection(guest.sourceRow, { municipalityCode: trimmed || undefined });
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, []);
+
+  // Scroll focused item into view
+  useEffect(() => {
+    if (focusIdx >= 0 && listRef.current) {
+      (listRef.current.children[focusIdx] as HTMLElement | undefined)?.scrollIntoView({ block: "nearest" });
+    }
+  }, [focusIdx]);
+
+  const filtered = useMemo(() => {
+    if (!municipios.length) return [];
+    if (!query) return municipios;
+    const isDigits = /^\d+$/.test(query);
+    if (isDigits) return municipios.filter((m) => m.codigoMunicipio.slice(2).startsWith(query));
+    const q = normalizeMunicipioName(query);
+    return municipios.filter((m) => m.nombreNormalizado.includes(q));
+  }, [municipios, query]);
+
+  const selected = municipios.find((m) => m.codigoMunicipio === guest.municipalityCode);
+
+  function select(m: MunicipioOption) {
+    onGuestCorrection(guest.sourceRow, { municipalityCode: m.codigoMunicipio });
+    setQuery("");
+    setOpen(false);
+    setFocusIdx(-1);
   }
 
-  // Resolve display value: if current code matches a known municipio, show "Nombre — code"
-  const currentDisplay = (() => {
-    if (!guest.municipalityCode) return "";
-    const found = municipios.find((m) => m.codigoMunicipio === guest.municipalityCode);
-    return found ? `${found.nombre} — ${found.codigoMunicipio}` : guest.municipalityCode;
-  })();
+  function clear() {
+    onGuestCorrection(guest.sourceRow, { municipalityCode: undefined });
+    setQuery("");
+    inputRef.current?.focus();
+  }
+
+  function onKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (!open && (e.key === "ArrowDown" || e.key === "Enter")) { setOpen(true); setFocusIdx(0); e.preventDefault(); return; }
+    if (e.key === "ArrowDown") { setFocusIdx((i) => Math.min(i + 1, filtered.length - 1)); e.preventDefault(); }
+    else if (e.key === "ArrowUp") { setFocusIdx((i) => Math.max(i - 1, 0)); e.preventDefault(); }
+    else if (e.key === "Enter" && focusIdx >= 0) { const m = filtered[focusIdx]; if (m) select(m); e.preventDefault(); }
+    else if (e.key === "Escape") { setOpen(false); setFocusIdx(-1); }
+  }
+
+  // Fall back to plain input when catalog not loaded
+  if (!municipios.length) {
+    return (
+      <CorrectionInput
+        label={t.municipalityCode}
+        value={guest.municipalityCode}
+        onChange={(value) => onGuestCorrection(guest.sourceRow, { municipalityCode: value })}
+      />
+    );
+  }
 
   return (
-    <label className="manual-field">
-      <span>{t.selectMunicipio}</span>
-      <input
-        className="input"
-        list={municipios.length ? datalistId : undefined}
-        placeholder={municipios.length ? t.selectMunicipio : t.municipalityCode}
-        defaultValue={currentDisplay}
-        key={currentDisplay}
-        onChange={(event) => handleChange(event.target.value)}
-      />
-      {municipios.length > 0 && (
-        <datalist id={datalistId}>
-          {municipios.map((municipio) => (
-            <option key={municipio.codigoMunicipio} value={`${municipio.nombre} — ${municipio.codigoMunicipio}`} />
+    <div ref={wrapperRef} className="manual-field relative">
+      <span className="text-xs font-bold uppercase text-muted">{t.selectMunicipio}</span>
+      <div className="flex items-center gap-1.5 rounded-lg border border-input bg-surface px-2.5 py-1.5 focus-within:ring-2 focus-within:ring-accent/40 transition-shadow">
+        {provinceCode && (
+          <span className="shrink-0 rounded bg-accent/15 px-1.5 py-0.5 font-mono text-xs font-bold text-accent select-none">
+            {provinceCode}
+          </span>
+        )}
+        <input
+          ref={inputRef}
+          id={uid}
+          className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted"
+          placeholder={selected ? selected.nombre : t.selectMunicipio}
+          value={query}
+          autoComplete="off"
+          onChange={(e) => { setQuery(e.target.value); setOpen(true); setFocusIdx(0); }}
+          onFocus={() => setOpen(true)}
+          onKeyDown={onKeyDown}
+          aria-expanded={open}
+          aria-haspopup="listbox"
+          aria-controls={`${uid}-list`}
+          aria-activedescendant={focusIdx >= 0 ? `${uid}-opt-${focusIdx}` : undefined}
+          role="combobox"
+        />
+        {selected && !query && (
+          <span className="shrink-0 rounded bg-surface-elevated px-1.5 py-0.5 font-mono text-xs text-muted select-none">
+            {selected.codigoMunicipio.slice(2)}
+          </span>
+        )}
+        {selected && (
+          <button type="button" aria-label="Borrar selección" onClick={clear}
+            className="shrink-0 flex h-4 w-4 items-center justify-center rounded-full text-muted transition-colors hover:bg-error/20 hover:text-error text-xs leading-none">
+            ✕
+          </button>
+        )}
+      </div>
+      {open && filtered.length > 0 && (
+        <ul
+          ref={listRef}
+          id={`${uid}-list`}
+          role="listbox"
+          className="absolute left-0 right-0 z-50 mt-1 max-h-52 overflow-y-auto rounded-xl border border-app bg-surface shadow-2xl"
+        >
+          {filtered.map((m, idx) => (
+            <li
+              key={m.codigoMunicipio}
+              id={`${uid}-opt-${idx}`}
+              role="option"
+              aria-selected={m.codigoMunicipio === guest.municipalityCode}
+              className={`flex cursor-pointer items-center justify-between gap-3 px-3 py-2 text-sm transition-colors ${
+                idx === focusIdx ? "bg-accent/15 text-primary" : "hover:bg-surface-elevated"
+              } ${m.codigoMunicipio === guest.municipalityCode ? "font-semibold" : ""}`}
+              onMouseDown={(e) => { e.preventDefault(); select(m); }}
+              onMouseEnter={() => setFocusIdx(idx)}
+            >
+              <span className="truncate">{m.nombre}</span>
+              <span className="shrink-0 font-mono text-xs text-muted">{m.codigoMunicipio}</span>
+            </li>
           ))}
-        </datalist>
+        </ul>
       )}
-    </label>
+      {open && query.length > 0 && filtered.length === 0 && (
+        <div className="absolute left-0 right-0 z-50 mt-1 rounded-xl border border-app bg-surface px-3 py-2.5 text-sm text-muted shadow-2xl">
+          {t.municipioAutoResolveFailed}
+        </div>
+      )}
+    </div>
   );
 }
 
