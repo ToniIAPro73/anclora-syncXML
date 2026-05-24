@@ -30,12 +30,13 @@ export function resolveMunicipioForGuest(guest: Pick<GuestRecord, "postalCode" |
   const addressText = normalizeMunicipioName(guest.address);
   const explicitMatches = matchMunicipios(explicitText, provinceCandidates);
   if (explicitMatches.length === 1) return { status: "resolved", municipio: explicitMatches[0], reason: "postal_code_name" };
-  if (explicitMatches.length > 1) return { status: "ambiguous", candidates: explicitMatches };
 
+  // If explicit municipality is ambiguous or not found, try address matching before giving up
   const addressMatches = matchMunicipiosInAddress(guest.address, addressText, provinceCandidates);
   if (addressMatches.length === 1) return { status: "resolved", municipio: addressMatches[0], reason: "postal_code_address" };
   if (addressMatches.length > 1) return { status: "ambiguous", candidates: addressMatches };
 
+  if (explicitMatches.length > 1) return { status: "ambiguous", candidates: explicitMatches };
   return { status: "not_found", candidates: provinceCandidates };
 }
 
@@ -73,13 +74,45 @@ export async function resolveParsedMunicipiosFromDb(parsed: ParsedExcel, reposit
 
 function matchMunicipios(text: string, candidates: MunicipioCatalogRecord[]) {
   if (!text) return [];
+  // Prefer exact matches first: text === variant, text contains full variant, or variant contains text
+  const exact = candidates.filter((candidate) => {
+    const variants = municipioNameVariants(candidate.nombreNormalizado || candidate.nombre);
+    return variants.some((v) => v && (text === v || text.includes(v)));
+  });
+  if (exact.length) return exact;
+  // Fallback: variant contains the search text (user typed a prefix/partial name)
   return candidates.filter((candidate) => {
     const variants = municipioNameVariants(candidate.nombreNormalizado || candidate.nombre);
-    return variants.some((variant) => variant && (text === variant || text.includes(variant) || variant.includes(text)));
+    return variants.some((v) => v && v.includes(text));
   });
 }
 
 function matchMunicipiosInAddress(rawAddress: string | undefined, normalizedAddress: string, candidates: MunicipioCatalogRecord[]) {
+  // Spanish address format: Street, Number, Municipality, Province, PostalCode
+  // → municipality is typically 3rd from end (index length-3 after removing postal code).
+  // Try positional strategy first for addresses with enough segments.
+  if (rawAddress) {
+    const segs = rawAddress
+      .split(",")
+      .map((s) => normalizeMunicipioName(s))
+      .filter((s) => s && !/^\d{5}$/.test(s)); // strip postal code segments
+
+    if (segs.length >= 3) {
+      // Candidate positions: 3rd-from-end (municipality) and 2nd-from-end (province, sometimes doubles as city)
+      for (const idx of [segs.length - 2, segs.length - 3]) {
+        if (idx < 0) continue;
+        const seg = segs[idx];
+        // Exact segment match
+        const exact = candidates.filter((c) => municipioNameVariants(c.nombreNormalizado || c.nombre).some((v) => v && seg === v));
+        if (exact.length === 1) return exact;
+        // Municipality name contained within this segment
+        const contained = candidates.filter((c) => municipioNameVariants(c.nombreNormalizado || c.nombre).some((v) => v && seg.includes(v)));
+        if (contained.length === 1) return contained;
+      }
+    }
+  }
+
+  // Fallback: search in full address, prefer matches in later segments
   const matches = matchMunicipios(normalizedAddress, candidates);
   if (matches.length <= 1) return matches;
   const segments = (rawAddress ?? "")
@@ -88,39 +121,19 @@ function matchMunicipiosInAddress(rawAddress: string | undefined, normalizedAddr
     .filter((segment) => segment && !/^\d{5}$/.test(segment));
   if (segments.length < 2) return matches;
   const lastIndex = segments.length - 1;
-
-  // Score each candidate: prefer exact segment match over substring, and later segments (closer to province/city position)
-  const scored = matches.map((candidate) => {
+  const indexedMatches = matches.map((candidate) => {
     const variants = municipioNameVariants(candidate.nombreNormalizado || candidate.nombre);
-    let exactScore = -1;
-    let containsScore = -1;
-    segments.forEach((segment, index) => {
-      const isExact = variants.some((v) => segment === v);
-      const isContained = !isExact && variants.some((v) => v && segment.includes(v) && segment.split(" ").length - v.split(" ").length <= 2);
-      if (isExact && (exactScore === -1 || index > exactScore)) exactScore = index;
-      if (isContained && (containsScore === -1 || index > containsScore)) containsScore = index;
-    });
-    return { candidate, exactScore, containsScore, bestScore: exactScore >= 0 ? exactScore * 2 + 1 : containsScore >= 0 ? containsScore * 2 : -1 };
-  }).filter((item) => item.bestScore >= 0);
-
-  if (!scored.length) return matches;
-
-  // If any candidate has an exact match, discard those that only have substring matches
-  const hasExact = scored.some((item) => item.exactScore >= 0);
-  const preferred = hasExact ? scored.filter((item) => item.exactScore >= 0) : scored;
-  if (preferred.length === 1) return [preferred[0].candidate];
-
-  // Among ties, prefer the one matching a later segment (typically the city/province position)
-  const maxScore = Math.max(...preferred.map((item) => item.bestScore));
-  const best = preferred.filter((item) => item.bestScore === maxScore);
-  if (best.length === 1) return [best[0].candidate];
-
-  // Still ambiguous — fall back to original behaviour but only for earlier-segment matches
-  const hasEarlierMatch = preferred.some((item) => (item.exactScore >= 0 ? item.exactScore : item.containsScore) < lastIndex);
+    const indexes = segments
+      .map((segment, index) => variants.some((variant) => segment === variant || segment.includes(variant)) ? index : -1)
+      .filter((index) => index >= 0);
+    return { candidate, indexes };
+  });
+  const hasEarlierMatch = indexedMatches.some((item) => item.indexes.some((index) => index < lastIndex));
   if (!hasEarlierMatch) return matches;
-  return preferred
-    .filter((item) => (item.exactScore >= 0 ? item.exactScore : item.containsScore) < lastIndex)
+  const filtered = indexedMatches
+    .filter((item) => item.indexes.some((index) => index < lastIndex))
     .map((item) => item.candidate);
+  return filtered.length ? filtered : matches;
 }
 
 function infoIssue(code: string, message: string, field: string, sourceRow?: number): ValidationIssue {
