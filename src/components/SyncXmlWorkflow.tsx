@@ -53,6 +53,28 @@ export function SyncXmlWorkflow() {
   const [mappingReviewed, setMappingReviewed] = useState(false);
   const [temporaryCleared, setTemporaryCleared] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const SESSION_KEY = "syncxml-session";
+
+  // Restore session on mount
+  useEffect(() => {
+    try {
+      const saved = sessionStorage.getItem(SESSION_KEY);
+      if (!saved) return;
+      const data = JSON.parse(saved);
+      if (data.parsed) { setParsed(data.parsed); setSmartValidated(data.smartValidated ?? false); setPreviewReviewed(data.previewReviewed ?? false); setMappingReviewed(data.mappingReviewed ?? false); }
+      if (data.generated) setGenerated(data.generated);
+      if (data.consolidated) setConsolidated(true);
+      if (data.activeStep) setActiveStep(data.activeStep);
+    } catch { /* ignore */ }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Persist session on state changes
+  useEffect(() => {
+    if (!parsed && !generated) { sessionStorage.removeItem(SESSION_KEY); return; }
+    try {
+      sessionStorage.setItem(SESSION_KEY, JSON.stringify({ activeStep, parsed, generated, consolidated, smartValidated, previewReviewed, mappingReviewed }));
+    } catch { /* quota exceeded */ }
+  }, [activeStep, parsed, generated, consolidated, smartValidated, previewReviewed, mappingReviewed]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" });
@@ -218,6 +240,7 @@ export function SyncXmlWorkflow() {
 
   function clearOperation() {
     if (!window.confirm(t.clearOperationConfirm)) return;
+    sessionStorage.removeItem(SESSION_KEY);
     setSelectedFile(null);
     setParsed(null);
     setGenerated(null);
