@@ -106,6 +106,8 @@ export function validateGuest(guest: Omit<GuestRecord, "validationStatus" | "err
   if (guest.sex && !ALLOWED_SEX_VALUES.has(guest.sex)) errors.push(issue("error", "guest.sex.invalid", "Sexo no admitido", "sex", guest.sourceRow));
   if (guest.address && guest.address.length > 100) errors.push(issue("error", "guest.address.maxLength", "Dirección superior a 100 caracteres", "address", guest.sourceRow));
   if (guest.addressComplement && guest.addressComplement.length > 100) errors.push(issue("error", "guest.addressComplement.maxLength", "Dirección complementaria superior a 100 caracteres", "addressComplement", guest.sourceRow));
+  if (!guest.postalCode) errors.push(issue("error", "guest.postalCode.required", "Código postal obligatorio para generar el XML SES", "postalCode", guest.sourceRow));
+  else if (guest.postalCode.length > 20) errors.push(issue("error", "guest.postalCode.maxLength", "Código postal superior a 20 caracteres", "postalCode", guest.sourceRow));
   if (guest.documentSupport && guest.documentSupport.length > 9) errors.push(issue("error", "guest.documentSupport.maxLength", "Soporte de documento superior a 9 caracteres", "documentSupport", guest.sourceRow));
   if (guest.relationship && guest.relationship.length > 2) warnings.push(issue("warning", "guest.relationship.maxLength", "Parentesco superior a 2 caracteres", "relationship", guest.sourceRow));
   if (!guest.phone) warnings.push(issue("warning", "guest.phone.missing", "Teléfono no informado", "phone", guest.sourceRow));
@@ -125,8 +127,7 @@ export function validateParsedExcel(parsed: Omit<ParsedExcel, "validation">): Pa
   if (!parsed.reservation.checkInDate || !parsed.reservation.checkOutDate) errors.push(issue("error", "reservation.dates.invalid", "Fechas de entrada/salida inválidas", "dates"));
   if (!parsed.property.establishmentCode) errors.push(issue("error", "property.establishmentCode.required", "Código de establecimiento ausente", "establishmentCode"));
   else if (parsed.property.establishmentCode.length > 10) errors.push(issue("error", "property.establishmentCode.maxLength", "Código de establecimiento superior a 10 caracteres", "establishmentCode"));
-  const validGuests = parsed.guests.filter((guest) => guest.errors.length === 0);
-  if (parsed.reservation.guestCount && parsed.reservation.guestCount !== validGuests.length) {
+  if (parsed.reservation.guestCount && parsed.reservation.guestCount !== parsed.guests.length) {
     errors.push(issue("error", "reservation.guestCount.mismatch", "El número de personas no coincide con los huéspedes válidos", "guestCount"));
   }
   if (parsed.payment.paymentType && !ALLOWED_PAYMENT_TYPES.has(parsed.payment.paymentType)) {
@@ -266,7 +267,7 @@ export function smartValidateParsedExcel(parsed: ParsedExcel): ParsedExcel {
       errors.push(issue("error", "guest.nationality.iso.invalid", "Nacionalidad no normalizada como ISO3", "nationalityIso3", guest.sourceRow));
     }
     if (guest.countryIso3 === "ESP" && guest.postalCode && !isValidSpanishPostalCode(guest.postalCode)) {
-      warnings.push(issue("warning", "guest.postalCode.invalid", "Código postal español no válido", "postalCode", guest.sourceRow));
+      errors.push(issue("error", "guest.postalCode.invalid", "Código postal español no válido", "postalCode", guest.sourceRow));
     }
     if (guest.birthDate && isValidIsoDate(guest.birthDate)) {
       const age = getAge(guest.birthDate);

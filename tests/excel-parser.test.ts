@@ -37,5 +37,8 @@ describe("parseExcelBuffer", () => {
     expect(euOnly.reservation.checkInDate).toBe("2026-06-15");
     expect(euOnly.reservation.checkOutDate).toBe("2026-06-20");
     expect(euOnly.payment.paymentType).toBe("OTRO");
+    expect(euOnly.guests.find((guest) => guest.sourceRow === 19)?.postalCode).toBe("1100-048");
+    expect(euOnly.guests.find((guest) => guest.sourceRow === 21)?.postalCode).toBe("1000");
+    expect(euOnly.guests.find((guest) => guest.sourceRow === 22)?.postalCode).toBe("111 51");
   });
 });

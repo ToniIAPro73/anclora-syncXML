@@ -43,12 +43,13 @@ describe("smartValidateParsedExcel", () => {
     expect(validated.validation.errors.some((error) => error.code === "payment.iban.invalid")).toBe(true);
   });
 
-  it("does not require Spanish municipality codes or infer IBANs for EU-only guests", () => {
+  it("does not require Spanish municipality codes or infer IBANs for EU-only guests but blocks missing postal codes", () => {
     const parsed = parseExcelBuffer(readFileSync("test-data/test2-eu-solo.xlsx"), "test2-eu-solo.xlsx");
     const validated = smartValidateParsedExcel(parsed);
 
-    expect(validated.validation.errors).toHaveLength(0);
-    expect(validated.validation.status).toBe("WARNING");
+    expect(validated.validation.errors).toHaveLength(1);
+    expect(validated.validation.errors[0]).toMatchObject({ code: "guest.postalCode.required", sourceRow: 20 });
+    expect(validated.validation.status).toBe("ERROR");
     expect(validated.guests.every((guest) => guest.countryIso3 !== "ESP" && !guest.municipalityCode)).toBe(true);
     expect(validated.validation.warnings.some((warning) => warning.code === "guest.phone.missing" && warning.sourceRow === 23)).toBe(true);
   });

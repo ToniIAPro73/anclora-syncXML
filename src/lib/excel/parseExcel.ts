@@ -1,6 +1,6 @@
 import * as XLSX from "xlsx";
 import type { ParsedExcel } from "../domain";
-import { cleanText, extractPostalCode, normalizeDocumentType, normalizeNationality, normalizePaymentType, normalizePhone, normalizeTime, parseDate } from "../normalizers";
+import { cleanText, extractPostalCode, extractResidencePostalCode, normalizeDocumentType, normalizeNationality, normalizePaymentType, normalizePhone, normalizeTime, parseDate } from "../normalizers";
 import { validateGuest, validateParsedExcel } from "../validation";
 import { detectDuplicates } from "../duplicates";
 
@@ -86,7 +86,7 @@ export function parseExcelBuffer(buffer: Buffer, fileName?: string): ParsedExcel
             email: get(row, header, "Correo electrónico") || undefined,
             phone: normalizePhone(get(row, header, "Número de teléfono")),
             address,
-            postalCode: extractPostalCode(address),
+            postalCode: extractResidencePostalCode(address, nationality === "ESP" ? "ESP" : nationality),
             countryIso3: nationality === "ESP" ? "ESP" : nationality,
             arrivalDate: parseDate(get(row, header, "Fecha de llegada")),
             departureDate: parseDate(get(row, header, "Fecha de salida")),
