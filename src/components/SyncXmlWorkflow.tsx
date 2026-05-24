@@ -1189,6 +1189,13 @@ function IneSyncPanel() {
                   <span className="col-span-2 sm:col-span-1">{t.ineLastSync}: <b>{new Date(result.lastSyncedAt).toLocaleString()}</b></span>
                 )}
               </div>
+              {result.errors?.length > 0 && (
+                <ul className="mt-2 space-y-0.5">
+                  {result.errors.map((e: any, i: number) => (
+                    <li key={i} className="text-error">{e.page ? `Página ${e.page}: ` : ""}{e.reason ?? e.message ?? JSON.stringify(e)}</li>
+                  ))}
+                </ul>
+              )}
             </div>
           )}
         </div>
