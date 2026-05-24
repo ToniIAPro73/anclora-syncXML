@@ -265,7 +265,6 @@ export function SyncXmlWorkflow() {
 
       {message && <div className={`process-message ${processMessageTone(message, t)}`} role="status">{message}</div>}
       {busy && <div className="process-message is-working" role="status">{t.processing}</div>}
-      {activeStep === 4 && <PrivacyModeCard onClear={clearOperation} hasData={Boolean(parsed || generated || selectedFile)} />}
 
       {activeStep === 1 && (
         <>
@@ -376,21 +375,26 @@ export function SyncXmlWorkflow() {
       )}
 
       {activeStep === 4 && (
-        <section className="panel p-6">
-          <div className="flex items-start gap-4">
-            <div className="icon-tile"><CheckCircle2 className="h-5 w-5" /></div>
-            <div>
-              <h2 className="font-heading text-2xl font-black">{t.processConsolidate}</h2>
-              <p className="mt-2 text-sm text-secondary">{message ?? t.consolidatedOk}</p>
+        <>
+          {/* Card consolidación */}
+          <section className="panel p-6">
+            <div className="flex items-start gap-4">
+              <div className="icon-tile"><CheckCircle2 className="h-5 w-5" /></div>
+              <div>
+                <h2 className="font-heading text-2xl font-black">{t.processConsolidate}</h2>
+                <p className="mt-2 text-sm text-secondary">{message ?? t.consolidatedOk}</p>
+              </div>
             </div>
-          </div>
-          {parsed && <OperationSummary parsed={parsed} temporaryCleared={temporaryCleared} />}
-          {generated && (
-            <div className="mt-5">
-              <button className="btn-secondary" onClick={downloadXml}><Download className="h-4 w-4" />{t.downloadXml}</button>
-            </div>
-          )}
-        </section>
+            {parsed && <OperationSummary parsed={parsed} temporaryCleared={temporaryCleared} />}
+            {generated && (
+              <div className="mt-5">
+                <button className="btn-secondary" onClick={downloadXml}><Download className="h-4 w-4" />{t.downloadXml}</button>
+              </div>
+            )}
+          </section>
+          {/* Modo privado */}
+          <PrivacyModeCard onClear={clearOperation} hasData={Boolean(parsed || generated || selectedFile)} />
+        </>
       )}
     </div>
   );
