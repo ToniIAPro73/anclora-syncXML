@@ -77,6 +77,13 @@ export function ReservationDashboard() {
               <Metric label={t.ineErrors} value={String(ineResult.errors?.length ?? 0)} />
               <Metric label={t.ineLastSync} value={ineResult.lastSyncedAt ? new Date(ineResult.lastSyncedAt).toLocaleString() : "-"} />
             </div>
+            {ineResult.errors?.length > 0 && (
+              <ul className="mt-3 space-y-1">
+                {ineResult.errors.map((e: any, i: number) => (
+                  <li key={i} className="text-xs text-error">{e.page ? `Página ${e.page}: ` : ""}{e.reason ?? e.message ?? JSON.stringify(e)}</li>
+                ))}
+              </ul>
+            )}
           </div>
         )}
       </section>
