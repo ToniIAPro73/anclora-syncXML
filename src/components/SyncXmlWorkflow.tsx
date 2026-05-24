@@ -55,6 +55,27 @@ export function SyncXmlWorkflow() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const SESSION_KEY = "syncxml-session";
 
+  // Reset state when "Nueva reserva" is clicked from within the workflow page
+  useEffect(() => {
+    function handleNew() {
+      sessionStorage.removeItem(SESSION_KEY);
+      setSelectedFile(null);
+      setParsed(null);
+      setGenerated(null);
+      setActiveStep(1);
+      setConsolidated(false);
+      setSmartValidated(false);
+      setPreviewReviewed(false);
+      setMappingReviewed(false);
+      setShowFullData(false);
+      setTemporaryCleared(false);
+      setMessage(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+    window.addEventListener("syncxml:new", handleNew);
+    return () => window.removeEventListener("syncxml:new", handleNew);
+  }, []);
+
   // Restore session on mount
   useEffect(() => {
     try {
