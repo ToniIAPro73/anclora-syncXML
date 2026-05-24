@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Download, Search, Trash2 } from "lucide-react";
+import Link from "next/link";
+import { ArrowLeft, Download, Search, Trash2 } from "lucide-react";
 import { formatDashboardDateTime } from "@/lib/dateFormat";
 import { usePreferences } from "./AppPreferencesProvider";
 import { maskDocument, maskEmail, maskPhone } from "@/lib/privacy/masking";
@@ -13,6 +14,12 @@ export function ReservationDashboard() {
   const [selected, setSelected] = useState<any | null>(null);
   const [busyAction, setBusyAction] = useState<"load" | "delete" | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [hasPendingSession, setHasPendingSession] = useState(false);
+
+  useEffect(() => {
+    setHasPendingSession(Boolean(sessionStorage.getItem("syncxml-session")));
+  }, []);
+
   const load = useCallback(async (q = query, showMessage = true) => {
     setBusyAction("load");
     if (showMessage) setMessage(null);
@@ -38,6 +45,12 @@ export function ReservationDashboard() {
 
   return (
     <div className="space-y-6">
+      {hasPendingSession && (
+        <Link href="/" className="flex items-center gap-2 rounded-lg border border-accent/40 bg-accent/10 px-4 py-3 text-sm font-semibold text-accent transition hover:bg-accent/20">
+          <ArrowLeft className="h-4 w-4 shrink-0" />
+          Continuar con la reserva en curso
+        </Link>
+      )}
       <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
       <section className="panel overflow-hidden">
         <div className="border-b border-app p-5">
