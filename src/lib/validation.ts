@@ -233,7 +233,7 @@ function findIbans(parsed: ParsedExcel) {
   if (parsed.payment.iban) candidates.push({ value: parsed.payment.iban });
   for (const row of parsed.rawRows) {
     const joined = row.values.join(" ");
-    const matches = joined.match(/\b[A-Z]{2}\d{2}[A-Z0-9 ]{10,34}\b/gi) ?? [];
+    const matches = joined.match(/\b[A-Z]{2}\d{2}(?: ?[A-Z0-9]){10,30}\b/g) ?? [];
     for (const match of matches) candidates.push({ value: match.replace(/\s+/g, ""), row: row.rowNumber });
   }
   return candidates.filter((candidate, index, all) => all.findIndex((item) => item.value === candidate.value && item.row === candidate.row) === index);
