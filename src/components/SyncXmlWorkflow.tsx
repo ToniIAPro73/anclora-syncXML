@@ -503,14 +503,14 @@ function ExcelReview({
         <GuestTable guests={parsed.guests} smartValidated={smartValidated} showFullData={showFullData} />
       </section>
 
-      <IssuePanel title={t.warnings} issues={parsed.validation.warnings} />
-
       <ManualCorrectionPanel parsed={parsed} onGuestCorrection={onGuestCorrection} />
 
-      <section className="grid items-start gap-4 lg:grid-cols-2">
-        <IssuePanel title={t.errors} issues={parsed.validation.errors} />
-        <DuplicatePanel duplicates={parsed.duplicates ?? []} onResolve={onDuplicateResolution} />
-      </section>
+      <UnifiedIssuesPanel
+        warnings={parsed.validation.warnings}
+        errors={parsed.validation.errors}
+        duplicates={parsed.duplicates ?? []}
+        onDuplicateResolve={onDuplicateResolution}
+      />
     </>
   );
 }
@@ -1168,11 +1168,16 @@ function MunicipioCorrectionField({
             {provinceCode}
           </span>
         )}
+        {selected && (
+          <span className="shrink-0 rounded bg-accent/10 px-1.5 py-0.5 font-mono text-xs font-bold text-accent/80 select-none border border-accent/20">
+            {selected.codigoMunicipio.slice(2)}
+          </span>
+        )}
         <input
           ref={inputRef}
           id={uid}
           className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted"
-          placeholder={selected ? `${selected.codigoMunicipio.slice(2)} · ${selected.nombre}` : t.selectMunicipio}
+          placeholder={selected ? selected.nombre : t.selectMunicipio}
           value={query}
           autoComplete="off"
           onChange={(e) => { setQuery(e.target.value); setOpen(true); setFocusIdx(0); }}
@@ -1347,6 +1352,10 @@ function CorrectionSelect({
 
 function GuestTable({ guests, smartValidated, showFullData }: { guests: ParsedExcel["guests"]; smartValidated: boolean; showFullData: boolean }) {
   const { dictionary: t } = usePreferences();
+  const [page, setPage] = useState(0);
+  const pageSize = 5;
+  const totalPages = Math.ceil(guests.length / pageSize);
+  const pageGuests = guests.slice(page * pageSize, (page + 1) * pageSize);
   return (
     <div className="guest-table-wrap">
       <table className="data-table guest-table">
@@ -1360,9 +1369,9 @@ function GuestTable({ guests, smartValidated, showFullData }: { guests: ParsedEx
           <col className="w-[22%]" />
           <col className="w-[13%]" />
         </colgroup>
-        <thead><tr><th>{t.status}</th><th>#</th><th>{t.name}</th><th>{t.document}</th><th>{t.data}</th><th>{t.contact}</th><th>{t.address}</th><th>{t.guestWarnings}</th></tr></thead>
+        <thead><tr><th>{t.status}</th><th>#</th><th>{t.name}</th><th>{t.document}</th><th>{t.data}</th><th>{t.contact}</th><th>{t.address}</th><th>{t.warnings}</th></tr></thead>
         <tbody>
-          {guests.map((guest) => (
+          {pageGuests.map((guest) => (
             <tr key={guest.sourceRow}>
               <td><StatusPill status={guest.validationStatus} /></td>
               <td>{guest.sourceRow}</td>
@@ -1376,6 +1385,7 @@ function GuestTable({ guests, smartValidated, showFullData }: { guests: ParsedEx
           ))}
         </tbody>
       </table>
+      {totalPages > 1 && <Pagination page={page} totalPages={totalPages} onPage={(p) => { setPage(p); }} />}
     </div>
   );
 }
@@ -1389,12 +1399,26 @@ function InfoCard({ title, rows }: { title: string; rows: Array<[string, string 
 }
 
 function StatusPill({ status }: { status: string }) {
-  const label = status === "ERROR" ? "ERR" : status === "WARNING" ? "WARN" : "OK";
+  const label = status === "ERROR" ? "ERR" : status === "WARNING" ? "AVISO" : "OK";
   return <span className={`status-pill ${status === "ERROR" ? "is-error" : status === "WARNING" ? "is-warning" : "is-valid"}`}>{label}</span>;
+}
+
+function Pagination({ page, totalPages, onPage }: { page: number; totalPages: number; onPage: (p: number) => void }) {
+  return (
+    <div className="flex items-center justify-between border-t border-app px-5 py-3 text-sm text-muted">
+      <button type="button" className="btn-secondary py-1 text-xs disabled:opacity-40" disabled={page === 0} onClick={() => onPage(page - 1)}>← Anterior</button>
+      <span>{page + 1} / {totalPages}</span>
+      <button type="button" className="btn-secondary py-1 text-xs disabled:opacity-40" disabled={page === totalPages - 1} onClick={() => onPage(page + 1)}>Siguiente →</button>
+    </div>
+  );
 }
 
 function IssuePanel({ title, issues }: { title: string; issues: Array<{ code: string; message: string; severity: string; field?: string; sourceRow?: number }> }) {
   const { dictionary: t } = usePreferences();
+  const [page, setPage] = useState(0);
+  const pageSize = 10;
+  const totalPages = Math.ceil(issues.length / pageSize);
+  const pageIssues = issues.slice(page * pageSize, (page + 1) * pageSize);
   return (
     <div className="panel overflow-hidden">
       <div className="border-b border-app p-5">
@@ -1402,22 +1426,25 @@ function IssuePanel({ title, issues }: { title: string; issues: Array<{ code: st
         <p className="mt-1 text-sm text-muted">{t.issueSummary}: {issues.length}</p>
       </div>
       {issues.length ? (
-        <div className="overflow-x-auto">
-          <table className="data-table">
-            <thead><tr><th>{t.severity}</th><th>{t.row}</th><th>{t.field}</th><th>{t.explanation}</th><th>{t.recommendedAction}</th></tr></thead>
-            <tbody>
-              {issues.map((issue, index) => (
-                <tr key={`${issue.code}-${index}`}>
-                  <td><span className={`status-pill ${issue.severity === "error" ? "is-error" : "is-warning"}`}>{issue.severity === "error" ? t.errors : t.warnings}</span></td>
-                  <td>{issue.sourceRow ?? "-"}</td>
-                  <td>{issue.field || "-"}</td>
-                  <td>{translateIssueMessage(issue.code, issue.message, t)}</td>
-                  <td>{t.fixBeforeConsolidating}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <>
+          <div className="overflow-x-auto">
+            <table className="data-table">
+              <thead><tr><th>{t.severity}</th><th>{t.row}</th><th>{t.field}</th><th>{t.explanation}</th><th>{t.recommendedAction}</th></tr></thead>
+              <tbody>
+                {pageIssues.map((issue, index) => (
+                  <tr key={`${issue.code}-${index}`}>
+                    <td><span className={`status-pill ${issue.severity === "error" ? "is-error" : "is-warning"}`}>{issue.severity === "error" ? "ERR" : "AVISO"}</span></td>
+                    <td>{issue.sourceRow ?? "-"}</td>
+                    <td>{issue.field || "-"}</td>
+                    <td>{translateIssueMessage(issue.code, issue.message, t)}</td>
+                    <td>{t.fixBeforeConsolidating}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {totalPages > 1 && <Pagination page={page} totalPages={totalPages} onPage={setPage} />}
+        </>
       ) : <p className="p-5 text-sm text-muted">OK</p>}
     </div>
   );
@@ -1487,6 +1514,96 @@ function ConsentPanel({ consents, onChange }: { consents: boolean[]; onChange: (
           </label>
         ))}
       </div>
+    </div>
+  );
+}
+
+function UnifiedIssuesPanel({
+  warnings,
+  errors,
+  duplicates,
+  onDuplicateResolve,
+}: {
+  warnings: Array<{ code: string; message: string; severity: string; field?: string; sourceRow?: number }>;
+  errors: Array<{ code: string; message: string; severity: string; field?: string; sourceRow?: number }>;
+  duplicates: NonNullable<ParsedExcel["duplicates"]>;
+  onDuplicateResolve: (id: string, resolution: DuplicateResolution) => void;
+}) {
+  const { dictionary: t } = usePreferences();
+  const [page, setPage] = useState(0);
+  const pageSize = 10;
+
+  type IssueRow =
+    | { kind: "issue"; issue: { code: string; message: string; severity: string; field?: string; sourceRow?: number } }
+    | { kind: "duplicate"; dup: NonNullable<ParsedExcel["duplicates"]>[number] };
+
+  const allRows: IssueRow[] = [
+    ...errors.map((issue) => ({ kind: "issue" as const, issue })),
+    ...warnings.map((issue) => ({ kind: "issue" as const, issue })),
+    ...duplicates.map((dup) => ({ kind: "duplicate" as const, dup })),
+  ];
+
+  const totalPages = Math.ceil(allRows.length / pageSize);
+  const pageRows = allRows.slice(page * pageSize, (page + 1) * pageSize);
+
+  return (
+    <div className="panel overflow-hidden">
+      <div className="flex items-center justify-between border-b border-app p-5">
+        <div>
+          <h3 className="font-heading font-bold">{t.warnings}</h3>
+          <p className="mt-1 text-sm text-muted">{t.issueSummary}: {allRows.length}</p>
+        </div>
+        {errors.length > 0 && <span className="status-pill is-error">{errors.length} {t.errors}</span>}
+      </div>
+      {allRows.length ? (
+        <>
+          <div className="overflow-x-auto">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>{t.severity}</th>
+                  <th>{t.row}</th>
+                  <th>{t.field}</th>
+                  <th>{t.explanation}</th>
+                  <th>{t.recommendedAction}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pageRows.map((row, idx) => {
+                  if (row.kind === "issue") {
+                    const { issue } = row;
+                    return (
+                      <tr key={`issue-${issue.code}-${idx}`}>
+                        <td><span className={`status-pill ${issue.severity === "error" ? "is-error" : "is-warning"}`}>{issue.severity === "error" ? "ERR" : "AVISO"}</span></td>
+                        <td>{issue.sourceRow ?? "-"}</td>
+                        <td>{issue.field || "-"}</td>
+                        <td>{translateIssueMessage(issue.code, issue.message, t)}</td>
+                        <td>{t.fixBeforeConsolidating}</td>
+                      </tr>
+                    );
+                  }
+                  const { dup } = row;
+                  return (
+                    <tr key={`dup-${dup.id}`}>
+                      <td><span className={`status-pill ${dup.classification === "likely" ? "is-error" : "is-warning"}`}>DUP</span></td>
+                      <td>{dup.sourceRows.join(", ")}</td>
+                      <td>-</td>
+                      <td>{dup.reasonCodes.join(", ")}</td>
+                      <td>
+                        <div className="flex flex-wrap gap-1">
+                          <button type="button" className={`tab text-xs ${dup.resolution === "skip_new" ? "is-active" : ""}`} onClick={() => onDuplicateResolve(dup.id, "skip_new")}>{t.skipNewRecord}</button>
+                          <button type="button" className={`tab text-xs ${dup.resolution === "keep_both" ? "is-active" : ""}`} onClick={() => onDuplicateResolve(dup.id, "keep_both")}>{t.keepBothRecords}</button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          {totalPages > 1 && <Pagination page={page} totalPages={totalPages} onPage={setPage} />}
+        </>
+      ) : <p className="p-5 text-sm text-muted">OK</p>}
     </div>
   );
 }
