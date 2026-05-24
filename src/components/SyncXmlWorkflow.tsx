@@ -265,83 +265,76 @@ export function SyncXmlWorkflow() {
 
       {message && <div className={`process-message ${processMessageTone(message, t)}`} role="status">{message}</div>}
       {busy && <div className="process-message is-working" role="status">{t.processing}</div>}
-      <PrivacyModeCard onClear={clearOperation} hasData={Boolean(parsed || generated || selectedFile)} />
+      {activeStep !== 1 && <PrivacyModeCard onClear={clearOperation} hasData={Boolean(parsed || generated || selectedFile)} />}
 
       {activeStep === 1 && (
-        <section className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
-          <div className="panel p-6">
-            <div className="flex items-start gap-4">
-              <div className="icon-tile"><FileSpreadsheet className="h-5 w-5" /></div>
-              <div>
-                <h1 className="font-heading text-3xl font-black">{t.uploadTitle}</h1>
-                <p className="mt-2 max-w-2xl text-sm text-muted">{t.uploadCopy}</p>
-                <p className="mt-3 text-sm text-warning">{t.noticeBeforeImport}</p>
+        <>
+          {/* Fila 2: Aceptación informada (izq) + Área de importación (dcha) */}
+          <section className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
+            <div className="panel p-6">
+              <div className="flex items-start gap-4">
+                <div className="icon-tile"><FileSpreadsheet className="h-5 w-5" /></div>
+                <div>
+                  <h1 className="font-heading text-3xl font-black">{t.uploadTitle}</h1>
+                  <p className="mt-2 text-sm text-muted">{t.uploadCopy}</p>
+                  <p className="mt-3 text-sm text-warning">{t.noticeBeforeImport}</p>
+                </div>
               </div>
+              <ConsentPanel consents={consents} onChange={setConsents} />
             </div>
-            <ConsentPanel consents={consents} onChange={setConsents} />
-            <button
-              type="button"
-              className={`upload-zone mt-6 ${dragActive ? "is-dragging" : ""} ${!consentAccepted ? "is-blocked" : ""}`}
-              disabled={busy}
-              aria-disabled={!consentAccepted}
-              onClick={() => {
-                if (!consentAccepted) {
-                  requireConsentNotice();
-                  return;
-                }
-                fileInputRef.current?.click();
-              }}
-              onDragEnter={(event) => {
-                event.preventDefault();
-                if (!consentAccepted) return;
-                setDragActive(true);
-              }}
-              onDragOver={(event) => {
-                event.preventDefault();
-                if (!consentAccepted) return;
-                setDragActive(true);
-              }}
-              onDragLeave={() => setDragActive(false)}
-              onDrop={(event) => {
-                event.preventDefault();
-                setDragActive(false);
-                if (!consentAccepted) {
-                  requireConsentNotice();
-                  return;
-                }
-                chooseFile(event.dataTransfer.files.item(0));
-              }}
-            >
-              <UploadCloud className="h-9 w-9 text-accent" />
-              <span className="font-heading text-lg font-bold">{dragActive ? t.dropExcel : t.selectExcel}</span>
-              <span className="text-sm text-muted">{t.clickOrDrop}</span>
-              {selectedFile && <span className="upload-file">{t.fileSelected}: {selectedFile.name}</span>}
-            </button>
-            <input ref={fileInputRef} className="hidden" type="file" accept=".xlsx" disabled={busy || !consentAccepted} onChange={(event) => chooseFile(event.target.files?.[0])} />
-            <div className="mt-5 flex justify-end">
+            <div className="panel p-6 flex flex-col">
               <button
-                className="btn-primary"
-                disabled={!selectedFile || busy}
-                aria-disabled={Boolean(selectedFile && !consentAccepted)}
+                type="button"
+                className={`upload-zone flex-1 ${dragActive ? "is-dragging" : ""} ${!consentAccepted ? "is-blocked" : ""}`}
+                disabled={busy}
+                aria-disabled={!consentAccepted}
                 onClick={() => {
-                  if (!consentAccepted) {
-                    requireConsentNotice();
-                    return;
-                  }
-                  void upload();
+                  if (!consentAccepted) { requireConsentNotice(); return; }
+                  fileInputRef.current?.click();
+                }}
+                onDragEnter={(event) => { event.preventDefault(); if (!consentAccepted) return; setDragActive(true); }}
+                onDragOver={(event) => { event.preventDefault(); if (!consentAccepted) return; setDragActive(true); }}
+                onDragLeave={() => setDragActive(false)}
+                onDrop={(event) => {
+                  event.preventDefault();
+                  setDragActive(false);
+                  if (!consentAccepted) { requireConsentNotice(); return; }
+                  chooseFile(event.dataTransfer.files.item(0));
                 }}
               >
-                {busyAction === "upload" ? <WorkingLabel label={t.processing} /> : t.importAction}
+                <UploadCloud className="h-9 w-9 text-accent" />
+                <span className="font-heading text-lg font-bold">{dragActive ? t.dropExcel : t.selectExcel}</span>
+                <span className="text-sm text-muted">{t.clickOrDrop}</span>
+                {selectedFile && <span className="upload-file">{t.fileSelected}: {selectedFile.name}</span>}
               </button>
+              <input ref={fileInputRef} className="hidden" type="file" accept=".xlsx" disabled={busy || !consentAccepted} onChange={(event) => chooseFile(event.target.files?.[0])} />
+              <div className="mt-5 flex justify-end">
+                <button
+                  className="btn-primary"
+                  disabled={!selectedFile || busy}
+                  aria-disabled={Boolean(selectedFile && !consentAccepted)}
+                  onClick={() => {
+                    if (!consentAccepted) { requireConsentNotice(); return; }
+                    void upload();
+                  }}
+                >
+                  {busyAction === "upload" ? <WorkingLabel label={t.processing} /> : t.importAction}
+                </button>
+              </div>
             </div>
-          </div>
-          <div className="panel border-accent/30 p-6">
-            <div className="flex gap-3">
-              <ShieldCheck className="mt-1 h-5 w-5 shrink-0 text-accent" />
-              <p className="text-sm leading-6 text-secondary">{t.privacyNotice}</p>
+          </section>
+
+          {/* Fila 3: Modo privado (izq) + Aviso de privacidad (dcha) */}
+          <section className="grid gap-6 lg:grid-cols-2">
+            <PrivacyModeCard onClear={clearOperation} hasData={Boolean(parsed || generated || selectedFile)} />
+            <div className="panel border-accent/30 p-6">
+              <div className="flex gap-3">
+                <ShieldCheck className="mt-1 h-5 w-5 shrink-0 text-accent" />
+                <p className="text-sm leading-6 text-secondary">{t.privacyNotice}</p>
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        </>
       )}
 
       {activeStep === 2 && parsed && (
