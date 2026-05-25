@@ -3,7 +3,8 @@ import { z } from "zod";
 import { requireAuth } from "@/lib/auth";
 import { getRateLimitKey, sensitiveRateLimiter } from "@/lib/security/rateLimit";
 import { querySesLote } from "@/lib/ses/client";
-import { summarizeSesHttpResponse } from "@/lib/ses/response";
+import { parseConsultaLoteResponse, sanitizeSoapForStorage, extractFirstCommunicationCode, collectSesErrors } from "@/lib/ses/parser";
+import { getSesSubmissionByBatchCode, updateSesSubmissionFromLote } from "@/lib/ses/submissionRepository";
 
 export async function POST(request: Request) {
   try {
@@ -11,16 +12,68 @@ export async function POST(request: Request) {
     if (!rateLimit.allowed) return NextResponse.json({ error: "Demasiadas solicitudes" }, { status: 429 });
     const unauthorized = await requireAuth();
     if (unauthorized) return unauthorized;
+
     const body = await request.json().catch(() => ({}));
     const parsed = z.object({
       loteCodes: z.array(z.string().min(1)).min(1),
       environment: z.enum(["pre", "prod"]).optional(),
       dryRun: z.boolean().optional(),
+      submissionId: z.string().optional(),
     }).safeParse(body);
     if (!parsed.success) return NextResponse.json({ error: "Payload inválido" }, { status: 400 });
-    const result = await querySesLote(parsed.data.loteCodes, { environment: parsed.data.environment, dryRun: parsed.data.dryRun ?? true });
-    if (!("status" in result)) return NextResponse.json({ dryRun: true, environment: result.environment, endpoint: result.endpoint });
-    return NextResponse.json(summarizeSesHttpResponse(result));
+
+    const { loteCodes, environment, dryRun = true, submissionId } = parsed.data;
+
+    const result = await querySesLote(loteCodes, { environment, dryRun });
+    if (!("status" in result)) {
+      return NextResponse.json({ dryRun: true, environment: result.environment, endpoint: result.endpoint });
+    }
+
+    const httpResult = result as { ok: boolean; status: number; statusText: string; body: string; parsed: unknown };
+    if (!httpResult.ok) {
+      return NextResponse.json({
+        ok: false,
+        responseCode: String(httpResult.status),
+        responseDescription: httpResult.statusText,
+        message: `HTTP ${httpResult.status}: ${httpResult.statusText}`,
+      }, { status: 502 });
+    }
+
+    const parsedResponse = parseConsultaLoteResponse(httpResult.body);
+    const sanitizedSoap = sanitizeSoapForStorage(httpResult.body);
+    const communicationCode = extractFirstCommunicationCode(parsedResponse);
+    const sesErrors = collectSesErrors(parsedResponse.resultados);
+
+    // Resolve which submission to update
+    const batchCode = loteCodes[0];
+    const resolvedId = submissionId ?? (await getSesSubmissionByBatchCode(batchCode))?.id;
+    let updatedSubmission = null;
+    if (resolvedId) {
+      updatedSubmission = await updateSesSubmissionFromLote(resolvedId, parsedResponse, sanitizedSoap);
+    }
+
+    let message: string;
+    if (!parsedResponse.ok) {
+      message = `SES devolvió error al consultar el lote (código ${parsedResponse.responseCode}): ${parsedResponse.responseDescription}`;
+    } else if (communicationCode) {
+      message = `Lote procesado. Código de comunicación: ${communicationCode}`;
+    } else if (parsedResponse.resultados.length) {
+      message = "SES aceptó la petición, pero el lote aún no ha sido procesado completamente. Vuelve a consultar en unos minutos.";
+    } else {
+      message = `Consulta completada: ${parsedResponse.responseDescription}`;
+    }
+
+    return NextResponse.json({
+      ok: parsedResponse.ok,
+      responseCode: parsedResponse.responseCode,
+      responseDescription: parsedResponse.responseDescription,
+      communicationCode,
+      batchStatus: updatedSubmission?.status,
+      submissionId: resolvedId,
+      sesErrors: sesErrors.length ? sesErrors : undefined,
+      resultados: parsedResponse.resultados.length,
+      message,
+    });
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : "Error SES" }, { status: 503 });
   }
