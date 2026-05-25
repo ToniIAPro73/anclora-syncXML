@@ -33,15 +33,23 @@ function authHeader(config: SesConfig) {
 }
 
 async function postSoap(xml: string, config: SesConfig, fetchImpl: typeof fetch) {
-  const response = await fetchImpl(config.endpoint, {
-    method: "POST",
-    headers: {
-      authorization: authHeader(config),
-      "content-type": "text/xml; charset=utf-8",
-      soapaction: "",
-    },
-    body: xml,
-  });
+  let response: Response;
+  try {
+    response = await fetchImpl(config.endpoint, {
+      method: "POST",
+      headers: {
+        authorization: authHeader(config),
+        "content-type": "text/xml; charset=utf-8",
+        soapaction: "",
+      },
+      body: xml,
+    });
+  } catch (error) {
+    const cause = error instanceof Error && "cause" in error && error.cause instanceof Error ? error.cause.message : undefined;
+    const detail = error instanceof Error ? error.message : "unknown network error";
+    const endpointHost = new URL(config.endpoint).host;
+    throw new Error(`SES.HOSPEDAJES network error connecting to ${endpointHost}: ${detail}${cause ? ` (${cause})` : ""}`);
+  }
   const text = await response.text();
   return {
     ok: response.ok,
