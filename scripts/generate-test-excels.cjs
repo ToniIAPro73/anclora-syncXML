@@ -45,7 +45,7 @@ function save(wb, filename) {
 
 // ── Common property header rows ─────────────────────────────────────────────
 const PROPERTY_ROWS = [
-  ["CODIGO ESTABLECIMIENTO", "12345"],
+  ["CODIGO ESTABLECIMIENTO", "0000004630"],
   ["Hotel Playa Dorada"],
   ["Calle del Mar, 10"],
   ["Valencia, 46001"],
