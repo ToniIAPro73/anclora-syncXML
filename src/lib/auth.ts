@@ -1,11 +1,12 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import { canUsePasswordAuth, getSessionSecret, isExplicitLocalDemoMode, validateRuntimeConfig } from "./security/env";
+import { authDisabled, canUsePasswordAuth, getSessionSecret, isExplicitLocalDemoMode, validateRuntimeConfig } from "./security/env";
 
 const COOKIE_NAME = "anclora-syncxml-session";
 
 export async function isAuthenticated() {
   validateRuntimeConfig();
+  if (authDisabled()) return true;
   if (!canUsePasswordAuth()) return false;
   if (isExplicitLocalDemoMode()) return true;
   return (await cookies()).get(COOKIE_NAME)?.value === getSessionSecret();
