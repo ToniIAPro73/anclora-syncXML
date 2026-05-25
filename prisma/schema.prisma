@@ -167,3 +167,55 @@ enum StoredFileType {
   GENERATED_XML
   VALIDATION_REPORT
 }
+
+model SesSubmission {
+  id                     String              @id @default(cuid())
+  createdAt              DateTime            @default(now())
+  updatedAt              DateTime            @updatedAt
+
+  xmlHash                String
+  fileName               String?
+  reference              String?
+
+  environment            String              @default("pre")
+  endpoint               String
+
+  landlordCode           String
+  establishmentCode      String?
+  applicationName        String              @default("Anclora SyncXML")
+
+  operationType          String              @default("A")
+  communicationType      String?
+
+  requestSoap            String?
+
+  responseSoap           String?
+  sesResponseCode        String?
+  sesResponseDescription String?
+  sesBatchCode           String?
+
+  batchStatus            String?
+  batchProcessedAt       DateTime?
+  communicationCode      String?
+
+  status                 SesSubmissionStatus @default(SENT)
+
+  sesErrors              Json?
+  lastCheckedAt          DateTime?
+  queryHistory           Json?
+
+  @@index([sesBatchCode])
+  @@index([reference])
+  @@index([createdAt])
+}
+
+enum SesSubmissionStatus {
+  DRAFT
+  SENT
+  ACCEPTED
+  PROCESSING
+  PROCESSED
+  FAILED
+  PARTIAL
+  UNKNOWN
+}

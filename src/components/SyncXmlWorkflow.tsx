@@ -2,7 +2,7 @@
 
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import type { ComponentType, ReactNode } from "react";
-import { Ban, CheckCircle2, ClipboardCheck, Copy, Download, Eye, EyeOff, FileSpreadsheet, FileText, Link2, RadioTower, Search, SearchCheck, Send, ShieldCheck, Trash2, UploadCloud } from "lucide-react";
+import { AlertTriangle, Ban, CheckCircle2, ClipboardCheck, Clock, Copy, Download, Eye, EyeOff, FileSpreadsheet, FileText, History, Link2, RadioTower, RefreshCw, Search, SearchCheck, Send, ShieldCheck, Trash2, UploadCloud } from "lucide-react";
 import type { DuplicateResolution, GeneratedXmlResult, GuestRecord, ParsedExcel, ValidationIssue } from "@/lib/domain";
 import { smartValidateParsedExcel, validateGuest } from "@/lib/validation";
 import { buildXmlDownloadFileName } from "@/lib/xml/fileName";
@@ -14,12 +14,48 @@ import { buildValidationReportCsv, buildValidationReportFileName } from "@/lib/v
 
 type BusyAction = "upload" | "validate" | "generate" | "consolidate" | null;
 type WorkflowStep = 1 | 2 | 3 | 4;
-type SesUiAction = "validate" | "prepare" | "sendPre" | "queryLot" | "queryCommunication" | "cancelLot" | "catalog" | null;
+type SesUiAction = "validate" | "prepare" | "sendPre" | "queryLot" | "queryCommunication" | "cancelLot" | "catalog" | "refreshHistory" | null;
 type SesStatus = {
   readyForPreproduction: boolean;
   hasCredentials: boolean;
   hasLandlordCode: boolean;
   endpoint: string;
+};
+type SesSubmissionSummary = {
+  id: string;
+  createdAt: string;
+  reference?: string;
+  communicationType?: string;
+  xmlHash: string;
+  sesBatchCode?: string;
+  status: string;
+  communicationCode?: string;
+  sesResponseCode?: string;
+  sesResponseDescription?: string;
+  sesErrors?: unknown;
+};
+type SesSendResult = {
+  ok: boolean;
+  submissionId?: string;
+  sesBatchCode?: string;
+  sesResponseCode?: string;
+  sesResponseDescription?: string;
+  communicationCode?: string;
+  status?: string;
+  message?: string;
+  sesErrors?: unknown;
+  xmlHash?: string;
+  communicationType?: string;
+};
+type SesQueryResult = {
+  ok: boolean;
+  responseCode?: string;
+  responseDescription?: string;
+  communicationCode?: string;
+  batchStatus?: string;
+  submissionId?: string;
+  sesErrors?: unknown;
+  message?: string;
 };
 type GuestCorrectionPatch = Partial<Pick<GuestRecord, "surname2" | "documentType" | "documentNumber" | "municipality" | "municipalityCode" | "postalCode" | "sex" | "relationship" | "documentSupport" | "phone" | "phone2" | "email" | "address">>;
 type MunicipioOption = { codigoMunicipio: string; codigoProvincia: string; nombre: string; nombreNormalizado: string };
@@ -753,6 +789,30 @@ function PrecheckinTestPanel({ parsed }: { parsed: ParsedExcel }) {
   );
 }
 
+function sesStatusLabel(status: string, t: ReturnType<typeof usePreferences>["dictionary"]): string {
+  const map: Record<string, string> = {
+    SENT: t.sesStatusSent,
+    ACCEPTED: t.sesStatusAccepted,
+    PROCESSING: t.sesStatusProcessing,
+    PROCESSED: t.sesStatusProcessed,
+    FAILED: t.sesStatusFailed,
+    PARTIAL: t.sesStatusPartial,
+    UNKNOWN: t.sesStatusUnknown,
+  };
+  return map[status] ?? status;
+}
+
+function sesCommunicationTypeLabel(type: string | undefined, t: ReturnType<typeof usePreferences>["dictionary"]): string {
+  if (!type) return "—";
+  const map: Record<string, string> = {
+    PV: t.sesTypePV,
+    RH: t.sesTypeRH,
+    AV: t.sesTypeAV,
+    RV: t.sesTypeRV,
+  };
+  return map[type] ?? type;
+}
+
 function SesIntegrationPanel({ xml }: { xml: string }) {
   const { dictionary: t } = usePreferences();
   const [busyAction, setBusyAction] = useState<SesUiAction>(null);
@@ -763,16 +823,36 @@ function SesIntegrationPanel({ xml }: { xml: string }) {
   const [catalog, setCatalog] = useState("");
   const [sesStatus, setSesStatus] = useState<SesStatus | null>(null);
   const [sesIssues, setSesIssues] = useState<ValidationIssue[]>([]);
+  const [sendResult, setSendResult] = useState<SesSendResult | null>(null);
+  const [queryResult, setQueryResult] = useState<SesQueryResult | null>(null);
+  const [showTechResponse, setShowTechResponse] = useState(false);
+  const [copyLabelBatch, setCopyLabelBatch] = useState(false);
+  const [history, setHistory] = useState<SesSubmissionSummary[]>([]);
+  const [showHistory, setShowHistory] = useState(false);
 
   useEffect(() => {
     let active = true;
     void fetchJson("/api/ses/status", { method: "GET" }).then(({ response, data }) => {
       if (active && response.ok) setSesStatus(data.status);
     }).catch(() => undefined);
-    return () => {
-      active = false;
-    };
+    return () => { active = false; };
   }, []);
+
+  async function copyToClipboard(text: string, setCopied: (v: boolean) => void) {
+    await navigator.clipboard.writeText(text).catch(() => undefined);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
+  async function refreshHistory() {
+    setBusyAction("refreshHistory");
+    try {
+      const { response, data } = await fetchJson("/api/ses/submissions", { method: "GET" });
+      if (response.ok) setHistory(data.submissions ?? []);
+    } catch { /* ignore */ } finally {
+      setBusyAction(null);
+    }
+  }
 
   async function run(action: SesUiAction, request: () => Promise<string>) {
     setBusyAction(action);
@@ -819,34 +899,84 @@ function SesIntegrationPanel({ xml }: { xml: string }) {
 
   async function sendPreproduction() {
     if (!window.confirm(t.sesPreSendConfirm)) return;
-    if (!sesStatus?.readyForPreproduction) {
-      setResult(t.sesConfigMissing);
-      return;
-    }
-    await run("sendPre", async () => {
+    if (!sesStatus?.readyForPreproduction) { setResult(t.sesConfigMissing); return; }
+    setSendResult(null);
+    setQueryResult(null);
+    setShowTechResponse(false);
+    setBusyAction("sendPre");
+    setResult(null);
+    setSesIssues([]);
+    try {
       const { response, data } = await fetchJson("/api/ses/communicate", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ xml, environment: "pre", dryRun: false }),
       }, 45000);
-      if (!response.ok) return sesErrorMessage(data.error, t);
-      return data.response?.ok ? t.sesPreSendOk : `${t.sesPreSendFailed}: ${data.response?.status ?? "-"}`;
-    });
+      if (!response.ok) {
+        setResult(sesErrorMessage(data.error, t));
+        setSendResult({ ok: false, message: data.error });
+        return;
+      }
+      const sr: SesSendResult = {
+        ok: data.ok,
+        submissionId: data.submissionId,
+        sesBatchCode: data.sesBatchCode,
+        sesResponseCode: data.sesResponseCode,
+        sesResponseDescription: data.sesResponseDescription,
+        communicationCode: data.communicationCode,
+        status: data.status,
+        message: data.message,
+        sesErrors: data.sesErrors,
+        xmlHash: data.xmlHash,
+        communicationType: data.communicationType,
+      };
+      setSendResult(sr);
+      setSchemaOk(data.ok);
+      if (data.sesBatchCode) setLotCode(data.sesBatchCode);
+      if (data.communicationCode) setCommunicationCode(data.communicationCode);
+      setResult(null);
+      if (showHistory) void refreshHistory();
+    } catch {
+      setResult(t.actionFailed);
+    } finally {
+      setBusyAction(null);
+    }
   }
 
   async function queryLot() {
     const value = lotCode.trim();
     if (!value) return setResult(t.sesCodeRequired);
     if (!sesStatus?.hasCredentials) return setResult(t.sesCredentialsMissing);
-    await run("queryLot", async () => {
+    setQueryResult(null);
+    setBusyAction("queryLot");
+    setResult(null);
+    try {
+      const submissionId = sendResult?.submissionId;
       const { response, data } = await fetchJson("/api/ses/lote", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ loteCodes: [value], environment: "pre", dryRun: false }),
+        body: JSON.stringify({ loteCodes: [value], environment: "pre", dryRun: false, submissionId }),
       }, 45000);
-      if (!response.ok) return sesErrorMessage(data.error, t);
-      return `${t.sesQueryCompleted}: ${data.status ?? "OK"}`;
-    });
+      if (!response.ok) { setResult(sesErrorMessage(data.error, t)); return; }
+      const qr: SesQueryResult = {
+        ok: data.ok,
+        responseCode: data.responseCode,
+        responseDescription: data.responseDescription,
+        communicationCode: data.communicationCode,
+        batchStatus: data.batchStatus,
+        submissionId: data.submissionId,
+        sesErrors: data.sesErrors,
+        message: data.message,
+      };
+      setQueryResult(qr);
+      if (data.communicationCode) setCommunicationCode(data.communicationCode);
+      if (sendResult && data.status) setSendResult({ ...sendResult, status: data.batchStatus, communicationCode: data.communicationCode ?? sendResult.communicationCode });
+      if (showHistory) void refreshHistory();
+    } catch {
+      setResult(t.actionFailed);
+    } finally {
+      setBusyAction(null);
+    }
   }
 
   async function queryCommunication() {
@@ -860,7 +990,7 @@ function SesIntegrationPanel({ xml }: { xml: string }) {
         body: JSON.stringify({ communicationCodes: [value], environment: "pre", dryRun: false }),
       }, 45000);
       if (!response.ok) return sesErrorMessage(data.error, t);
-      return `${t.sesQueryCompleted}: ${data.status ?? "OK"}`;
+      return data.message ?? `${t.sesQueryCompleted}: ${data.responseDescription ?? "OK"}`;
     });
   }
 
@@ -891,14 +1021,41 @@ function SesIntegrationPanel({ xml }: { xml: string }) {
         body: JSON.stringify({ catalog: value, environment: "pre", dryRun: false }),
       }, 45000);
       if (!response.ok) return sesErrorMessage(data.error, t);
-      return `${t.sesQueryCompleted}: ${data.status ?? "OK"}`;
+      return data.message ?? `${t.sesQueryCompleted}: ${data.responseDescription ?? "OK"}`;
     });
   }
 
+  function downloadTraceability() {
+    if (!sendResult) return;
+    const payload = {
+      submissionId: sendResult.submissionId,
+      createdAt: new Date().toISOString(),
+      xmlHash: sendResult.xmlHash,
+      environment: "pre",
+      communicationType: sendResult.communicationType,
+      sesBatchCode: sendResult.sesBatchCode,
+      sesResponseCode: sendResult.sesResponseCode,
+      sesResponseDescription: sendResult.sesResponseDescription,
+      status: queryResult?.batchStatus ?? sendResult.status,
+      communicationCode: queryResult?.communicationCode ?? sendResult.communicationCode,
+      sesErrors: queryResult?.sesErrors ?? sendResult.sesErrors ?? [],
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `ses-trazabilidad-${sendResult.sesBatchCode ?? sendResult.submissionId ?? Date.now()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   const working = Boolean(busyAction);
+  const activeCommunicationCode = queryResult?.communicationCode ?? sendResult?.communicationCode ?? communicationCode.trim();
+  const activeStatus = queryResult?.batchStatus ?? sendResult?.status;
 
   return (
     <section className="ses-panel mt-6">
+      {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex min-w-0 gap-3">
           <div className="icon-tile"><RadioTower className="h-5 w-5" /></div>
@@ -924,6 +1081,147 @@ function SesIntegrationPanel({ xml }: { xml: string }) {
         </div>
       )}
 
+      {/* ── Send result traceability card ── */}
+      {sendResult && (
+        <div className={`mt-5 rounded-lg border p-4 ${sendResult.ok ? "border-accent/30 bg-accent/5" : "border-error/30 bg-error/5"}`}>
+          <div className="flex flex-wrap items-center gap-2">
+            {sendResult.ok
+              ? <CheckCircle2 className="h-5 w-5 text-accent" />
+              : <AlertTriangle className="h-5 w-5 text-error" />}
+            <span className="font-heading font-bold">{t.sesSendStatus}:</span>
+            <span className={`status-pill ${sendResult.ok ? "is-valid" : "is-error"}`}>
+              {activeStatus ? sesStatusLabel(activeStatus, t) : sendResult.ok ? t.sesStatusAccepted : t.sesStatusFailed}
+            </span>
+          </div>
+
+          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+            {sendResult.sesBatchCode && (
+              <div className="flex flex-col gap-0.5">
+                <span className="text-xs font-bold uppercase text-muted">{t.sesBatchCodeLabel}</span>
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-base font-black">{sendResult.sesBatchCode}</span>
+                  <button
+                    type="button"
+                    className="btn-secondary py-0.5 px-2 text-xs"
+                    onClick={() => copyToClipboard(sendResult.sesBatchCode!, setCopyLabelBatch)}
+                  >
+                    <Copy className="h-3 w-3" />
+                    {copyLabelBatch ? t.sesCopied : t.sesCopyBatch}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {activeCommunicationCode && (
+              <div className="flex flex-col gap-0.5">
+                <span className="text-xs font-bold uppercase text-muted">{t.sesCommunicationCodeLabel}</span>
+                <span className="font-mono text-base font-black">{activeCommunicationCode}</span>
+              </div>
+            )}
+
+            {sendResult.communicationType && (
+              <div className="flex flex-col gap-0.5">
+                <span className="text-xs font-bold uppercase text-muted">{t.sesSendStatus}</span>
+                <span className="text-sm">{sesCommunicationTypeLabel(sendResult.communicationType, t)}</span>
+              </div>
+            )}
+
+            {sendResult.sesResponseCode && (
+              <div className="flex flex-col gap-0.5">
+                <span className="text-xs font-bold uppercase text-muted">SES</span>
+                <span className="text-sm">{sendResult.sesResponseCode} — {sendResult.sesResponseDescription}</span>
+              </div>
+            )}
+
+            {sendResult.xmlHash && (
+              <div className="flex flex-col gap-0.5 sm:col-span-2">
+                <span className="text-xs font-bold uppercase text-muted">{t.sesXmlHash}</span>
+                <span className="font-mono text-xs text-muted">{sendResult.xmlHash.slice(0, 24)}…</span>
+              </div>
+            )}
+          </div>
+
+          {!sendResult.sesBatchCode && sendResult.ok && (
+            <p className="mt-3 flex items-start gap-2 text-sm text-warning">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+              {t.sesNoLotWarning}
+            </p>
+          )}
+
+          {sendResult.message && (
+            <p className="mt-3 text-sm text-secondary">{sendResult.message}</p>
+          )}
+
+          {/* Query result update */}
+          {queryResult && (
+            <div className="mt-3 border-t border-current/10 pt-3">
+              {queryResult.communicationCode && (
+                <p className="text-sm font-bold text-accent">
+                  {t.sesCommunicationCodeLabel}: {queryResult.communicationCode}
+                </p>
+              )}
+              {queryResult.message && <p className="mt-1 text-sm text-secondary">{queryResult.message}</p>}
+            </div>
+          )}
+
+          {/* Action buttons */}
+          <div className="mt-4 flex flex-wrap gap-2">
+            {sendResult.sesBatchCode && (
+              <button
+                type="button"
+                className="btn-secondary"
+                disabled={working || !sesStatus?.hasCredentials}
+                onClick={queryLot}
+              >
+                {busyAction === "queryLot" ? <WorkingLabel label={t.processing} /> : <><Search className="h-4 w-4" />{t.sesConsultBatch}</>}
+              </button>
+            )}
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={() => setShowTechResponse((v) => !v)}
+            >
+              {showTechResponse ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              {t.sesTechnicalResponse}
+            </button>
+            {(sendResult.sesBatchCode || sendResult.submissionId) && (
+              <button type="button" className="btn-secondary" onClick={downloadTraceability}>
+                <Download className="h-4 w-4" />{t.sesDownloadTraceability}
+              </button>
+            )}
+          </div>
+
+          {/* Technical accordion */}
+          {showTechResponse && (
+            <div className="mt-4 rounded-lg border border-current/10 bg-black/30 p-3 text-xs">
+              <p className="font-bold text-muted mb-2">{t.sesTechnicalResponse}</p>
+              <pre className="overflow-auto whitespace-pre-wrap text-emerald-300 max-h-48">
+                {JSON.stringify({
+                  submissionId: sendResult.submissionId,
+                  sesResponseCode: sendResult.sesResponseCode,
+                  sesResponseDescription: sendResult.sesResponseDescription,
+                  sesBatchCode: sendResult.sesBatchCode,
+                  status: activeStatus,
+                  communicationCode: activeCommunicationCode,
+                  sesErrors: sendResult.sesErrors,
+                }, null, 2)}
+              </pre>
+            </div>
+          )}
+
+          {/* SES errors */}
+          {(sendResult.sesErrors as unknown[])?.length > 0 && (
+            <div className="mt-3 rounded-lg border border-error/30 bg-error/5 p-3">
+              <p className="text-xs font-bold text-error mb-1">SES Errors</p>
+              <pre className="text-xs text-error overflow-auto max-h-32">
+                {JSON.stringify(sendResult.sesErrors, null, 2)}
+              </pre>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Transmission + Queries grid ── */}
       <div className="mt-5 grid gap-4 xl:grid-cols-[1fr_1fr]">
         <div className="ses-card">
           <h4 className="font-heading text-base font-bold">{t.sesTransmission}</h4>
@@ -962,16 +1260,98 @@ function SesIntegrationPanel({ xml }: { xml: string }) {
             </label>
           </div>
           <div className="mt-4 flex flex-wrap gap-2">
-            <button type="button" className="btn-secondary" disabled={working || !sesStatus?.hasCredentials} onClick={queryLot}>{busyAction === "queryLot" ? <WorkingLabel label={t.processing} /> : t.sesQueryLot}</button>
-            <button type="button" className="btn-secondary" disabled={working || !sesStatus?.hasCredentials} onClick={queryCommunication}>{busyAction === "queryCommunication" ? <WorkingLabel label={t.processing} /> : t.sesQueryCommunication}</button>
-            <button type="button" className="btn-secondary" disabled={working || !sesStatus?.hasCredentials} onClick={queryCatalog}>{busyAction === "catalog" ? <WorkingLabel label={t.processing} /> : t.sesQueryCatalog}</button>
-            <button type="button" className="btn-danger" disabled={working || !sesStatus?.hasCredentials} onClick={cancelLot}>{busyAction === "cancelLot" ? <WorkingLabel label={t.processing} /> : t.sesCancelLot}</button>
+            <button type="button" className="btn-secondary" disabled={working || !sesStatus?.hasCredentials} onClick={queryLot}>
+              {busyAction === "queryLot" ? <WorkingLabel label={t.processing} /> : t.sesQueryLot}
+            </button>
+            <button type="button" className="btn-secondary" disabled={working || !sesStatus?.hasCredentials} onClick={queryCommunication}>
+              {busyAction === "queryCommunication" ? <WorkingLabel label={t.processing} /> : t.sesQueryCommunication}
+            </button>
+            <button type="button" className="btn-secondary" disabled={working || !sesStatus?.hasCredentials} onClick={queryCatalog}>
+              {busyAction === "catalog" ? <WorkingLabel label={t.processing} /> : t.sesQueryCatalog}
+            </button>
+            <button type="button" className="btn-danger" disabled={working || !sesStatus?.hasCredentials} onClick={cancelLot}>
+              {busyAction === "cancelLot" ? <WorkingLabel label={t.processing} /> : t.sesCancelLot}
+            </button>
           </div>
         </div>
       </div>
 
       {result && <div className="ses-result mt-4" role="status">{result}</div>}
       {sesIssues.length > 0 && <div className="mt-4"><IssuePanel title={t.xmlValidationIssues} issues={sesIssues} /></div>}
+
+      {/* ── History section ── */}
+      <div className="mt-5 border-t border-current/10 pt-4">
+        <div className="flex items-center justify-between gap-3">
+          <button
+            type="button"
+            className="flex items-center gap-2 text-sm font-bold text-muted hover:text-primary transition-colors"
+            onClick={() => { setShowHistory((v) => !v); if (!showHistory) void refreshHistory(); }}
+          >
+            <History className="h-4 w-4" />
+            {t.sesHistoryTitle}
+          </button>
+          {showHistory && (
+            <button type="button" className="btn-secondary py-1 px-2 text-xs" disabled={busyAction === "refreshHistory"} onClick={refreshHistory}>
+              {busyAction === "refreshHistory" ? <WorkingLabel label={t.processing} /> : <><RefreshCw className="h-3 w-3" />{t.sesHistoryRefresh}</>}
+            </button>
+          )}
+        </div>
+
+        {showHistory && (
+          <div className="mt-3">
+            {history.length === 0 ? (
+              <p className="text-sm text-muted">{t.sesHistoryEmpty}</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-b border-current/10 text-left text-muted">
+                      <th className="pb-2 pr-3">{t.sesHistoryDate}</th>
+                      <th className="pb-2 pr-3">{t.reference}</th>
+                      <th className="pb-2 pr-3">{t.sesHistoryType}</th>
+                      <th className="pb-2 pr-3">{t.sesHistoryBatch}</th>
+                      <th className="pb-2 pr-3">{t.sesHistoryCommunicationCode}</th>
+                      <th className="pb-2 pr-3">{t.sesHistoryStatus}</th>
+                      <th className="pb-2">{t.sesHistoryActions}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {history.map((item) => (
+                      <tr key={item.id} className="border-b border-current/5 hover:bg-current/5">
+                        <td className="py-1.5 pr-3 tabular-nums text-muted">
+                          {new Date(item.createdAt).toLocaleString()}
+                        </td>
+                        <td className="py-1.5 pr-3">{item.reference ?? "—"}</td>
+                        <td className="py-1.5 pr-3">{item.communicationType ?? "—"}</td>
+                        <td className="py-1.5 pr-3 font-mono font-bold">{item.sesBatchCode ?? "—"}</td>
+                        <td className="py-1.5 pr-3 font-mono">{item.communicationCode ?? "—"}</td>
+                        <td className="py-1.5 pr-3">
+                          <span className={`status-pill ${item.status === "PROCESSED" ? "is-valid" : item.status === "FAILED" ? "is-error" : "is-warning"}`}>
+                            {sesStatusLabel(item.status, t)}
+                          </span>
+                        </td>
+                        <td className="py-1.5">
+                          {item.sesBatchCode && (
+                            <button
+                              type="button"
+                              className="btn-secondary py-0.5 px-2 text-xs"
+                              onClick={() => { setLotCode(item.sesBatchCode!); void queryLot(); }}
+                            >
+                              <Clock className="h-3 w-3" />
+                              {t.sesConsultBatch}
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
       <p className="mt-4 text-xs leading-5 text-muted">{t.sesPrivacyNote}</p>
     </section>
   );
