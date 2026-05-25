@@ -93,7 +93,7 @@ async function postSoap(xml: string, config: SesConfig, fetchImpl: typeof fetch)
     const cause = error instanceof Error && "cause" in error && error.cause instanceof Error ? error.cause.message : undefined;
     const detail = error instanceof Error ? error.message : "unknown network error";
     const endpointHost = new URL(config.endpoint).host;
-    throw new Error(`SES.HOSPEDAJES network error connecting to ${endpointHost}: ${detail}${cause ? ` (${cause})` : ""}`);
+    throw new Error(`SES.HOSPEDAJES network error connecting to ${endpointHost}: ${detail}${cause ? ` (${cause})` : ""}`, { cause: error });
   }
   const text = await response.text();
   return {
