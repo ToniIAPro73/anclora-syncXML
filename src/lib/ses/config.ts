@@ -1,3 +1,5 @@
+import { envFlag } from "@/lib/security/env";
+
 export type SesEnvironment = "pre" | "prod";
 
 export const SES_PRE_ENDPOINT = "https://hospedajes.pre-ses.mir.es/hospedajes-web/ws/v1/comunicacion";
@@ -28,8 +30,8 @@ export function getSesConfig(environment: SesEnvironment = (process.env.SYNCXML_
     password: process.env.SYNCXML_SES_PASSWORD || "",
     landlordCode: process.env.SYNCXML_SES_LANDLORD_CODE || "",
     applicationName: process.env.SYNCXML_SES_APPLICATION || "Anclora SyncXML",
-    allowProductionSend: process.env.SYNCXML_SES_ALLOW_PRODUCTION_SEND === "true",
-    allowInsecureTls: resolvedEnvironment === "pre" && process.env.SYNCXML_SES_ALLOW_INSECURE_TLS === "true",
+    allowProductionSend: envFlag("SYNCXML_SES_ALLOW_PRODUCTION_SEND"),
+    allowInsecureTls: resolvedEnvironment === "pre" && envFlag("SYNCXML_SES_ALLOW_INSECURE_TLS"),
   };
 }
 
