@@ -1,3 +1,4 @@
+import { request as httpsRequest } from "node:https";
 import { XMLBuilder, XMLParser } from "fast-xml-parser";
 import { assertSesConfig, getSesConfig, type SesConfig, type SesEnvironment } from "./config";
 import { zipXmlBase64 } from "./zip";
@@ -9,6 +10,14 @@ export type SesRequestOptions = {
   environment?: SesEnvironment;
   dryRun?: boolean;
   fetchImpl?: typeof fetch;
+};
+
+type SesHttpResponse = {
+  ok: boolean;
+  status: number;
+  statusText: string;
+  body: string;
+  parsed: unknown;
 };
 
 const SOAP_NS = "http://schemas.xmlsoap.org/soap/envelope/";
@@ -32,7 +41,43 @@ function authHeader(config: SesConfig) {
   return `Basic ${Buffer.from(`${config.username}:${config.password}`, "utf8").toString("base64")}`;
 }
 
-async function postSoap(xml: string, config: SesConfig, fetchImpl: typeof fetch) {
+function postSoapWithInsecureTls(xml: string, config: SesConfig): Promise<SesHttpResponse> {
+  return new Promise((resolve, reject) => {
+    const url = new URL(config.endpoint);
+    const request = httpsRequest({
+      hostname: url.hostname,
+      port: url.port ? Number(url.port) : 443,
+      path: `${url.pathname}${url.search}`,
+      method: "POST",
+      rejectUnauthorized: false,
+      headers: {
+        authorization: authHeader(config),
+        "content-type": "text/xml; charset=utf-8",
+        soapaction: "",
+        "content-length": Buffer.byteLength(xml, "utf8"),
+      },
+    }, (response) => {
+      const chunks: Buffer[] = [];
+      response.on("data", (chunk) => chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)));
+      response.on("end", () => {
+        const body = Buffer.concat(chunks).toString("utf8");
+        resolve({
+          ok: Boolean(response.statusCode && response.statusCode >= 200 && response.statusCode < 300),
+          status: response.statusCode ?? 0,
+          statusText: response.statusMessage ?? "",
+          body,
+          parsed: body ? parser.parse(body) : undefined,
+        });
+      });
+    });
+    request.on("error", reject);
+    request.write(xml);
+    request.end();
+  });
+}
+
+async function postSoap(xml: string, config: SesConfig, fetchImpl: typeof fetch): Promise<SesHttpResponse> {
+  if (config.allowInsecureTls) return postSoapWithInsecureTls(xml, config);
   let response: Response;
   try {
     response = await fetchImpl(config.endpoint, {
