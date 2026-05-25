@@ -36,3 +36,4 @@ docs/SESION_*.md
 *.njsproj
 *.sln
 *.sw?
+.vercel
