@@ -1,7 +1,7 @@
 import { describe, expect, it, vi, afterEach } from "vitest";
 import type { ParsedExcel } from "@/lib/domain";
 import { detectDuplicates, unresolvedDuplicates } from "@/lib/duplicates";
-import { authDisabled, canUsePasswordAuth, persistentStorageEnabled, validateRuntimeConfig } from "@/lib/security/env";
+import { authDisabled, canUsePasswordAuth, envFlag, persistentStorageEnabled, validateRuntimeConfig } from "@/lib/security/env";
 import { validateUploadFile } from "@/lib/security/files";
 import { maskAddress, maskDocument, maskEmail, maskPayment, maskPhone } from "@/lib/privacy/masking";
 import { assertWellFormedXml, generateHospitalityXml } from "@/lib/xml/generateHospitalityXml";
@@ -54,6 +54,12 @@ describe("responsibility hardening", () => {
     expect(persistentStorageEnabled()).toBe(false);
     vi.stubEnv("SYNCXML_ENABLE_PERSISTENT_STORAGE", "true");
     expect(persistentStorageEnabled()).toBe(true);
+  });
+
+  it("parses quoted boolean environment flags", () => {
+    vi.stubEnv("SYNCXML_DISABLE_AUTH", '"true"');
+    expect(envFlag("SYNCXML_DISABLE_AUTH")).toBe(true);
+    expect(authDisabled()).toBe(true);
   });
 
   it("blocks production config when critical secrets are absent", () => {
