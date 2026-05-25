@@ -3,7 +3,7 @@ import { z } from "zod";
 import { requireAuth } from "@/lib/auth";
 import { getRateLimitKey, sensitiveRateLimiter } from "@/lib/security/rateLimit";
 import { querySesComunicacion } from "@/lib/ses/client";
-import { summarizeSesHttpResponse } from "@/lib/ses/response";
+import { parseConsultaComunicacionResponse } from "@/lib/ses/parser";
 
 export async function POST(request: Request) {
   try {
@@ -18,9 +18,27 @@ export async function POST(request: Request) {
       dryRun: z.boolean().optional(),
     }).safeParse(body);
     if (!parsed.success) return NextResponse.json({ error: "Payload inválido" }, { status: 400 });
-    const result = await querySesComunicacion(parsed.data.communicationCodes, { environment: parsed.data.environment, dryRun: parsed.data.dryRun ?? true });
-    if (!("status" in result)) return NextResponse.json({ dryRun: true, environment: result.environment, endpoint: result.endpoint });
-    return NextResponse.json(summarizeSesHttpResponse(result));
+
+    const result = await querySesComunicacion(parsed.data.communicationCodes, {
+      environment: parsed.data.environment,
+      dryRun: parsed.data.dryRun ?? true,
+    });
+    if (!("status" in result)) {
+      return NextResponse.json({ dryRun: true, environment: result.environment, endpoint: result.endpoint });
+    }
+
+    const httpResult = result as { ok: boolean; status: number; statusText: string; body: string };
+    const parsedResponse = parseConsultaComunicacionResponse(httpResult.body);
+
+    return NextResponse.json({
+      ok: parsedResponse.ok,
+      responseCode: parsedResponse.responseCode,
+      responseDescription: parsedResponse.responseDescription,
+      communicationCount: parsedResponse.communications.length,
+      message: parsedResponse.ok
+        ? `Consulta completada: ${parsedResponse.responseDescription}`
+        : `Error SES ${parsedResponse.responseCode}: ${parsedResponse.responseDescription}`,
+    });
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : "Error SES" }, { status: 503 });
   }

@@ -4,8 +4,31 @@ import { z } from "zod";
 import { requireAuth } from "@/lib/auth";
 import { getRateLimitKey, sensitiveRateLimiter } from "@/lib/security/rateLimit";
 import { validateSesHospedajesXml } from "@/lib/ses/schema";
-import { sendReservaHospedajeXml } from "@/lib/ses/client";
-import { summarizeSesHttpResponse } from "@/lib/ses/response";
+import { sendParteHospedajeXml } from "@/lib/ses/client";
+import { getSesConfig } from "@/lib/ses/config";
+import {
+  parseComunicacionResponse,
+  sanitizeSoapForStorage,
+  deriveSesStatus,
+  extractFirstCommunicationCode,
+  collectSesErrors,
+} from "@/lib/ses/parser";
+import {
+  createSesSubmission,
+  updateSesSubmissionFromComunicacion,
+  updateSesSubmissionStatus,
+} from "@/lib/ses/submissionRepository";
+import { buildComunicacionEnvelope } from "@/lib/ses/client";
+import { zipXmlBase64 } from "@/lib/ses/zip";
+
+const BodySchema = z.object({
+  xml: z.string().min(1),
+  environment: z.enum(["pre", "prod"]).optional(),
+  dryRun: z.boolean().optional(),
+  reference: z.string().optional(),
+  fileName: z.string().optional(),
+  communicationType: z.enum(["PV", "RH", "AV", "RV"]).optional(),
+});
 
 export async function POST(request: Request) {
   try {
@@ -13,39 +36,154 @@ export async function POST(request: Request) {
     if (!rateLimit.allowed) return NextResponse.json({ error: "Demasiadas solicitudes" }, { status: 429 });
     const unauthorized = await requireAuth();
     if (unauthorized) return unauthorized;
+
     const body = await request.json().catch(() => ({}));
-    const parsed = z.object({
-      xml: z.string().min(1),
-      environment: z.enum(["pre", "prod"]).optional(),
-      dryRun: z.boolean().optional(),
-    }).safeParse(body);
+    const parsed = BodySchema.safeParse(body);
     if (!parsed.success) return NextResponse.json({ error: "Payload inválido" }, { status: 400 });
 
-    const validation = validateSesHospedajesXml(parsed.data.xml, "altaParteHospedaje");
-    if (!validation.ok) return NextResponse.json({ error: "XML no válido contra validación SES local", validation }, { status: 422 });
+    const { xml, environment = "pre", dryRun = true, reference, fileName, communicationType } = parsed.data;
 
-    const result = await sendReservaHospedajeXml(parsed.data.xml, {
-      environment: parsed.data.environment,
-      dryRun: parsed.data.dryRun ?? true,
-    });
-    const xmlHash = createHash("sha256").update(parsed.data.xml).digest("hex");
+    // Validate XML type vs communicationType coherence
+    const isParteHospedaje = xml.includes("altaParteHospedaje");
+    const isReservaHospedaje = xml.includes("altaReservaHospedaje");
+    const detectedType = isParteHospedaje ? "PV" : isReservaHospedaje ? "RH" : undefined;
+    const effectiveCommunicationType = communicationType ?? detectedType ?? "PV";
 
-    if (!("status" in result)) {
+    if (communicationType && detectedType && communicationType !== detectedType) {
       return NextResponse.json({
+        error: `Tipo de comunicación incoherente: el XML es ${detectedType} pero se indicó ${communicationType}. Revisa el tipo antes de enviar.`,
+      }, { status: 422 });
+    }
+
+    const validation = validateSesHospedajesXml(xml, isReservaHospedaje ? "altaReservaHospedaje" : "altaParteHospedaje");
+    if (!validation.ok) {
+      return NextResponse.json({ error: "XML no válido contra validación SES local", validation }, { status: 422 });
+    }
+
+    const xmlHash = createHash("sha256").update(xml).digest("hex");
+    const config = getSesConfig(environment);
+
+    // ── Dry run ──────────────────────────────────────────────────────────────
+    if (dryRun) {
+      const zippedXmlBase64 = zipXmlBase64(xml, isParteHospedaje ? "altaParteHospedaje.xml" : "altaReservaHospedaje.xml");
+      buildComunicacionEnvelope({
+        config: { ...config, landlordCode: config.landlordCode || "PENDING" },
+        operation: "A",
+        communicationType: effectiveCommunicationType as "PV" | "RH" | "AV" | "RV",
+        zippedXmlBase64,
+      });
+      return NextResponse.json({
+        ok: true,
         dryRun: true,
-        environment: result.environment,
-        endpoint: result.endpoint,
+        environment: config.environment,
+        endpoint: config.endpoint,
         xmlHash,
+        communicationType: effectiveCommunicationType,
         message: "Petición SES preparada en modo simulación. No se ha enviado información al Ministerio.",
       });
     }
 
-    return NextResponse.json({
-      sent: true,
+    // ── Real send ─────────────────────────────────────────────────────────────
+    const submission = await createSesSubmission({
       xmlHash,
-      response: summarizeSesHttpResponse(result),
+      fileName,
+      reference,
+      environment: config.environment,
+      endpoint: config.endpoint,
+      landlordCode: config.landlordCode,
+      establishmentCode: undefined,
+      applicationName: config.applicationName,
+      operationType: "A",
+      communicationType: effectiveCommunicationType,
+      requestSoap: undefined, // SOAP body built inside client; headers never stored
+    });
+
+    let httpResult: { ok: boolean; status: number; statusText: string; body: string; parsed: unknown };
+    try {
+      const result = await sendParteHospedajeXml(xml, { environment, dryRun: false });
+      if (!("status" in result)) {
+        // Should not happen since dryRun=false, but guard
+        await updateSesSubmissionStatus(submission.id, "UNKNOWN");
+        return NextResponse.json({ ok: false, submissionId: submission.id, status: "UNKNOWN", message: "Respuesta inesperada del cliente SES" }, { status: 502 });
+      }
+      httpResult = result as typeof httpResult;
+    } catch (networkError) {
+      await updateSesSubmissionStatus(submission.id, "FAILED", {
+        sesResponseCode: "NETWORK_ERROR",
+        sesResponseDescription: networkError instanceof Error ? networkError.message : "Error de red",
+      });
+      return NextResponse.json({
+        ok: false,
+        submissionId: submission.id,
+        status: "FAILED",
+        message: networkError instanceof Error ? networkError.message : "Error de red conectando con SES.HOSPEDAJES",
+      }, { status: 503 });
+    }
+
+    // HTTP error
+    if (!httpResult.ok) {
+      const sanitizedResponse = sanitizeSoapForStorage(httpResult.body);
+      await updateSesSubmissionStatus(submission.id, "FAILED", {
+        sesResponseCode: String(httpResult.status),
+        sesResponseDescription: httpResult.statusText,
+        responseSoap: sanitizedResponse,
+      });
+      const detail = httpResult.status === 401 || httpResult.status === 403
+        ? "Credenciales SES incorrectas o sin permisos."
+        : httpResult.status === 404
+        ? "Endpoint SES no encontrado. Revisa la URL configurada."
+        : `HTTP ${httpResult.status}: ${httpResult.statusText}`;
+      return NextResponse.json({
+        ok: false,
+        submissionId: submission.id,
+        status: "FAILED",
+        message: detail,
+        xmlHash,
+      }, { status: 502 });
+    }
+
+    // Parse SOAP response
+    const parsedResponse = parseComunicacionResponse(httpResult.body);
+    const sanitizedResponseSoap = sanitizeSoapForStorage(httpResult.body);
+
+    const updatedSubmission = await updateSesSubmissionFromComunicacion(
+      submission.id,
+      parsedResponse,
+      sanitizedResponseSoap,
+    );
+
+    const finalStatus = updatedSubmission?.status ?? deriveSesStatus(parsedResponse.responseCode, parsedResponse.sesBatchCode, parsedResponse.resultados);
+    const communicationCode = updatedSubmission?.communicationCode ?? extractFirstCommunicationCode(parsedResponse);
+    const sesErrors = collectSesErrors(parsedResponse.resultados);
+
+    // User-facing message
+    let message: string;
+    if (!parsedResponse.ok) {
+      message = `SES devolvió errores de validación (código ${parsedResponse.responseCode}). Revisa los detalles técnicos antes de reenviar.`;
+    } else if (parsedResponse.sesBatchCode) {
+      message = `Comunicación enviada a SES.HOSPEDAJES. Lote SES: ${parsedResponse.sesBatchCode}. Consulta el lote para obtener el código final de comunicación.`;
+    } else {
+      message = "No se ha podido obtener el lote SES. El envío no debe considerarse trazado. Revisa la respuesta técnica.";
+    }
+
+    return NextResponse.json({
+      ok: parsedResponse.ok,
+      submissionId: submission.id,
+      xmlHash,
+      communicationType: effectiveCommunicationType,
+      sesBatchCode: parsedResponse.sesBatchCode,
+      sesResponseCode: parsedResponse.responseCode,
+      sesResponseDescription: parsedResponse.responseDescription,
+      communicationCode,
+      status: finalStatus,
+      sesErrors: sesErrors.length ? sesErrors : undefined,
+      message,
+      // Raw SOAP for technical accordion — only on explicit request (no default exposure)
+      _rawResponse: undefined,
     });
   } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : "Error SES" }, { status: 503 });
+    return NextResponse.json({
+      error: error instanceof Error ? error.message : "Error SES",
+    }, { status: 503 });
   }
 }
