@@ -140,4 +140,11 @@ describe("SES.HOSPEDAJES phase 3 integration", () => {
 
     await expect(sendParteHospedajeXml(validParteHospedajeXml, { environment: "prod", dryRun: false })).rejects.toThrow(/production sending is blocked/);
   });
+
+  it("only enables insecure SES TLS bypass for preproduction", () => {
+    vi.stubEnv("SYNCXML_SES_ALLOW_INSECURE_TLS", "true");
+
+    expect(getSesConfig("pre").allowInsecureTls).toBe(true);
+    expect(getSesConfig("prod").allowInsecureTls).toBe(false);
+  });
 });
