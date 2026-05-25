@@ -1,7 +1,7 @@
 import { describe, expect, it, vi, afterEach } from "vitest";
 import type { ParsedExcel } from "@/lib/domain";
 import { detectDuplicates, unresolvedDuplicates } from "@/lib/duplicates";
-import { canUsePasswordAuth, persistentStorageEnabled, validateRuntimeConfig } from "@/lib/security/env";
+import { authDisabled, canUsePasswordAuth, persistentStorageEnabled, validateRuntimeConfig } from "@/lib/security/env";
 import { validateUploadFile } from "@/lib/security/files";
 import { maskAddress, maskDocument, maskEmail, maskPayment, maskPhone } from "@/lib/privacy/masking";
 import { assertWellFormedXml, generateHospitalityXml } from "@/lib/xml/generateHospitalityXml";
@@ -70,6 +70,16 @@ describe("responsibility hardening", () => {
     vi.stubEnv("SESSION_SECRET", "");
     vi.stubEnv("AUTH_SECRET", "");
     expect(canUsePasswordAuth()).toBe(false);
+  });
+
+  it("allows an explicit temporary auth bypass flag", () => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("SYNCXML_DISABLE_AUTH", "true");
+    vi.stubEnv("SYNCXML_ADMIN_PASSWORD", "");
+    vi.stubEnv("SESSION_SECRET", "");
+    expect(authDisabled()).toBe(true);
+    expect(() => validateRuntimeConfig()).not.toThrow();
+    expect(canUsePasswordAuth()).toBe(true);
   });
 
   it("allows local demo only with explicit marker outside production", () => {

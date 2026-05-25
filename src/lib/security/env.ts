@@ -6,12 +6,17 @@ export function persistentStorageEnabled() {
   return process.env.SYNCXML_ENABLE_PERSISTENT_STORAGE === "true";
 }
 
+export function authDisabled() {
+  return process.env.SYNCXML_DISABLE_AUTH === "true";
+}
+
 export function getSessionSecret() {
   return process.env.SESSION_SECRET || process.env.AUTH_SECRET || "";
 }
 
 export function getRuntimeConfigError() {
   if (process.env.NODE_ENV !== "production") return null;
+  if (authDisabled()) return null;
   const missing: string[] = [];
   if (!process.env.SYNCXML_ADMIN_PASSWORD) missing.push("SYNCXML_ADMIN_PASSWORD");
   if (!getSessionSecret()) missing.push("SESSION_SECRET");
@@ -28,6 +33,7 @@ export function validateRuntimeConfig() {
 }
 
 export function canUsePasswordAuth() {
+  if (authDisabled()) return true;
   if (process.env.SYNCXML_ADMIN_PASSWORD && getSessionSecret()) return true;
   return isExplicitLocalDemoMode();
 }
