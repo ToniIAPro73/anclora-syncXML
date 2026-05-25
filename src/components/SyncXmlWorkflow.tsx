@@ -970,7 +970,7 @@ function SesIntegrationPanel({ xml }: { xml: string }) {
       };
       setQueryResult(qr);
       if (data.communicationCode) setCommunicationCode(data.communicationCode);
-      if (sendResult && data.status) setSendResult({ ...sendResult, status: data.batchStatus, communicationCode: data.communicationCode ?? sendResult.communicationCode });
+      if (sendResult && data.batchStatus) setSendResult({ ...sendResult, status: data.batchStatus, communicationCode: data.communicationCode ?? sendResult.communicationCode, sesErrors: (data.sesErrors as unknown[])?.length ? data.sesErrors : sendResult.sesErrors });
       if (showHistory) void refreshHistory();
     } catch {
       setResult(t.actionFailed);
@@ -1161,6 +1161,18 @@ function SesIntegrationPanel({ xml }: { xml: string }) {
                 </p>
               )}
               {queryResult.message && <p className="mt-1 text-sm text-secondary">{queryResult.message}</p>}
+              {(queryResult.sesErrors as unknown[])?.length > 0 && (
+                <div className="mt-2 rounded-lg border border-error/30 bg-error/5 p-3">
+                  <p className="text-xs font-bold text-error mb-1">{t.sesQueryValidationErrors}</p>
+                  {(queryResult.sesErrors as Array<{ orden?: number; tipoError?: string; error?: string }>).map((e, i) => (
+                    <div key={i} className="mt-1 text-xs text-error">
+                      {e.orden !== undefined && <span className="font-bold mr-1">[{e.orden}]</span>}
+                      {e.tipoError && <span className="mr-1 opacity-70">{e.tipoError}:</span>}
+                      <span>{e.error}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
