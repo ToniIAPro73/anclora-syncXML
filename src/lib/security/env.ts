@@ -1,13 +1,18 @@
+export function envFlag(name: string) {
+  const value = process.env[name]?.trim().replace(/^["']|["']$/g, "").toLowerCase();
+  return value === "true" || value === "1" || value === "yes";
+}
+
 export function isExplicitLocalDemoMode() {
-  return process.env.SYNCXML_LOCAL_DEMO === "true" && process.env.NODE_ENV !== "production";
+  return envFlag("SYNCXML_LOCAL_DEMO") && process.env.NODE_ENV !== "production";
 }
 
 export function persistentStorageEnabled() {
-  return process.env.SYNCXML_ENABLE_PERSISTENT_STORAGE === "true";
+  return envFlag("SYNCXML_ENABLE_PERSISTENT_STORAGE");
 }
 
 export function authDisabled() {
-  return process.env.SYNCXML_DISABLE_AUTH === "true";
+  return envFlag("SYNCXML_DISABLE_AUTH");
 }
 
 export function getSessionSecret() {
