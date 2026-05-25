@@ -4,7 +4,7 @@
 
 - Date: 2026-05-24
 - Branch: `feat/syncxml-phased-hardening`
-- Status: Implemented for controlled test mode; blocked for production use until SES test credentials and governance copy are available.
+- Status: Implemented for controlled test mode; blocked for production use until SES response evidence and governance copy are available.
 
 ## Gate Decision
 
@@ -17,7 +17,7 @@ This decision reduces the retention scope, but does not remove all governance re
 - External privacy notice and legal basis for guest-facing pre-check-in forms.
 - Operational procedure for deletion, access requests and incident handling for any data held outside SES.
 - Confirmation of required fields and signature/consent requirements.
-- SES test credentials and pre-production response evidence.
+- SES pre-production response evidence.
 
 ## What Was Not Implemented
 
@@ -67,9 +67,8 @@ The current implementation now covers the practical test-mode subset of this sco
 3. Metadata-only retention decision: fields, purpose, duration, deletion and audit limits.
 4. Required legal basis and controller instructions for direct guest collection.
 5. Confirmation of whether signatures, explicit acceptance or other consent evidence are legally/operationally required.
-6. SES test credentials.
-7. SES official submission and consultation process evidence.
-8. Accepted/rejected SES response samples and operational handling rules.
+6. SES official submission and consultation process evidence.
+7. Accepted/rejected SES response samples and operational handling rules.
 
 ## Residual Risk
 
