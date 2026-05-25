@@ -13,6 +13,7 @@ export type SesConfig = {
   landlordCode: string;
   applicationName: string;
   allowProductionSend: boolean;
+  allowInsecureTls: boolean;
 };
 
 export function getSesConfig(environment: SesEnvironment = (process.env.SYNCXML_SES_ENV as SesEnvironment) || "pre"): SesConfig {
@@ -28,6 +29,7 @@ export function getSesConfig(environment: SesEnvironment = (process.env.SYNCXML_
     landlordCode: process.env.SYNCXML_SES_LANDLORD_CODE || "",
     applicationName: process.env.SYNCXML_SES_APPLICATION || "Anclora SyncXML",
     allowProductionSend: process.env.SYNCXML_SES_ALLOW_PRODUCTION_SEND === "true",
+    allowInsecureTls: resolvedEnvironment === "pre" && process.env.SYNCXML_SES_ALLOW_INSECURE_TLS === "true",
   };
 }
 
@@ -41,6 +43,7 @@ export function getSesConfigStatus(environment: SesEnvironment = "pre") {
     hasApplicationName: Boolean(config.applicationName),
     readyForPreproduction: Boolean(config.username && config.password && config.landlordCode && config.applicationName),
     productionEnabled: config.allowProductionSend,
+    insecureTlsEnabled: config.allowInsecureTls,
   };
 }
 
