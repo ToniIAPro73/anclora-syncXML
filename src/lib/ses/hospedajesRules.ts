@@ -25,7 +25,8 @@ export const HOSPEDAJES_LIMITS = {
 export const HOSPEDAJES_PAYMENT_TYPES = new Set(["DESTI", "EFECT", "TARJT", "PLATF", "TRANS", "MOVIL", "TREG", "OTRO"]);
 export const HOSPEDAJES_DOCUMENT_TYPES = new Set(["NIF", "NIE", "PAS", "OTRO"]);
 export const HOSPEDAJES_SEX_VALUES = new Set(["H", "M", "O"]);
-export const HOSPEDAJES_RELATIONSHIP_VALUES = new Set(["AB", "BA", "CO", "CU", "HE", "HJ", "HR", "NI", "PM", "SB", "SG", "TI", "TU", "OT"]);
+// Authoritative list: querySesCatalog("TIPO_PARENTESCO"). CO was removed by MIR in v2.2.1 (Nov-2022).
+export const HOSPEDAJES_RELATIONSHIP_VALUES = new Set(["AB", "BA", "CU", "HE", "HJ", "HR", "NI", "PM", "SB", "SG", "TI", "TU", "OT"]);
 
 export function getAgeOn(date: string, now = new Date()) {
   const birth = new Date(`${date}T00:00:00Z`);

@@ -131,6 +131,8 @@ export function validateSesHospedajesXml(xml: string, kind: SesSchemaKind = "alt
       const checkIn = timestamp(contrato.fechaEntrada);
       const checkOut = timestamp(contrato.fechaSalida);
       if (checkIn !== undefined && checkOut !== undefined && checkOut <= checkIn) errors.push(issue("ses.business.dateOrder", "fechaSalida debe ser posterior a fechaEntrada", `${base}.contrato.fechaSalida`));
+      const oneYearAgo = Date.now() - 365 * 24 * 60 * 60 * 1000;
+      if (checkIn !== undefined && checkIn < oneYearAgo) errors.push(issue("ses.business.fechaEntrada.tooOld", "fechaEntrada no puede ser anterior a un año", `${base}.contrato.fechaEntrada`));
       if (contrato.numPersonas && !isInt(contrato.numPersonas)) errors.push(issue("ses.xsd.int", "numPersonas debe ser entero", `${base}.contrato.numPersonas`));
       if (contrato.numPersonas && isInt(contrato.numPersonas) && Number(contrato.numPersonas) < 1) errors.push(issue("ses.business.numPersonas", "numPersonas debe ser mayor que cero", `${base}.contrato.numPersonas`));
       if (contrato.numHabitaciones && !isInt(contrato.numHabitaciones)) errors.push(issue("ses.xsd.int", "numHabitaciones debe ser entero", `${base}.contrato.numHabitaciones`));
