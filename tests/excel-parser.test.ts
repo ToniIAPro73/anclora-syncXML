@@ -31,7 +31,7 @@ describe("parseExcelBuffer", () => {
     const euOnly = parseExcelBuffer(readFileSync("test-data/test2-eu-solo.xlsx"), "test2-eu-solo.xlsx");
 
     expect(euOnly.guests).toHaveLength(8);
-    expect(euOnly.property.establishmentCode).toBe("12345");
+    expect(euOnly.property.establishmentCode).toBe("0000004630");
     expect(euOnly.property.name).toBe("Hotel Playa Dorada");
     expect(euOnly.reservation.reference).toBe("RES-2026-002");
     expect(euOnly.reservation.checkInDate).toBe("2026-06-15");

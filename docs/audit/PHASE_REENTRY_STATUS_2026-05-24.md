@@ -60,7 +60,7 @@ Updated on 2026-05-24 after controller clarification:
 - DPA / processor terms: still required if Anclora or any deployed service processes personal data on behalf of the accommodation/controller.
 - Guest-facing privacy notice and legal basis: still required before adding external pre-check-in collection.
 - Signature or consent requirements: still unresolved and must be confirmed against the SES workflow and controller/legal instructions.
-- SES credentials: pending Ministry response for the test environment.
+- SES credentials: received on 2026-05-25 for the test environment and configured only in the local ignored `.env` file.
 - SES accepted/rejected procedure: pending until pre-production credentials and real response samples are available.
 - SES accepted XML/receipt evidence: pending until test submissions can be performed.
 
@@ -76,4 +76,4 @@ Implemented on 2026-05-24:
 - Metadata-only operational retention model.
 - Submission hash instead of storing a legal registry record.
 
-This is a test-mode implementation only. Production rollout remains blocked until SES test credentials, accepted/rejected SES response evidence and approved privacy/DPA copy are available.
+This is a test-mode implementation only. Production rollout remains blocked until accepted/rejected SES response evidence and approved privacy/DPA copy are available.

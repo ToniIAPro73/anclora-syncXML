@@ -40,7 +40,7 @@ function makeWorkbook(sheetData) {
 // Common meta rows (property + reservation)
 // ---------------------------------------------------------------------------
 const META_ESP = [
-  ["CODIGO 12345"],
+  ["CODIGO 0000004630"],
   ["Apartamentos Anclora"],
   ["Calle Mayor 1"],
   ["46812 Riola"],
@@ -56,7 +56,7 @@ const META_ESP = [
 ];
 
 const META2 = [
-  ["CODIGO 12345"],
+  ["CODIGO 0000004630"],
   ["Apartamentos Anclora"],
   ["Calle Mayor 1"],
   ["46812 Riola"],
@@ -72,7 +72,7 @@ const META2 = [
 ];
 
 const META3 = [
-  ["CODIGO 12345"],
+  ["CODIGO 0000004630"],
   ["Apartamentos Anclora"],
   ["Calle Mayor 1"],
   ["46812 Riola"],
