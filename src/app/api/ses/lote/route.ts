@@ -57,8 +57,10 @@ export async function POST(request: Request) {
       message = `SES devolvió error al consultar el lote (código ${parsedResponse.responseCode}): ${parsedResponse.responseDescription}`;
     } else if (communicationCode) {
       message = `Lote procesado. Código de comunicación: ${communicationCode}`;
+    } else if (sesErrors.length) {
+      message = `Lote procesado con errores de validación (${sesErrors.length} error${sesErrors.length > 1 ? "es" : ""}). Corrige los datos y reenvía.`;
     } else if (parsedResponse.resultados.length) {
-      message = "SES aceptó la petición, pero el lote aún no ha sido procesado completamente. Vuelve a consultar en unos minutos.";
+      message = "Lote pendiente de procesamiento. Vuelve a consultar en unos minutos.";
     } else {
       message = `Consulta completada: ${parsedResponse.responseDescription}`;
     }
