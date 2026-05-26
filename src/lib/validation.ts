@@ -113,7 +113,9 @@ export function validateGuest(guest: Omit<GuestRecord, "validationStatus" | "err
   if (adult && !guest.documentType) errors.push(issue("error", "guest.documentType.required", "Tipo de documento obligatorio para personas mayores de edad", "documentType", guest.sourceRow));
   else if (guest.documentType && !HOSPEDAJES_DOCUMENT_TYPES.has(guest.documentType)) errors.push(issue("error", "guest.documentType.invalid", "Tipo de documento no admitido", "documentType", guest.sourceRow));
   if (!guest.birthDate) errors.push(issue("error", "guest.birthDate.invalid", "Fecha de nacimiento inválida", "birthDate", guest.sourceRow));
+  else if (!/^\d{4}-\d{2}-\d{2}$/.test(guest.birthDate) || Number.isNaN(new Date(`${guest.birthDate}T00:00:00Z`).getTime())) errors.push(issue("error", "guest.birthDate.format.invalid", "Fecha de nacimiento con formato inválido (debe ser AAAA-MM-DD)", "birthDate", guest.sourceRow));
   if (!guest.nationalityIso3) errors.push(issue("error", "guest.nationality.required", "Nacionalidad obligatoria", "nationalityIso3", guest.sourceRow));
+  else if (!/^[A-Za-z]{3}$/.test(guest.nationalityIso3)) errors.push(issue("error", "guest.nationality.iso.invalid", "Nacionalidad no es un código ISO alfa-3 válido", "nationalityIso3", guest.sourceRow));
   if (guest.sex && !HOSPEDAJES_SEX_VALUES.has(guest.sex)) errors.push(issue("error", "guest.sex.invalid", "Sexo no admitido", "sex", guest.sourceRow));
   if (!guest.address) errors.push(issue("error", "guest.address.required", "Dirección de residencia obligatoria", "address", guest.sourceRow));
   else if (guest.address.length > HOSPEDAJES_LIMITS.address) errors.push(issue("error", "guest.address.maxLength", "Dirección superior a 100 caracteres", "address", guest.sourceRow));
@@ -121,8 +123,10 @@ export function validateGuest(guest: Omit<GuestRecord, "validationStatus" | "err
   if (!guest.postalCode) errors.push(issue("error", "guest.postalCode.required", "Código postal obligatorio para generar el XML SES", "postalCode", guest.sourceRow));
   else if (guest.postalCode.length > HOSPEDAJES_LIMITS.postalCode) errors.push(issue("error", "guest.postalCode.maxLength", "Código postal superior a 20 caracteres", "postalCode", guest.sourceRow));
   if (!countryIso3) errors.push(issue("error", "guest.country.required", "País de residencia obligatorio", "countryIso3", guest.sourceRow));
+  else if (!/^[A-Za-z]{3}$/.test(countryIso3)) errors.push(issue("error", "guest.country.iso.invalid", "País de residencia no es un código ISO alfa-3 válido", "countryIso3", guest.sourceRow));
   if (isSpanishCountry(countryIso3)) {
     if (!guest.municipalityCode) errors.push(issue("error", "guest.municipalityCode.required", "Código de municipio INE obligatorio para residentes en España", "municipalityCode", guest.sourceRow));
+    else if (!/^[0-9]{5}$/.test(guest.municipalityCode)) errors.push(issue("error", "guest.municipalityCode.format", "Código de municipio INE debe tener exactamente 5 dígitos", "municipalityCode", guest.sourceRow));
   } else if (!guest.municipality) {
     errors.push(issue("error", "guest.municipality.required", "Municipio o ciudad obligatorio para residentes fuera de España", "municipality", guest.sourceRow));
   } else if (guest.municipality.length > HOSPEDAJES_LIMITS.municipalityName) {
@@ -146,12 +150,17 @@ export function validateParsedExcel(parsed: Omit<ParsedExcel, "validation">): Pa
   if (!parsed.reservation.reference) errors.push(issue("error", "reservation.reference.required", "Referencia de reserva ausente", "reference"));
   else if (parsed.reservation.reference.length > 50) errors.push(issue("error", "reservation.reference.maxLength", "Referencia superior a 50 caracteres", "reference"));
   if (!parsed.reservation.checkInDate || !parsed.reservation.checkOutDate) errors.push(issue("error", "reservation.dates.invalid", "Fechas de entrada/salida inválidas", "dates"));
+  if (!parsed.reservation.contractDate) errors.push(issue("error", "reservation.contractDate.required", "Fecha de contrato obligatoria (fechaContrato)", "contractDate"));
+  else if (!/^\d{4}-\d{2}-\d{2}$/.test(parsed.reservation.contractDate) || Number.isNaN(new Date(`${parsed.reservation.contractDate}T00:00:00Z`).getTime())) errors.push(issue("error", "reservation.contractDate.format", "Fecha de contrato con formato inválido (debe ser AAAA-MM-DD)", "contractDate"));
   if (!parsed.property.establishmentCode) errors.push(issue("error", "property.establishmentCode.required", "Código de establecimiento ausente", "establishmentCode"));
   else if (parsed.property.establishmentCode.length > 10) errors.push(issue("error", "property.establishmentCode.maxLength", "Código de establecimiento superior a 10 caracteres", "establishmentCode"));
-  if (parsed.reservation.guestCount && parsed.reservation.guestCount !== parsed.guests.length) {
+  if (!parsed.reservation.guestCount) errors.push(issue("error", "reservation.guestCount.required", "Número de personas obligatorio (numPersonas)", "guestCount"));
+  else if (parsed.reservation.guestCount < 1) errors.push(issue("error", "reservation.guestCount.invalid", "Número de personas debe ser mayor que cero", "guestCount"));
+  else if (parsed.reservation.guestCount !== parsed.guests.length) {
     errors.push(issue("error", "reservation.guestCount.mismatch", "El número de personas no coincide con los huéspedes válidos", "guestCount"));
   }
-  if (parsed.payment.paymentType && !HOSPEDAJES_PAYMENT_TYPES.has(parsed.payment.paymentType)) {
+  if (!parsed.payment.paymentType) errors.push(issue("error", "payment.type.required", "Tipo de pago obligatorio (tipoPago)", "paymentType"));
+  else if (!HOSPEDAJES_PAYMENT_TYPES.has(parsed.payment.paymentType)) {
     errors.push(issue("error", "payment.type.invalid", "Tipo de pago no permitido", "paymentType"));
   }
   const seen = new Map<string, number>();
@@ -302,9 +311,6 @@ export function smartValidateParsedExcel(parsed: ParsedExcel): ParsedExcel {
         warnings.push(issue("warning", "guest.phone.format.suspicious", "Teléfono con longitud poco probable", "phone", guest.sourceRow));
       }
     }
-    if (!isValidIso3(guest.nationalityIso3)) {
-      errors.push(issue("error", "guest.nationality.iso.invalid", "Nacionalidad no normalizada como ISO3", "nationalityIso3", guest.sourceRow));
-    }
     if (guest.countryIso3 === "ESP" && guest.postalCode && !isValidSpanishPostalCode(guest.postalCode)) {
       errors.push(issue("error", "guest.postalCode.invalid", "Código postal español no válido", "postalCode", guest.sourceRow));
     }
@@ -312,8 +318,6 @@ export function smartValidateParsedExcel(parsed: ParsedExcel): ParsedExcel {
       const age = getAge(guest.birthDate);
       if (age !== undefined && age < 0) errors.push(issue("error", "guest.birthDate.future", "Fecha de nacimiento futura", "birthDate", guest.sourceRow));
       else if (age !== undefined && age > 120) warnings.push(issue("warning", "guest.birthDate.unlikely", "Edad superior a 120 años", "birthDate", guest.sourceRow));
-    } else if (guest.birthDate) {
-      errors.push(issue("error", "guest.birthDate.format.invalid", "Fecha de nacimiento con formato inválido", "birthDate", guest.sourceRow));
     }
 
     return { ...baseGuest, errors, warnings, validationStatus: statusFrom(errors, warnings) };
