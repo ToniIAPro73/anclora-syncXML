@@ -5,6 +5,8 @@ import type { ComponentType, ReactNode } from "react";
 import { AlertTriangle, Ban, CheckCircle2, ClipboardCheck, Clock, Copy, Download, Eye, EyeOff, FileSpreadsheet, FileText, History, Link2, RadioTower, RefreshCw, Search, SearchCheck, Send, ShieldCheck, Trash2, UploadCloud } from "lucide-react";
 import type { DuplicateResolution, GeneratedXmlResult, GuestRecord, ParsedExcel, ValidationIssue } from "@/lib/domain";
 import { smartValidateParsedExcel, validateGuest } from "@/lib/validation";
+import { autoCorrectParsedExcel } from "@/lib/autoCorrect";
+import type { AutoCorrection } from "@/lib/autoCorrect";
 import { buildXmlDownloadFileName } from "@/lib/xml/fileName";
 import { usePreferences } from "./AppPreferencesProvider";
 import { unresolvedDuplicates } from "@/lib/duplicates";
@@ -76,6 +78,7 @@ export function SyncXmlWorkflow() {
   const { dictionary: t } = usePreferences();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [parsed, setParsed] = useState<ParsedExcel | null>(null);
+  const [autoCorrections, setAutoCorrections] = useState<AutoCorrection[]>([]);
   const [generated, setGenerated] = useState<GeneratedXmlResult | null>(null);
   const [activeView, setActiveView] = useState<"visual" | "xml">("visual");
   const [activeStep, setActiveStep] = useState<WorkflowStep>(1);
@@ -173,7 +176,9 @@ export function SyncXmlWorkflow() {
         setMessage(fileErrorMessage(data.error, t));
         return;
       }
-      setParsed(data.parsed);
+      const { data: correctedData, corrections } = autoCorrectParsedExcel(data.parsed);
+      setParsed(correctedData);
+      setAutoCorrections(corrections);
       setGenerated(null);
       setConsolidated(false);
       setSmartValidated(false);
@@ -312,6 +317,7 @@ export function SyncXmlWorkflow() {
     sessionStorage.removeItem(SESSION_KEY);
     setSelectedFile(null);
     setParsed(null);
+    setAutoCorrections([]);
     setGenerated(null);
     setActiveStep(1);
     setConsolidated(false);
@@ -445,6 +451,7 @@ export function SyncXmlWorkflow() {
       {activeStep === 2 && parsed && (
         <ExcelReview
           parsed={parsed}
+          autoCorrections={autoCorrections}
           validGuests={validGuests.length}
           busy={busy}
           busyAction={busyAction}
@@ -519,6 +526,7 @@ function fileErrorMessage(error: unknown, t: ReturnType<typeof usePreferences>["
 
 function ExcelReview({
   parsed,
+  autoCorrections,
   validGuests,
   busy,
   busyAction,
@@ -538,6 +546,7 @@ function ExcelReview({
   hasData,
 }: {
   parsed: ParsedExcel;
+  autoCorrections: AutoCorrection[];
   validGuests: number;
   busy: boolean;
   busyAction: BusyAction;
@@ -560,6 +569,9 @@ function ExcelReview({
   const duplicateBlockers = unresolvedDuplicates(parsed);
   return (
     <>
+      {/* Autocorrecciones aplicadas al importar */}
+      <AutoCorrectionPanel corrections={autoCorrections} />
+
       {/* 3. Tabla de huéspedes */}
       <section className="panel overflow-hidden">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-app p-5">
@@ -2020,6 +2032,61 @@ function Pagination({ page, totalPages, onPage }: { page: number; totalPages: nu
       <span>{page + 1} / {totalPages}</span>
       <button type="button" className="btn-secondary py-1 text-xs disabled:opacity-40" disabled={page === totalPages - 1} onClick={() => onPage(page + 1)}>Siguiente →</button>
     </div>
+  );
+}
+
+function AutoCorrectionPanel({ corrections }: { corrections: AutoCorrection[] }) {
+  const { dictionary: t } = usePreferences();
+  const [open, setOpen] = useState(false);
+  if (!corrections.length) return null;
+  const scopeLabel = (scope: AutoCorrection["scope"]) => {
+    if (scope === "reservation") return "Reserva";
+    if (scope === "payment") return "Pago";
+    return "Huésped";
+  };
+  return (
+    <section className="panel border-yellow-500/40">
+      <button
+        type="button"
+        className="flex w-full items-center justify-between gap-3 p-5 text-left"
+        onClick={() => setOpen((o) => !o)}
+      >
+        <div className="flex items-center gap-3">
+          <AlertTriangle className="h-5 w-5 shrink-0 text-yellow-500" />
+          <div>
+            <p className="font-heading font-bold">{t.autoCorrectionTitle} ({corrections.length})</p>
+            <p className="mt-0.5 text-sm text-muted">{t.autoCorrectionDescription}</p>
+          </div>
+        </div>
+        <span className="text-muted text-sm">{open ? "▲" : "▼"}</span>
+      </button>
+      {open && (
+        <div className="overflow-x-auto border-t border-app">
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>{t.autoCorrectionScope}</th>
+                <th>{t.autoCorrectionRow}</th>
+                <th>{t.autoCorrectionField}</th>
+                <th>{t.autoCorrectionFrom}</th>
+                <th>{t.autoCorrectionTo}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {corrections.map((c, i) => (
+                <tr key={i}>
+                  <td>{scopeLabel(c.scope)}</td>
+                  <td>{c.sourceRow ?? "-"}</td>
+                  <td>{c.fieldLabel}</td>
+                  <td className="text-muted font-mono text-xs">{c.from || <em>vacío</em>}</td>
+                  <td className="text-success font-mono text-xs font-semibold">{c.to || <em>vacío</em>}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
   );
 }
 
