@@ -326,6 +326,13 @@ export function smartValidateParsedExcel(parsed: ParsedExcel): ParsedExcel {
   if (base.reservation.checkInDate && base.reservation.checkOutDate && base.reservation.checkInDate >= base.reservation.checkOutDate) {
     errors.push(issue("error", "reservation.dates.order.invalid", "La fecha de salida debe ser posterior a la entrada", "dates"));
   }
+  if (base.reservation.checkInDate) {
+    const checkIn = new Date(`${base.reservation.checkInDate}T00:00:00Z`).getTime();
+    const oneYearAgo = Date.now() - 365 * 24 * 60 * 60 * 1000;
+    if (!Number.isNaN(checkIn) && checkIn < oneYearAgo) {
+      errors.push(issue("error", "reservation.checkInDate.tooOld", "La fecha de entrada no puede ser anterior a un año (límite SES)", "checkInDate"));
+    }
+  }
   if (base.reservation.checkInTime && !/^([01]\d|2[0-3]):[0-5]\d:[0-5]\d$/.test(base.reservation.checkInTime)) {
     errors.push(issue("error", "reservation.checkInTime.invalid", "Hora de entrada invalida", "checkInTime"));
   }
