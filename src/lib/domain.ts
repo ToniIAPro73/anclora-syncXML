@@ -8,6 +8,7 @@ export type ValidationIssue = {
   severity: ValidationSeverity;
   code: string;
   message: string;
+  recommendation?: string;
   field?: string;
   sourceRow?: number;
 };
