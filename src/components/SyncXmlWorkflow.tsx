@@ -2047,7 +2047,7 @@ function IssuePanel({ title, issues }: { title: string; issues: Array<{ code: st
                     <td>{issue.sourceRow ?? "-"}</td>
                     <td>{issue.field || "-"}</td>
                     <td>{translateIssueMessage(issue.code, issue.message, t)}</td>
-                    <td>{t.fixBeforeConsolidating}</td>
+                    <td>{issueRecommendedAction(issue, t)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -2091,7 +2091,8 @@ function translateIssueMessage(code: string, fallback: string, t: ReturnType<typ
   return fallback;
 }
 
-function issueRecommendedAction(issue: { severity: string }, t: ReturnType<typeof usePreferences>["dictionary"]) {
+function issueRecommendedAction(issue: { severity: string; recommendation?: string }, t: ReturnType<typeof usePreferences>["dictionary"]) {
+  if (issue.recommendation) return issue.recommendation;
   return issue.severity === "error" ? t.fixBeforeConsolidating : t.reviewWarningAction;
 }
 
