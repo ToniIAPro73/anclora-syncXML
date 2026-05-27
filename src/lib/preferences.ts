@@ -1,10 +1,11 @@
 import type { AppLanguage, AppTheme } from "./domain";
+import { ACTIVE_APP_LOCALES, DEFAULT_APP_LOCALE, normalizeActiveLocale } from "./anclora-language-toggle";
 
 export const DEFAULT_THEME: AppTheme = "dark";
-export const DEFAULT_LANGUAGE: AppLanguage = "es";
+export const DEFAULT_LANGUAGE: AppLanguage = DEFAULT_APP_LOCALE;
 
 export const themeModes: AppTheme[] = ["dark", "light", "system"];
-export const languages: AppLanguage[] = ["es", "en", "de"];
+export const languages: AppLanguage[] = [...ACTIVE_APP_LOCALES];
 
 export const PREFERENCE_COOKIE_NAMES = {
   theme: "anclora-syncxml-theme",
@@ -16,5 +17,5 @@ export function normalizeTheme(value: unknown): AppTheme {
 }
 
 export function normalizeLanguage(value: unknown): AppLanguage {
-  return value === "en" || value === "de" ? value : DEFAULT_LANGUAGE;
+  return normalizeActiveLocale(value);
 }
