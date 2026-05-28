@@ -10,7 +10,6 @@ export function LanguageToggle() {
   const [open, setOpen] = useState(false);
   const popoverRef = useRef<HTMLDivElement>(null);
   const selected = ANCLORA_LOCALE_META[language];
-  const pendingLabel = language === "en" ? "Pending" : language === "de" ? "Ausstehend" : "Pendiente";
 
   useEffect(() => {
     function handleOutside(event: MouseEvent) {
@@ -58,37 +57,26 @@ export function LanguageToggle() {
               <X className="h-4 w-4" />
             </button>
           </div>
-          <div className="grid gap-1.5">
+          <select
+            value={language}
+            onChange={(event) => setLanguage(event.target.value as ActiveAncloraLocale)}
+            className="w-full rounded-xl border border-app bg-[var(--surface-elevated)] px-3 py-2 text-sm font-black text-premium"
+            aria-label={t.language}
+          >
             {PREMIUM_LOCALES.map((locale) => {
               const meta = ANCLORA_LOCALE_META[locale];
               const active = meta.status === "active";
-              const current = locale === language;
               return (
-                <button
+                <option
                   key={locale}
-                  type="button"
                   disabled={!active}
-                  onClick={() => {
-                    if (!active) return;
-                    setLanguage(locale as ActiveAncloraLocale);
-                    setOpen(false);
-                  }}
-                  className={`flex items-center justify-between gap-3 rounded-xl border px-3 py-2 text-left text-sm transition ${
-                    current
-                      ? "border-[var(--accent)] bg-[color-mix(in_srgb,var(--accent)_16%,transparent)] text-premium"
-                      : "border-app bg-[var(--surface-elevated)] text-muted hover:text-premium"
-                  } ${!active ? "cursor-not-allowed opacity-55" : ""}`}
-                  aria-pressed={current}
+                  value={locale}
                 >
-                  <span>
-                    <span className="block font-black">{meta.nativeName}</span>
-                    <span className="text-xs">{meta.englishName}</span>
-                  </span>
-                  <span className="text-xs font-black">{active ? meta.short : pendingLabel}</span>
-                </button>
+                  {meta.nativeName} - {meta.englishName}{active ? "" : " - Pending"}
+                </option>
               );
             })}
-          </div>
+          </select>
           <button type="button" className="mt-3 w-full rounded-xl bg-[var(--accent)] px-3 py-2 text-sm font-black text-black" onClick={() => setOpen(false)}>
             Save and close
           </button>
