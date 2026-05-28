@@ -1,5 +1,5 @@
 export type AncloraLocale = "es" | "ca" | "en" | "de" | "fr" | "it" | "pt";
-export type ActiveAncloraLocale = "es" | "en" | "de";
+export type ActiveAncloraLocale = "es" | "ca" | "en" | "de" | "fr" | "it" | "pt";
 export type LanguageToggleMode = "segmented" | "modal-popover";
 
 export type AncloraLocaleMeta = {
@@ -11,17 +11,17 @@ export type AncloraLocaleMeta = {
 };
 
 export const PREMIUM_LOCALES: AncloraLocale[] = ["es", "ca", "en", "de", "fr", "it", "pt"];
-export const ACTIVE_APP_LOCALES: ActiveAncloraLocale[] = ["es", "en", "de"];
+export const ACTIVE_APP_LOCALES: ActiveAncloraLocale[] = ["es", "ca", "en", "de", "fr", "it", "pt"];
 export const DEFAULT_APP_LOCALE: ActiveAncloraLocale = "es";
 
 export const ANCLORA_LOCALE_META: Record<AncloraLocale, AncloraLocaleMeta> = {
   es: { code: "es", short: "ES", nativeName: "Español", englishName: "Spanish", status: "active" },
-  ca: { code: "ca", short: "CA", nativeName: "Català", englishName: "Catalan", status: "pending-copy" },
+  ca: { code: "ca", short: "CA", nativeName: "Català", englishName: "Catalan", status: "active" },
   en: { code: "en", short: "EN", nativeName: "English", englishName: "English", status: "active" },
   de: { code: "de", short: "DE", nativeName: "Deutsch", englishName: "German", status: "active" },
-  fr: { code: "fr", short: "FR", nativeName: "Français", englishName: "French", status: "pending-copy" },
-  it: { code: "it", short: "IT", nativeName: "Italiano", englishName: "Italian", status: "pending-copy" },
-  pt: { code: "pt", short: "PT", nativeName: "Português", englishName: "Portuguese", status: "pending-copy" },
+  fr: { code: "fr", short: "FR", nativeName: "Français", englishName: "French", status: "active" },
+  it: { code: "it", short: "IT", nativeName: "Italiano", englishName: "Italian", status: "active" },
+  pt: { code: "pt", short: "PT", nativeName: "Português", englishName: "Portuguese", status: "active" },
 };
 
 export function isPremiumLocale(value: unknown): value is AncloraLocale {
