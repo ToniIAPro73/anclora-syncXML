@@ -116,3 +116,11 @@ El idioma por defecto es espanol. La UI incluye ES/EN/DE y toggle visible. El te
 - Tests y build pasando.
 - Contacto legal real definido en politicas.
 - No usar datos reales hasta completar auditoria de seguridad y privacidad.
+## Global Preferences Toggle
+
+Esta app sigue el contrato global de preferencias de Anclora Group.
+
+Incluye:
+- idioma
+
+El Theme Toggle se gestiona por separado y solo aparece en grupos Premium, Internal y Portfolio.
