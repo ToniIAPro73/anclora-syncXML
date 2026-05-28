@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { AppLogo } from "./AppLogo";
 import { AuthGate } from "./AuthGate";
-import { LanguageToggle } from "./LanguageToggle";
+import { GlobalPreferencesTrigger } from "./GlobalPreferencesTrigger";
 import { ThemeToggle } from "./ThemeToggle";
 import { usePreferences } from "./AppPreferencesProvider";
 
@@ -28,11 +28,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <header className="glass sticky top-0 z-40 border-b border-app">
         <nav className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-4">
           <button type="button" className="cursor-pointer" onClick={startNewReservation}><AppLogo /></button>
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center gap-4">
             <button type="button" className="nav-link" onClick={startNewReservation}>{t.newBooking}</button>
             <Link className="nav-link" href="/dashboard">{t.dashboard}</Link>
             <ThemeToggle />
-            <LanguageToggle />
+            <GlobalPreferencesTrigger />
           </div>
         </nav>
       </header>
