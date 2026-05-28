@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import type { AppLanguage, AppTheme } from "@/lib/domain";
 import { dictionaries, type Dictionary } from "@/lib/i18n";
+import { resolveInitialLocale } from "@/lib/anclora-language-toggle";
 import { DEFAULT_LANGUAGE, DEFAULT_THEME, normalizeLanguage, normalizeTheme, PREFERENCE_COOKIE_NAMES } from "@/lib/preferences";
 
 type PreferencesContextValue = {
@@ -32,8 +33,13 @@ export function AppPreferencesProvider({ children }: { children: React.ReactNode
   const [language, setLanguageState] = useState<AppLanguage>(DEFAULT_LANGUAGE);
 
   useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
     const storedTheme = normalizeTheme(localStorage.getItem(PREFERENCE_COOKIE_NAMES.theme));
-    const storedLanguage = normalizeLanguage(localStorage.getItem(PREFERENCE_COOKIE_NAMES.language));
+    const storedLanguage = resolveInitialLocale({
+      urlLocale: searchParams.get("lang") || searchParams.get("locale"),
+      persistedLocale: localStorage.getItem(PREFERENCE_COOKIE_NAMES.language),
+      browserLocales: navigator.languages?.length ? navigator.languages : [navigator.language],
+    });
     setThemeState(storedTheme);
     setLanguageState(storedLanguage);
     document.documentElement.lang = storedLanguage;

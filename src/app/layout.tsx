@@ -25,7 +25,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               (function () {
                 try {
                   var theme = localStorage.getItem('anclora-syncxml-theme') || 'dark';
-                  var language = localStorage.getItem('anclora-syncxml-language') || 'es';
+                  var params = new URLSearchParams(window.location.search);
+                  var rawLanguage = params.get('lang') || params.get('locale') || localStorage.getItem('anclora-syncxml-language') || ((navigator.languages && navigator.languages[0]) || navigator.language || 'es');
+                  var language = String(rawLanguage).toLowerCase().split(/[-_]/)[0];
                   if (language !== 'en' && language !== 'de') language = 'es';
                   var resolved = theme === 'system' ? (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark') : theme;
                   document.documentElement.dataset.theme = theme;

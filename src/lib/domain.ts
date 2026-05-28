@@ -1,5 +1,7 @@
+import type { ActiveAncloraLocale } from "./anclora-language-toggle";
+
 export type AppTheme = "dark" | "light" | "system";
-export type AppLanguage = "es" | "en" | "de";
+export type AppLanguage = ActiveAncloraLocale;
 export type ValidationSeverity = "error" | "warning" | "info";
 export type ValidationStatus = "PENDING" | "VALID" | "WARNING" | "ERROR";
 export type ReservationStatus = "DRAFT" | "IMPORTED" | "VALIDATED" | "XML_GENERATED" | "CONSOLIDATED" | "DOWNLOADED" | "DELETED";
