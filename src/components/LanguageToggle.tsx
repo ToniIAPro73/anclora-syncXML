@@ -36,7 +36,7 @@ export function LanguageToggle() {
         onClick={() => setOpen((value) => !value)}
         aria-expanded={open}
         aria-haspopup="dialog"
-        aria-label="Global preferences"
+        aria-label={t.globalPreferences}
       >
         <Globe className="h-4 w-4 text-muted" aria-hidden="true" />
         <span>{selected.nativeName}</span>
@@ -46,14 +46,14 @@ export function LanguageToggle() {
         <div
           className="absolute right-0 top-[calc(100%+0.6rem)] z-50 w-[min(19rem,calc(100vw-2rem))] rounded-2xl border border-app bg-[var(--surface)] p-3 shadow-2xl"
           role="dialog"
-          aria-label="Global preferences settings"
+          aria-label={t.globalPreferencesSettings}
         >
           <div className="mb-2 flex items-center justify-between gap-3 px-1">
             <div>
-              <p className="text-xs font-black uppercase tracking-[0.16em] text-muted">Settings</p>
+              <p className="text-xs font-black uppercase tracking-[0.16em] text-muted">{t.settings}</p>
               <h2 className="text-sm font-black text-premium">{t.language}</h2>
             </div>
-            <button type="button" className="rounded-full p-1.5 text-premium hover:bg-[var(--surface-elevated)]" onClick={() => setOpen(false)} aria-label="Close preferences">
+            <button type="button" className="rounded-full p-1.5 text-premium hover:bg-[var(--surface-elevated)]" onClick={() => setOpen(false)} aria-label={t.closePreferences}>
               <X className="h-4 w-4" />
             </button>
           </div>
@@ -72,13 +72,13 @@ export function LanguageToggle() {
                   disabled={!active}
                   value={locale}
                 >
-                  {meta.nativeName} - {meta.englishName}{active ? "" : " - Pending"}
+                  {meta.nativeName} - {meta.englishName}{active ? "" : ` - ${t.pendingLabel}`}
                 </option>
               );
             })}
           </select>
           <button type="button" className="mt-3 w-full rounded-xl bg-[var(--accent)] px-3 py-2 text-sm font-black text-black" onClick={() => setOpen(false)}>
-            Save and close
+            {t.saveAndClose}
           </button>
         </div>
       )}
