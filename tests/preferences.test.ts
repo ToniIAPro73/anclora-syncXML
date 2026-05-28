@@ -24,11 +24,11 @@ describe("preferences and i18n", () => {
     expect(Object.keys(dictionaries.de)).toEqual(Object.keys(dictionaries.es));
   });
 
-  it("declares Premium locales while only activating complete copy", () => {
+  it("declares all 7 Premium locales active in governance order", () => {
     expect(PREMIUM_LOCALES).toEqual(["es", "ca", "en", "de", "fr", "it", "pt"]);
-    expect(ACTIVE_APP_LOCALES).toEqual(["es", "en", "de"]);
-    expect(ANCLORA_LOCALE_META.ca.status).toBe("pending-copy");
-    expect(ANCLORA_LOCALE_META.fr.status).toBe("pending-copy");
+    expect(ACTIVE_APP_LOCALES).toEqual(["es", "ca", "en", "de", "fr", "it", "pt"]);
+    expect(ANCLORA_LOCALE_META.ca.status).toBe("active");
+    expect(ANCLORA_LOCALE_META.fr.status).toBe("active");
   });
 
   it("resolves initial locale from URL, storage and browser preferences", () => {
@@ -36,7 +36,10 @@ describe("preferences and i18n", () => {
     expect(resolveInitialLocale({ browserLocales: ["de-CH"] })).toBe("de");
     expect(resolveInitialLocale({ persistedLocale: "de", browserLocales: ["en-US"] })).toBe("de");
     expect(resolveInitialLocale({ urlLocale: "en", persistedLocale: "de" })).toBe("en");
-    expect(resolveInitialLocale({ urlLocale: "fr-CH", persistedLocale: "ca", browserLocales: ["pt-PT"] })).toBe("es");
+    // fr, ca and pt are now active — resolveInitialLocale returns them directly
+    expect(resolveInitialLocale({ urlLocale: "fr-CH", persistedLocale: "ca", browserLocales: ["pt-PT"] })).toBe("fr");
+    expect(resolveInitialLocale({ persistedLocale: "ca" })).toBe("ca");
+    expect(resolveInitialLocale({ browserLocales: ["pt-PT"] })).toBe("pt");
   });
 
   it("requires modal or popover for Premium language governance", () => {
