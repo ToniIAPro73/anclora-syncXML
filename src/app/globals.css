@@ -80,12 +80,9 @@ body {
 }
 
 .app-logo-mark {
-  height: 2.5rem;
-  width: 2.5rem;
+  height: 45px;
+  width: 45px;
   flex: 0 0 auto;
-  border-radius: 8px;
-  border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
-  background: var(--surface-elevated);
   object-fit: cover;
   object-position: center;
 }
