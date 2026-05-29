@@ -16,7 +16,7 @@ import {
 
 export type SesSubmissionStatus =
   | "DRAFT" | "SENT" | "ACCEPTED" | "PROCESSING"
-  | "PROCESSED" | "FAILED" | "PARTIAL" | "UNKNOWN";
+  | "PROCESSED" | "FAILED" | "PARTIAL" | "UNKNOWN" | "CANCELLED";
 
 export type SesSubmissionRecord = {
   id: string;
@@ -276,6 +276,26 @@ export async function getSesSubmissionByBatchCode(batchCode: string): Promise<Se
     } catch { /* fallthrough */ }
   }
   return mem.sesSubmissions!.find((r) => r.sesBatchCode === batchCode) ?? null;
+}
+
+export async function cancelSesSubmissionByBatchCode(batchCode: string): Promise<SesSubmissionRecord | null> {
+  if (shouldUseDb()) {
+    try {
+      const row = await prisma.sesSubmission.updateMany({
+        where: { sesBatchCode: batchCode, status: { not: "CANCELLED" } },
+        data: { status: "CANCELLED" },
+      });
+      if (row.count === 0) return null;
+      const updated = await prisma.sesSubmission.findFirst({ where: { sesBatchCode: batchCode }, orderBy: { createdAt: "desc" } });
+      return updated ? dbToRecord(updated) : null;
+    } catch { /* fallthrough */ }
+  }
+  // In-memory fallback
+  const idx = mem.sesSubmissions!.findIndex((r) => r.sesBatchCode === batchCode && r.status !== "CANCELLED");
+  if (idx === -1) return null;
+  const updated = { ...mem.sesSubmissions![idx], status: "CANCELLED" as SesSubmissionStatus, updatedAt: now() };
+  mem.sesSubmissions![idx] = updated;
+  return updated;
 }
 
 export async function listSesSubmissions(limit = 50): Promise<SesSubmissionRecord[]> {
