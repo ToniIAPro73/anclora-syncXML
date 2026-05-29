@@ -810,6 +810,7 @@ function sesStatusLabel(status: string, t: ReturnType<typeof usePreferences>["di
     FAILED: t.sesStatusFailed,
     PARTIAL: t.sesStatusPartial,
     UNKNOWN: t.sesStatusUnknown,
+    CANCELLED: t.sesStatusCancelled,
   };
   return map[status] ?? status;
 }
@@ -1018,6 +1019,13 @@ function SesIntegrationPanel({ xml }: { xml: string }) {
         body: JSON.stringify({ loteCode: value, environment: "pre", dryRun: false }),
       }, 45000);
       if (!response.ok) return sesErrorMessage(data.error, t);
+      if (sendResult && sendResult.sesBatchCode === value) {
+        setSendResult({ ...sendResult, status: "CANCELLED", ok: true, message: t.sesCancelCompleted });
+      }
+      if (queryResult && lotCode === value) {
+        setQueryResult({ ...queryResult, batchStatus: "CANCELLED", message: t.sesCancelCompleted });
+      }
+      if (showHistory) void refreshHistory();
       return `${t.sesCancelCompleted}: ${data.status ?? "OK"}`;
     });
   }
@@ -1350,10 +1358,11 @@ function SesIntegrationPanel({ xml }: { xml: string }) {
                         <td className="py-1.5 pr-3 font-mono font-bold">{item.sesBatchCode ?? "—"}</td>
                         <td className="py-1.5 pr-3 font-mono">{item.communicationCode ?? "—"}</td>
                         <td className="py-1.5 pr-3">
-                          <span className={`status-pill ${item.status === "PROCESSED" ? "is-valid" : item.status === "FAILED" ? "is-error" : "is-warning"}`}>
+                          <span className={`status-pill ${item.status === "PROCESSED" || item.status === "CANCELLED" ? "is-valid" : item.status === "FAILED" ? "is-error" : "is-warning"}`}>
                             {sesStatusLabel(item.status, t)}
                           </span>
                         </td>
+
                         <td className="py-1.5">
                           {item.sesBatchCode && (
                             <button
