@@ -9,6 +9,8 @@ import { autoCorrectParsedExcel } from "@/lib/autoCorrect";
 import type { AutoCorrection } from "@/lib/autoCorrect";
 import { buildSyntheticParsedExcel } from "@/lib/demo/syntheticDataset";
 import { track } from "@/components/landing/analytics";
+import { PILOT_HREF } from "@/components/landing/landingData";
+import Link from "next/link";
 import { buildXmlDownloadFileName } from "@/lib/xml/fileName";
 import { usePreferences } from "./AppPreferencesProvider";
 import { unresolvedDuplicates } from "@/lib/duplicates";
@@ -594,6 +596,21 @@ export function SyncXmlWorkflow() {
           {/* Modo privado */}
           <PrivacyModeCard onClear={clearOperation} hasData={Boolean(parsed || generated || selectedFile)} />
         </>
+      )}
+
+      {parsed && activeStep >= 2 && (
+        <section className="panel border-accent/30 p-6">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <h2 className="font-heading text-xl font-black">{t.postDemoTitle}</h2>
+              <p className="mt-2 max-w-2xl text-sm text-secondary">{t.postDemoText}</p>
+              <p className="mt-2 max-w-2xl text-xs text-muted">{t.postDemoNote}</p>
+            </div>
+            <Link className="btn-primary shrink-0" href={PILOT_HREF} onClick={() => track("click_post_demo_pilot")}>
+              {t.postDemoCta}
+            </Link>
+          </div>
+        </section>
       )}
     </div>
   );
