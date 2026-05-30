@@ -45,7 +45,18 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           }}
         />
       </head>
-      <body className={`${inter.variable} ${sora.variable}`}>
+      <body className={`${inter.variable} ${sora.variable}`} suppressHydrationWarning>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function () {
+                try {
+                  document.body.removeAttribute('cz-shortcut-listen');
+                } catch (error) {}
+              })();
+            `,
+          }}
+        />
         <AppPreferencesProvider>
           <AppShell>{children}</AppShell>
         </AppPreferencesProvider>

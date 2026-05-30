@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { LockKeyhole } from "lucide-react";
+import { AncloraAuthCard } from "@/components/auth/AncloraAuthCard";
 import { usePreferences } from "./AppPreferencesProvider";
 import { PILOT_HREF } from "./landing/landingData";
 
@@ -44,7 +44,13 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
         body: JSON.stringify({ password }),
       });
       if (!response.ok) {
-        setError(t.accessDenied);
+        setError(
+          response.status === 503
+            ? process.env.NODE_ENV === "development"
+              ? "Configura SYNCXML_ADMIN_PASSWORD y SESSION_SECRET para probar el login, o usa SYNCXML_LOCAL_DEMO=true para demo local sin datos reales."
+              : "La configuración de acceso no está disponible. Contacta con el administrador."
+            : t.accessDenied,
+        );
         return;
       }
       setAuthenticated(true);
@@ -62,40 +68,72 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   if (authenticated) return <>{children}</>;
 
   return (
-    <section className="mx-auto max-w-xl panel p-6">
-      <div className="flex items-start gap-4">
-        <div className="icon-tile"><LockKeyhole className="h-5 w-5" /></div>
-        <div>
-          <h1 className="font-heading text-2xl font-black">{t.accessTitle}</h1>
-          <p className="mt-2 text-sm text-muted">{t.accessCopy}</p>
+    <div className="mx-auto flex w-full max-w-[460px] justify-center">
+      <AncloraAuthCard
+        mode="gate"
+        title="Iniciar sesión"
+        badge="VALIDACIÓN CONTROLADA"
+        description="Acceso reservado a participantes aprobados del piloto controlado. La participación se revisa manualmente antes de habilitar la aplicación."
+        footer={
+          <p>
+            Al acceder aceptas los <Link href="/terms">Términos</Link> y la{" "}
+            <Link href="/privacy">Política de Privacidad</Link>.
+          </p>
+        }
+      >
+        <form className="flex flex-col gap-3" onSubmit={login}>
+          <label className="auth-card-field-label">
+            Clave de acceso al piloto
+            <input
+              className="input"
+              type="password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              placeholder="••••••••"
+              autoComplete="current-password"
+              aria-required="true"
+            />
+            <span className="auth-card-help">
+              Recibirás la clave por correo una vez aprobada tu solicitud. Es
+              una clave compartida del piloto, no una cuenta personal.
+            </span>
+          </label>
+          {error && <p className="auth-card-error" role="alert">{error}</p>}
+          <button
+            className="btn-primary auth-card-action"
+            type="submit"
+            disabled={busy || !password}
+          >
+            {busy ? (
+              <>
+                <span className="spinner" aria-hidden="true" />
+                {t.processing}
+              </>
+            ) : (
+              "Entrar a la aplicación"
+            )}
+          </button>
+        </form>
+
+        <div className="auth-card-pilot-box">
+          <p className="text-sm font-bold text-premium">
+            ¿Todavía no participas en el piloto?
+          </p>
+          <Link className="btn-secondary auth-card-action mt-3" href={PILOT_HREF}>
+            Solicitar piloto controlado
+          </Link>
+          <Link
+            className="mt-3 inline-flex text-xs font-bold text-muted hover:text-premium"
+            href="/"
+          >
+            Volver a la landing
+          </Link>
+          <p className="auth-card-note mt-3">
+            No subas datos reales de huéspedes. La validación se realiza con
+            datos sintéticos o anonimizados.
+          </p>
         </div>
-      </div>
-      <form className="mt-6 space-y-4" onSubmit={login}>
-        <input
-          className="input"
-          type="password"
-          value={password}
-          onChange={(event) => setPassword(event.target.value)}
-          placeholder={t.password}
-          autoComplete="current-password"
-        />
-        {error && <p className="text-sm text-error">{error}</p>}
-        <button className="btn-primary w-full justify-center" type="submit" disabled={busy || !password}>
-          {busy ? <><span className="spinner" aria-hidden="true" />{t.processing}</> : t.accessAction}
-        </button>
-      </form>
-      <div className="mt-6 border-t border-app pt-5">
-        <p className="text-sm text-muted">
-          El acceso a Anclora SyncXML se concede tras revisar manualmente la
-          solicitud de piloto controlado. Una vez aprobada, recibirás por correo
-          la clave de acceso compartida del piloto. No subas datos reales de
-          huéspedes.
-        </p>
-        <div className="mt-4 flex flex-wrap gap-3">
-          <Link className="btn-secondary" href={PILOT_HREF}>Solicitar piloto controlado</Link>
-          <Link className="btn-secondary" href="/">Volver a la landing</Link>
-        </div>
-      </div>
-    </section>
+      </AncloraAuthCard>
+    </div>
   );
 }
