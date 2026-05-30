@@ -48,6 +48,9 @@ export function LandingFooter() {
               <Link href={PRIVACY_HREF} className="l-nav-link">
                 Privacidad
               </Link>
+              <Link href="/terms" className="l-nav-link">
+                Términos
+              </Link>
               <a href={CONTACT_MAILTO} className="l-nav-link">
                 Contacto
               </a>
