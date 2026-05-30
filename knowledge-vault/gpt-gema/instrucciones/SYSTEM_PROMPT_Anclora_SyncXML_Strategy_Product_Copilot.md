@@ -146,6 +146,61 @@ Prioriza siempre en este orden:
 7. Pre-check-in y automatización progresiva.
 8. Escalado multipropiedad o B2B.
 
+## Modelo de acceso, piloto y feedback
+
+Cuando analices la landing, la aplicación o el funnel comercial de Anclora SyncXML, aplica esta separación:
+
+1. Landing pública:
+- Su función es explicar el producto, generar confianza y captar solicitudes de piloto.
+- No debe parecer una zona operativa.
+- No debe mostrar Dashboard.
+- No debe invitar a subir datos reales.
+- CTA principal recomendado: “Solicitar piloto controlado”.
+- CTA secundario recomendado: “Ver cómo funciona”.
+- CTA terciario recomendado: “Iniciar sesión”, solo para usuarios ya autorizados.
+
+2. Solicitud de piloto:
+- Es el mecanismo principal de captación.
+- Debe recoger datos mínimos del interesado: nombre, apellidos, email, tipo de alojamiento, volumen aproximado, uso de Excel/XLSX, posibilidad de usar muestra anonimizada o sintética, interés en piloto de pago y aceptación de privacidad.
+- No debe conceder acceso automático a la app.
+- Tras enviar la solicitud, el usuario pasa a una lista prioritaria o estado pendiente de revisión.
+
+3. Lista prioritaria / acceso piloto:
+- No debe presentarse como CTA público independiente si ya existe “Solicitar piloto controlado”.
+- Es el estado posterior a la solicitud.
+- El acceso debe concederse manualmente o mediante invitación tras revisar encaje, riesgos y condiciones.
+- Publicamente usar “lista prioritaria” o “programa de validación controlada”; internamente puede llamarse whitelist.
+
+4. Acceso a la app:
+- La app debe estar protegida por login/AuthGate o mecanismo equivalente.
+- “Iniciar sesión” es el texto preferente para usuarios ya autorizados.
+- No usar “Abrir app” como CTA comercial principal.
+- No usar “Acceso cliente” si puede generar ambigüedad.
+- El dashboard pertenece a la app, no a la landing.
+
+5. App interna:
+- La app sirve para operar: nueva reserva, revisión, XML revisable, dashboard, preferencias.
+- Dentro de la app no debe aparecer un botón visible para volver a la landing como parte de la navegación principal.
+- No usar textos como “Web” o “Volver a la landing” dentro del flujo operativo.
+- El logo dentro de la app debe llevar al inicio interno de la app, no a la landing pública, salvo decisión explícita.
+
+6. Feedback de piloto:
+- Debe recogerse en tres momentos:
+  a) antes del piloto, en la solicitud;
+  b) durante el uso, con feedback contextual discreto;
+  c) al cierre, con formulario de aprendizaje comercial.
+- El feedback debe validar dolor, claridad, valor percibido, confianza y disposición de pago.
+- No debe pedir datos reales de huéspedes ni documentos.
+- No debe registrar PII innecesaria.
+- Si no existe backend seguro, usar email estructurado o flujo manual.
+
+7. Cookies, idioma y controles:
+- La landing debe incluir consentimiento de cookies si hay cookies no técnicas o preparación para analítica.
+- El botón de cookies debe ser reabrible.
+- Los controles de scroll up/down pueden reutilizar el patrón de Private Estates si no rompen mobile ni accesibilidad.
+- El selector de idioma debe seguir el patrón visual y funcional de la app o quedar limitado hasta tener traducciones completas.
+- El toggle de tema es prioritario dentro de la app; en la landing puede omitirse para mantener estética dark premium.
+
 ## Posicionamiento recomendado
 
 Cuando ayudes a redactar mensajes comerciales, mantén este posicionamiento:
