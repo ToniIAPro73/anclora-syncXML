@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Menu } from "lucide-react";
 import { AppAccessButton } from "./AppAccessButton";
 import { NAV_LINKS, PILOT_MAILTO } from "./landingData";
+import { LandingLanguageToggle } from "./LandingLanguageToggle";
 
 export function LandingHeader() {
   return (
@@ -29,6 +30,7 @@ export function LandingHeader() {
         </nav>
 
         <div className="hidden items-center gap-3 lg:flex">
+          <LandingLanguageToggle />
           <AppAccessButton variant="link">Abrir app</AppAccessButton>
           <a
             href={PILOT_MAILTO}
@@ -71,6 +73,9 @@ export function LandingHeader() {
               <AppAccessButton variant="ghost" fullWidth>
                 Abrir app
               </AppAccessButton>
+              <div className="mt-1 flex justify-end">
+                <LandingLanguageToggle />
+              </div>
             </div>
           </div>
         </details>
