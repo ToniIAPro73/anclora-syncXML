@@ -106,7 +106,7 @@ export function LoginView() {
           ) : (
             <form className="mt-6 flex flex-col gap-4" onSubmit={login}>
               <label className="flex flex-col gap-1.5">
-                <span className="l-eyebrow">Contraseña de acceso</span>
+                <span className="l-eyebrow">Clave de acceso al piloto</span>
                 <input
                   className="l-input"
                   type="password"
@@ -116,6 +116,11 @@ export function LoginView() {
                   autoComplete="current-password"
                   disabled={phase === "checking"}
                 />
+                <span className="l-text text-xs">
+                  Recibirás la clave de acceso al piloto por correo una vez
+                  aprobada tu solicitud. Es una clave compartida del piloto, no
+                  una cuenta personal.
+                </span>
               </label>
               {error ? (
                 <p className="text-sm text-[color:var(--l-amber)]" role="alert">
