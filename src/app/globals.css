@@ -709,6 +709,23 @@ button[aria-disabled="true"]:hover {
   background: var(--surface-elevated);
 }
 
+.anon-gate-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(2, 6, 12, 0.66);
+  backdrop-filter: blur(4px);
+}
+
+.anon-gate-card {
+  width: 100%;
+  max-width: 30rem;
+}
+
 /* ============================================================
    Landing page (public) — self-contained premium dark theme.
    Scoped under .landing-root so it stays consistent regardless
