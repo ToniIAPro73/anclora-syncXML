@@ -1,7 +1,6 @@
 import Link from "next/link";
-import { AppAccessButton } from "./AppAccessButton";
 import { LandingLanguageToggle } from "./LandingLanguageToggle";
-import { CONTACT_MAILTO, PRIVACY_HREF, TERMS_HREF } from "./landingData";
+import { CONTACT_MAILTO, LOGIN_HREF, PRIVACY_HREF, TERMS_HREF } from "./landingData";
 
 const SECTION_LINKS = [
   { label: "Producto", href: "#producto" },
@@ -55,9 +54,13 @@ export function LandingFooter() {
               <a href={CONTACT_MAILTO} className="l-nav-link">
                 Contacto
               </a>
-              <AppAccessButton variant="link">
+              <Link
+                href={LOGIN_HREF}
+                className="l-nav-link"
+                data-track="click_iniciar_sesion"
+              >
                 Aplicación en validación controlada
-              </AppAccessButton>
+              </Link>
             </nav>
           </div>
         </div>

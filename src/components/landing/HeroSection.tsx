@@ -1,6 +1,6 @@
+import Link from "next/link";
 import { ChevronRight } from "lucide-react";
-import { AppAccessButton } from "./AppAccessButton";
-import { HERO_BADGES, HERO_FLOW, PILOT_MAILTO } from "./landingData";
+import { HERO_BADGES, HERO_FLOW, LOGIN_HREF, PILOT_MAILTO } from "./landingData";
 
 export function HeroSection() {
   return (
@@ -9,7 +9,7 @@ export function HeroSection() {
         <div>
           <span className="l-eyebrow">
             <span className="inline-block h-1.5 w-1.5 rounded-full bg-[color:var(--l-gold)]" />
-            PRE-MVP · VALIDACIÓN CONTROLADA
+            PRE-MVP · PILOTO CONTROLADO
           </span>
 
           <h1 className="l-h1 mt-4">
@@ -40,17 +40,19 @@ export function HeroSection() {
             >
               Ver cómo funciona
             </a>
+            <Link
+              href={LOGIN_HREF}
+              className="l-applink"
+              data-track="click_iniciar_sesion"
+            >
+              Iniciar sesión
+              <ChevronRight className="h-4 w-4" aria-hidden="true" />
+            </Link>
           </div>
 
-          <div className="mt-4">
-            <AppAccessButton variant="link">
-              Abrir aplicación en validación controlada
-              <ChevronRight className="h-4 w-4" aria-hidden="true" />
-            </AppAccessButton>
-            <p className="l-text mt-1.5 text-xs">
-              Solo para pruebas con datos sintéticos o anonimizados.
-            </p>
-          </div>
+          <p className="l-text mt-3 text-xs">
+            Sin datos reales de huéspedes durante la validación inicial.
+          </p>
 
           <p className="l-text mt-5 max-w-xl text-xs leading-relaxed">
             Fase pre-MVP / validación controlada. No garantiza cumplimiento legal,
