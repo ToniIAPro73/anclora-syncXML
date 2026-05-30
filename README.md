@@ -88,6 +88,15 @@ npm run build
 - Enmascarar documentos, emails, telefonos, direcciones y pagos por defecto.
 - Bloquear consolidacion con errores criticos o duplicados sin resolver.
 
+## Modelo de acceso
+
+El acceso a `/app` y `/dashboard` esta protegido por AuthGate con una
+**contraseña unica compartida** (`SYNCXML_ADMIN_PASSWORD`). **No hay cuentas por
+usuario ni tabla de leads**: la solicitud de piloto (`/piloto`) se gestiona por
+correo y los estados `pending/approved/invited/rejected` del modelo v0.2 son hoy
+un **proceso manual**. Detalles y pendientes en
+[`docs/ACCESS_MODEL.md`](docs/ACCESS_MODEL.md).
+
 ## i18n y tema
 
 El idioma por defecto es espanol. La aplicacion (`/app`, `/dashboard`, `/privacy`, `/terms`) esta disponible en ES/CA/EN/DE/FR/IT/PT con toggle de idioma visible. El tema por defecto es dark, con toggle dark/light/system dentro de la app.
