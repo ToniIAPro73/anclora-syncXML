@@ -9,10 +9,10 @@ import { PILOT_EMAIL, PRIVACY_HREF, TERMS_HREF } from "./landingData";
 /**
  * Structured pilot request + pre-pilot feedback (FASE 9.1).
  *
- * No backend and no PII storage: on submit it composes a mailto with the
- * answers so the lead is handled manually. It never asks for real guest data,
- * documents, or SES credentials. It captures the commercial signal the v0.2
- * model requires — pain, current workflow, volume, and willingness to pay.
+ * Server-side email delivery: on submit it sends the request through the
+ * controlled pilot API route. It never asks for real guest data, documents, or
+ * SES credentials. It captures the commercial signal the v0.2 model requires:
+ * pain, current workflow, volume, and willingness to pay.
  */
 
 type Field = { name: string; label: string; type?: "text" | "email"; required?: boolean; placeholder?: string };
@@ -44,6 +44,8 @@ export function PilotRequestForm() {
   const [muestraSintetica, setMuestraSintetica] = useState(false);
   const [privacy, setPrivacy] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   function set(name: string, value: string) {
     setValues((prev) => ({ ...prev, [name]: value }));
@@ -54,39 +56,42 @@ export function PilotRequestForm() {
     [values.nombre, values.apellidos, values.email, privacy],
   );
 
-  function buildMailto(): string {
-    const lines = [
-      "Solicitud de piloto controlado — Anclora SyncXML",
-      "",
-      `Nombre: ${values.nombre ?? ""} ${values.apellidos ?? ""}`,
-      `Email: ${values.email ?? ""}`,
-      `Tipo de alojamiento: ${values.alojamiento ?? ""}`,
-      `Nº de inmuebles: ${inmuebles}`,
-      `Reservas/mes aprox.: ${reservas}`,
-      `Trabaja con Excel/XLSX: ${excelUse}`,
-      "",
-      `Principal problema operativo: ${problema}`,
-      `Alternativa actual: ${alternativa}`,
-      `Tiempo invertido hoy (por reserva/semana): ${tiempo}`,
-      `Puede usar muestra sintética/anonimizada: ${muestraSintetica ? "Sí" : "No indicado"}`,
-      "",
-      `Interés en piloto de pago: ${pay}`,
-      `Modelo preferido: ${model}`,
-      `Rango/presupuesto orientativo: ${presupuesto}`,
-      "",
-      `Mensaje: ${mensaje}`,
-    ];
-    return `mailto:${PILOT_EMAIL}?subject=${encodeURIComponent(
-      "Solicitud de piloto controlado — Anclora SyncXML",
-    )}&body=${encodeURIComponent(lines.join("\n"))}`;
-  }
-
-  function onSubmit(event: React.FormEvent<HTMLFormElement>) {
+  async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!canSubmit) return;
     track("submit_pilot_request");
-    window.location.href = buildMailto();
-    setSubmitted(true);
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      const response = await fetch("/api/pilot/request", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          ...values,
+          inmuebles,
+          reservas,
+          excelUse,
+          problema,
+          alternativa,
+          tiempo,
+          muestraSintetica,
+          pay,
+          model,
+          presupuesto,
+          mensaje,
+          privacy,
+        }),
+      });
+      if (!response.ok) {
+        setSubmitError("No se pudo enviar la solicitud. Inténtalo de nuevo o escribe al correo de contacto.");
+        return;
+      }
+      setSubmitted(true);
+    } catch {
+      setSubmitError("No se pudo enviar la solicitud. Inténtalo de nuevo o escribe al correo de contacto.");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   if (submitted) {
@@ -102,7 +107,7 @@ export function PilotRequestForm() {
           aprobado y configurado.
         </p>
         <p className="l-text mx-auto mt-3 max-w-md text-xs">
-          Si tu cliente de correo no se ha abierto, escríbenos a{" "}
+          También puedes escribirnos a{" "}
           <a className="l-gold" href={`mailto:${PILOT_EMAIL}`}>
             {PILOT_EMAIL}
           </a>
@@ -183,9 +188,15 @@ export function PilotRequestForm() {
         </span>
       </label>
 
-      <button type="submit" className="l-btn l-btn-primary mt-6 w-full" disabled={!canSubmit}>
+      {submitError ? (
+        <p className="mt-4 text-sm text-[color:var(--l-amber)]" role="alert">
+          {submitError}
+        </p>
+      ) : null}
+
+      <button type="submit" className="l-btn l-btn-primary mt-6 w-full" disabled={!canSubmit || submitting}>
         <Send className="h-4 w-4" aria-hidden="true" />
-        Enviar solicitud de piloto
+        {submitting ? "Enviando solicitud…" : "Enviar solicitud de piloto"}
       </button>
       <p className="l-text mt-3 text-xs">
         Enviar no concede acceso automático: revisamos el encaje antes de habilitar

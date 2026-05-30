@@ -55,6 +55,10 @@ Variables operativas:
 
 - `SYNCXML_ENABLE_PERSISTENT_STORAGE=false` por defecto.
 - `SYNCXML_LOCAL_DEMO=true` solo en desarrollo local sin datos reales.
+- `RESEND_API_KEY` para enviar solicitudes de piloto por Resend.
+- `RESEND_FROM_EMAIL` remitente verificado en Resend, por ejemplo
+  `Anclora SyncXML <piloto@tu-dominio.com>`.
+- `SYNCXML_PILOT_REQUEST_TO` buzón que recibe las solicitudes del piloto.
 - `BLOB_READ_WRITE_TOKEN` si se incorpora almacenamiento externo.
 
 En produccion, si faltan secretos criticos, el acceso falla de forma segura.
@@ -105,8 +109,8 @@ npm run build
 El acceso a `/app` y `/dashboard` esta protegido por AuthGate con una
 **contraseña unica compartida** (`SYNCXML_ADMIN_PASSWORD`). **No hay cuentas por
 usuario ni tabla de leads**: la solicitud de piloto (`/piloto`) se gestiona por
-correo y los estados `pending/approved/invited/rejected` del modelo v0.2 son hoy
-un **proceso manual**. Detalles y pendientes en
+email transaccional con Resend y los estados `pending/approved/invited/rejected`
+del modelo v0.2 son hoy un **proceso manual**. Detalles y pendientes en
 [`docs/ACCESS_MODEL.md`](docs/ACCESS_MODEL.md).
 
 El `/login` y el estado no autenticado de AuthGate siguen el contrato visual
