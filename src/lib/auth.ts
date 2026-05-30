@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { authDisabled, canUsePasswordAuth, getSessionSecret, isExplicitLocalDemoMode, validateRuntimeConfig } from "./security/env";
 
-const COOKIE_NAME = "anclora-syncxml-session";
+export const COOKIE_NAME = "anclora-syncxml-session";
 
 export async function isAuthenticated() {
   validateRuntimeConfig();
@@ -26,6 +26,17 @@ export async function setSessionCookie(response: NextResponse) {
     secure: process.env.NODE_ENV === "production",
     path: "/",
     maxAge: 60 * 60 * 8,
+  });
+  return response;
+}
+
+export function clearSessionCookie(response: NextResponse) {
+  response.cookies.set(COOKIE_NAME, "", {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: 0,
   });
   return response;
 }

@@ -31,6 +31,17 @@ describe("landing access model v0.2", () => {
   const source = landingSource();
   const lower = source.toLowerCase();
 
+  it("aligns /login copy with the controlled pilot auth contract", () => {
+    const authCard = readFileSync(`${root}/src/components/auth/AncloraAuthCard.tsx`, "utf8");
+    const loginContractSource = `${source}\n${authCard}`;
+    expect(loginContractSource).toContain("Anclora SyncXML");
+    expect(loginContractSource).toContain("Clave de acceso al piloto");
+    expect(loginContractSource).toContain("Solicitar piloto controlado");
+    expect(loginContractSource).toContain("No subas datos reales de huéspedes");
+    expect(loginContractSource).toContain("/terms");
+    expect(loginContractSource).toContain("/privacy");
+  });
+
   it("does not expose Dashboard in the public landing", () => {
     expect(lower).not.toContain("dashboard");
   });
@@ -86,5 +97,20 @@ describe("app routing guards", () => {
     expect(shell).toContain("AuthGate");
     expect(shell).toContain('pathname === "/login"');
     expect(shell).toMatch(/isLandingPage \|\| isLoginPage/);
+  });
+
+  it("uses the contractual shared-key card in AuthGate", () => {
+    const gate = readFileSync(`${root}/src/components/AuthGate.tsx`, "utf8");
+    expect(gate).toContain("AncloraAuthCard");
+    expect(gate).toContain("Clave de acceso al piloto");
+    expect(gate).toContain("Entrar a la aplicación");
+    expect(gate).toContain("Solicitar piloto controlado");
+    expect(gate).not.toContain("Abrir app");
+  });
+
+  it("keeps logout limited to clearing the SyncXML session cookie", () => {
+    const logout = readFileSync(`${root}/src/app/api/auth/logout/route.ts`, "utf8");
+    expect(logout).toContain("clearSessionCookie");
+    expect(logout).toContain("{ ok: true }");
   });
 });
