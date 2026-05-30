@@ -32,8 +32,6 @@ export function AppAccessButton({
   const confirmRef = useRef<HTMLButtonElement>(null);
   const openerRef = useRef<HTMLElement | null>(null);
 
-  const close = useCallback(() => setOpen(false), []);
-
   const openModal = useCallback(() => {
     openerRef.current = document.activeElement as HTMLElement | null;
     track("click_app_validacion_controlada");
