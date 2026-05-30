@@ -1,11 +1,6 @@
-import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { APP_HREF, PILOT_EMAIL, PILOT_MAILTO } from "./landingData";
-
-const DEMO_MAILTO =
-  `mailto:${PILOT_EMAIL}` +
-  "?subject=" +
-  encodeURIComponent("Demo con datos sintéticos — Anclora SyncXML");
+import { AppAccessButton } from "./AppAccessButton";
+import { DIAGNOSTIC_MAILTO, PILOT_MAILTO } from "./landingData";
 
 export function FinalCTA() {
   return (
@@ -23,16 +18,24 @@ export function FinalCTA() {
             actual.
           </p>
           <div className="mt-9 flex flex-wrap justify-center gap-3">
-            <a href={PILOT_MAILTO} className="l-btn l-btn-primary">
+            <a
+              href={PILOT_MAILTO}
+              className="l-btn l-btn-primary"
+              data-track="click_solicitar_piloto_controlado"
+            >
               Solicitar piloto controlado
               <ArrowRight className="h-4 w-4" aria-hidden="true" />
             </a>
-            <a href={DEMO_MAILTO} className="l-btn l-btn-secondary">
-              Preparar demo con datos sintéticos
+            <a
+              href={DIAGNOSTIC_MAILTO}
+              className="l-btn l-btn-secondary"
+              data-track="click_diagnostico_inicial"
+            >
+              Solicitar diagnóstico inicial
             </a>
-            <Link href={APP_HREF} className="l-btn l-btn-ghost">
-              Abrir aplicación
-            </Link>
+            <AppAccessButton variant="ghost">
+              Abrir aplicación en validación controlada
+            </AppAccessButton>
           </div>
           <p className="l-text mx-auto mt-6 max-w-xl text-sm">
             El piloto se plantea siempre con datos sintéticos o anonimizados. No

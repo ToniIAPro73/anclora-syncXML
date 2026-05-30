@@ -4,7 +4,7 @@ import { AUDIENCE_FOR, AUDIENCE_NOT_FOR } from "./landingData";
 
 export function AudienceSection() {
   return (
-    <section className="l-section">
+    <section id="para-quien-es" className="l-section">
       <div className="l-container">
         <SectionHeading
           eyebrow="Encaje"
