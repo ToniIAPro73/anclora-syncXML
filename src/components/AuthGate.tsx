@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { LockKeyhole } from "lucide-react";
 import { usePreferences } from "./AppPreferencesProvider";
+import { PILOT_MAILTO } from "./landing/landingData";
 
 export function AuthGate({ children }: { children: React.ReactNode }) {
   const { dictionary: t } = usePreferences();
@@ -82,6 +84,16 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
           {busy ? <><span className="spinner" aria-hidden="true" />{t.processing}</> : t.accessAction}
         </button>
       </form>
+      <div className="mt-6 border-t border-app pt-5">
+        <p className="text-sm text-muted">
+          El acceso a Anclora SyncXML se concede tras aprobar la solicitud de
+          piloto controlado. No subas datos reales de huéspedes.
+        </p>
+        <div className="mt-4 flex flex-wrap gap-3">
+          <a className="btn-secondary" href={PILOT_MAILTO}>Solicitar piloto controlado</a>
+          <Link className="btn-secondary" href="/">Volver a la landing</Link>
+        </div>
+      </div>
     </section>
   );
 }
