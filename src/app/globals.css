@@ -1150,6 +1150,77 @@ button[aria-disabled="true"]:hover {
 }
 
 /* Modal */
+.l-cookie-banner {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 90;
+  padding: 0.85rem 1rem calc(0.85rem + env(safe-area-inset-bottom));
+  background: color-mix(in srgb, var(--l-bg) 92%, transparent);
+  backdrop-filter: blur(16px);
+  border-top: 1px solid var(--l-border-strong);
+}
+
+.l-cookie-banner-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.l-cookie-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.l-cookie-actions .l-btn { flex: 1 1 auto; min-height: 40px; }
+
+@media (min-width: 768px) {
+  .l-cookie-banner-inner { flex-direction: row; align-items: center; justify-content: space-between; }
+  .l-cookie-actions { flex: 0 0 auto; }
+  .l-cookie-actions .l-btn { flex: 0 0 auto; }
+}
+
+.l-switch { position: relative; display: inline-flex; cursor: pointer; }
+.l-switch input { position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
+.l-switch-track {
+  width: 2.6rem;
+  height: 1.5rem;
+  border-radius: 999px;
+  background: var(--l-surface-2);
+  border: 1px solid var(--l-border-strong);
+  position: relative;
+  transition: background 160ms ease, border-color 160ms ease;
+}
+.l-switch-track::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0.18rem;
+  width: 1.05rem;
+  height: 1.05rem;
+  border-radius: 999px;
+  background: var(--l-muted);
+  transform: translateY(-50%);
+  transition: transform 160ms ease, background 160ms ease;
+}
+.l-switch input:checked + .l-switch-track {
+  background: color-mix(in srgb, var(--l-gold) 30%, transparent);
+  border-color: color-mix(in srgb, var(--l-gold) 60%, transparent);
+}
+.l-switch input:checked + .l-switch-track::after {
+  transform: translateY(-50%) translateX(1.05rem);
+  background: var(--l-gold);
+}
+.l-switch input:focus-visible + .l-switch-track {
+  outline: 2px solid var(--l-gold);
+  outline-offset: 2px;
+}
+
 .l-modal-overlay {
   position: fixed;
   inset: 0;
