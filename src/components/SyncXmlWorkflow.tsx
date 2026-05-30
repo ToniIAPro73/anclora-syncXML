@@ -2,11 +2,12 @@
 
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import type { ComponentType, ReactNode } from "react";
-import { AlertTriangle, Ban, CheckCircle2, ClipboardCheck, Clock, Copy, Download, Eye, EyeOff, FileSpreadsheet, FileText, History, Link2, RadioTower, RefreshCw, Search, SearchCheck, Send, ShieldCheck, Trash2, UploadCloud } from "lucide-react";
+import { AlertTriangle, Ban, CheckCircle2, ClipboardCheck, Clock, Copy, Download, Eye, EyeOff, FileSpreadsheet, FileText, History, Link2, RadioTower, RefreshCw, Search, SearchCheck, Send, ShieldCheck, Sparkles, Trash2, UploadCloud, X } from "lucide-react";
 import type { DuplicateResolution, GeneratedXmlResult, GuestRecord, ParsedExcel, ValidationIssue } from "@/lib/domain";
 import { smartValidateParsedExcel, validateGuest } from "@/lib/validation";
 import { autoCorrectParsedExcel } from "@/lib/autoCorrect";
 import type { AutoCorrection } from "@/lib/autoCorrect";
+import { buildSyntheticParsedExcel } from "@/lib/demo/syntheticDataset";
 import { buildXmlDownloadFileName } from "@/lib/xml/fileName";
 import { usePreferences } from "./AppPreferencesProvider";
 import { unresolvedDuplicates } from "@/lib/duplicates";
@@ -92,6 +93,8 @@ export function SyncXmlWorkflow() {
   const [previewReviewed, setPreviewReviewed] = useState(false);
   const [mappingReviewed, setMappingReviewed] = useState(false);
   const [temporaryCleared, setTemporaryCleared] = useState(false);
+  const [anonGateOpen, setAnonGateOpen] = useState(false);
+  const [anonConfirmed, setAnonConfirmed] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const SESSION_KEY = "syncxml-session";
 
@@ -115,6 +118,16 @@ export function SyncXmlWorkflow() {
     window.addEventListener("syncxml:new", handleNew);
     return () => window.removeEventListener("syncxml:new", handleNew);
   }, []);
+
+  // Close the anonymised-sample gate with Escape.
+  useEffect(() => {
+    if (!anonGateOpen) return;
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") setAnonGateOpen(false);
+    }
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [anonGateOpen]);
 
   // Restore session on mount
   useEffect(() => {
@@ -192,6 +205,22 @@ export function SyncXmlWorkflow() {
     } finally {
       setBusyAction(null);
     }
+  }
+
+  function loadSyntheticDemo() {
+    const { data: correctedData, corrections } = autoCorrectParsedExcel(buildSyntheticParsedExcel());
+    setSelectedFile(null);
+    setParsed(correctedData);
+    setAutoCorrections(corrections);
+    setGenerated(null);
+    setConsolidated(false);
+    setSmartValidated(false);
+    setPreviewReviewed(false);
+    setMappingReviewed(false);
+    setTemporaryCleared(false);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    setActiveStep(2);
+    setMessage(t.demoLoaded);
   }
 
   async function generate() {
@@ -356,6 +385,37 @@ export function SyncXmlWorkflow() {
 
   return (
     <div className="space-y-6">
+      <div className="process-message is-warning" role="note">{t.validationBanner}</div>
+
+      {anonGateOpen && (
+        <div className="anon-gate-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setAnonGateOpen(false); }}>
+          <div className="panel anon-gate-card p-6" role="dialog" aria-modal="true" aria-labelledby="anon-gate-title">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="icon-tile"><ShieldCheck className="h-5 w-5" /></div>
+                <h2 id="anon-gate-title" className="font-heading text-xl font-black">{t.anonGateTitle}</h2>
+              </div>
+              <button type="button" className="rounded-full p-1.5 text-premium hover:bg-[var(--surface-elevated)]" onClick={() => setAnonGateOpen(false)} aria-label={t.anonGateCancel}><X className="h-5 w-5" /></button>
+            </div>
+            <label className="checkbox-row mt-5">
+              <input type="checkbox" checked={anonConfirmed} onChange={(event) => setAnonConfirmed(event.target.checked)} />
+              <span>{t.anonGateConfirm}</span>
+            </label>
+            <div className="mt-6 flex flex-col gap-2.5 sm:flex-row-reverse">
+              <button
+                type="button"
+                className="btn-primary w-full justify-center sm:w-auto"
+                disabled={!anonConfirmed || busy}
+                onClick={() => { setAnonGateOpen(false); void upload(); }}
+              >
+                {t.anonGateContinue}
+              </button>
+              <button type="button" className="btn-secondary w-full justify-center sm:w-auto" onClick={() => setAnonGateOpen(false)}>{t.anonGateCancel}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <ProcessRail
         activeStep={activeStep}
         parsed={parsed}
@@ -419,19 +479,24 @@ export function SyncXmlWorkflow() {
                 {selectedFile && <span className="upload-file">{t.fileSelected}: {selectedFile.name}</span>}
               </button>
               <input ref={fileInputRef} className="hidden" type="file" accept=".xlsx" disabled={busy || !consentAccepted} onChange={(event) => chooseFile(event.target.files?.[0])} />
-              <div className="mt-5 flex justify-end">
+              <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
+                <button type="button" className="btn-secondary" disabled={busy} onClick={loadSyntheticDemo} title={t.demoHint}>
+                  <Sparkles className="h-4 w-4" />{t.demoLoad}
+                </button>
                 <button
                   className="btn-primary"
                   disabled={!selectedFile || busy}
                   aria-disabled={Boolean(selectedFile && !consentAccepted)}
                   onClick={() => {
                     if (!consentAccepted) { requireConsentNotice(); return; }
-                    void upload();
+                    setAnonConfirmed(false);
+                    setAnonGateOpen(true);
                   }}
                 >
                   {busyAction === "upload" ? <WorkingLabel label={t.processing} /> : t.importAction}
                 </button>
               </div>
+              <p className="mt-2 text-xs text-muted">{t.demoHint}</p>
             </div>
           </section>
 
@@ -504,6 +569,7 @@ export function SyncXmlWorkflow() {
             {generated && (
               <div className="mt-5">
                 <button className="btn-secondary" onClick={downloadXml}><Download className="h-4 w-4" />{t.downloadXml}</button>
+                <p className="mt-2 text-xs text-muted">{t.xmlReviewableNotice}</p>
               </div>
             )}
           </section>
@@ -711,6 +777,7 @@ function XmlViewer({
             {busyAction === "consolidate" ? <WorkingLabel label={t.processing} /> : <><CheckCircle2 className="h-4 w-4" />{t.consolidate}</>}
           </button>
         </div>
+        <p className="mt-3 text-xs text-muted">{t.xmlReviewableNotice}</p>
       </section>
 
       {/* Servicios SES.HOSPEDAJES */}
