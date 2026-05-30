@@ -727,6 +727,7 @@ button[aria-disabled="true"]:hover {
   --l-border-strong: rgba(255, 255, 255, 0.14);
   --l-amber: #D9A441;
   --l-emerald: #34D399;
+  --l-header-h: 60px;
   min-height: 100vh;
   background:
     radial-gradient(60rem 40rem at 80% -10%, rgba(212, 175, 55, 0.10), transparent 60%),
@@ -966,6 +967,120 @@ button[aria-disabled="true"]:hover {
 
 .l-hero-logo {
   filter: drop-shadow(0 10px 40px rgba(212, 175, 55, 0.22));
+}
+
+/* Hero fits within the first viewport on desktop (no initial scroll). */
+.l-hero {
+  display: flex;
+  align-items: center;
+}
+
+@media (min-width: 1024px) {
+  .l-hero { min-height: calc(100svh - var(--l-header-h)); }
+}
+
+.l-applink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--l-muted);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--l-gold) 45%, transparent);
+  text-underline-offset: 4px;
+  transition: color 140ms ease;
+}
+
+.l-applink:hover { color: var(--l-fg); }
+
+.l-notice {
+  display: flex;
+  gap: 0.6rem;
+  border: 1px solid color-mix(in srgb, var(--l-amber) 38%, var(--l-border));
+  border-radius: 0.6rem;
+  background: color-mix(in srgb, var(--l-amber) 10%, transparent);
+  padding: 0.85rem 1rem;
+  color: var(--l-fg);
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.l-notice svg { color: var(--l-amber); flex: 0 0 auto; }
+
+.l-tier-flag {
+  position: absolute;
+  top: -0.7rem;
+  left: 1.5rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--l-gold) 55%, transparent);
+  background: var(--l-bg-2);
+  padding: 0.2rem 0.7rem;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--l-gold);
+}
+
+/* Modal */
+.l-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(2, 4, 9, 0.72);
+  backdrop-filter: blur(6px);
+  animation: l-fade 140ms ease;
+}
+
+.l-modal {
+  width: 100%;
+  max-width: 32rem;
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+  border: 1px solid var(--l-border-strong);
+  border-top: 2px solid color-mix(in srgb, var(--l-gold) 70%, transparent);
+  border-radius: 0.85rem;
+  background: linear-gradient(180deg, var(--l-surface-2), var(--l-bg-2));
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55);
+  padding: 1.5rem;
+  animation: l-pop 160ms ease;
+}
+
+.l-modal-close {
+  display: inline-flex;
+  height: 2.25rem;
+  width: 2.25rem;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.5rem;
+  border: 1px solid var(--l-border);
+  background: color-mix(in srgb, var(--l-surface) 70%, transparent);
+  color: var(--l-muted);
+  transition: color 140ms ease, background 140ms ease;
+}
+
+.l-modal-close:hover { color: var(--l-fg); background: var(--l-surface-2); }
+
+@keyframes l-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes l-pop {
+  from { opacity: 0; transform: translateY(8px) scale(0.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .l-modal-overlay,
+  .l-modal { animation: none; }
+  .l-btn:hover { transform: none; }
 }
 
 @media (max-width: 900px) {

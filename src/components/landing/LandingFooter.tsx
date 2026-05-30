@@ -1,5 +1,13 @@
 import Link from "next/link";
-import { APP_HREF, PRIVACY_HREF, TERMS_HREF } from "./landingData";
+import { AppAccessButton } from "./AppAccessButton";
+import { CONTACT_MAILTO, PRIVACY_HREF } from "./landingData";
+
+const SECTION_LINKS = [
+  { label: "Producto", href: "#producto" },
+  { label: "Cómo funciona", href: "#como-funciona" },
+  { label: "Acceso piloto", href: "#acceso-piloto" },
+  { label: "Seguridad y límites", href: "#seguridad" },
+];
 
 export function LandingFooter() {
   return (
@@ -11,9 +19,9 @@ export function LandingFooter() {
               <img
                 src="/brand/logo-anclora-syncxml.png"
                 alt="Logotipo de Anclora SyncXML"
-                width={36}
-                height={36}
-                className="h-9 w-9 rounded-full"
+                width={34}
+                height={34}
+                className="h-8 w-8 rounded-full"
               />
               <span className="font-heading text-base font-semibold text-white">
                 Anclora SyncXML
@@ -25,26 +33,39 @@ export function LandingFooter() {
             </p>
           </div>
 
-          <nav aria-label="Enlaces del pie" className="flex flex-col gap-3">
-            <span className="l-eyebrow">Enlaces</span>
-            <Link href={PRIVACY_HREF} className="l-nav-link">
-              Privacidad
-            </Link>
-            <Link href={TERMS_HREF} className="l-nav-link">
-              Términos
-            </Link>
-            <Link href={APP_HREF} className="l-nav-link">
-              Abrir aplicación
-            </Link>
-          </nav>
+          <div className="grid grid-cols-2 gap-8 sm:gap-12">
+            <nav aria-label="Secciones del producto" className="flex flex-col gap-3">
+              <span className="l-eyebrow">Producto</span>
+              {SECTION_LINKS.map((link) => (
+                <a key={link.href} href={link.href} className="l-nav-link">
+                  {link.label}
+                </a>
+              ))}
+            </nav>
+
+            <nav aria-label="Recursos y contacto" className="flex flex-col items-start gap-3">
+              <span className="l-eyebrow">Recursos</span>
+              <Link href={PRIVACY_HREF} className="l-nav-link">
+                Privacidad
+              </Link>
+              <a href={CONTACT_MAILTO} className="l-nav-link">
+                Contacto
+              </a>
+              <AppAccessButton variant="link">
+                Aplicación en validación controlada
+              </AppAccessButton>
+            </nav>
+          </div>
         </div>
 
         <hr className="l-divider my-8" />
 
         <p className="l-text text-xs leading-relaxed">
-          Anclora SyncXML no constituye asesoramiento legal, no garantiza
-          cumplimiento normativo y no implica integración oficial automática con
-          SES.HOSPEDAJES.
+          Anclora SyncXML está en fase pre-MVP / validación controlada. Ayuda a
+          revisar datos y preparar XML revisable, pero no constituye asesoramiento
+          legal, no garantiza cumplimiento normativo y no acredita integración
+          oficial con SES.HOSPEDAJES. El uso con datos reales requiere cerrar
+          previamente seguridad, RGPD, DPA, retención y validación técnica.
         </p>
         <p className="l-text mt-2 text-xs">
           © {new Date().getFullYear()} Anclora Group · Anclora SyncXML
