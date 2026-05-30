@@ -1,0 +1,5 @@
+Anclora SyncXML se desarrolla en el contexto de la nueva gestión de hospedajes en España, vinculada a SES.HOSPEDAJES, registro de viajeros, parte de viajeros, libro-registro y comunicación de datos al Ministerio del Interior.
+
+El producto busca posicionarse como una herramienta ligera para pequeños alojamientos, viviendas turísticas y gestores que no necesitan un PMS completo. Su propuesta es facilitar el flujo Excel/XLSX → validación de datos → revisión → generación XML compatible con SES.HOSPEDAJES → privacidad por defecto → futura asistencia o integración SES.
+
+Este cuaderno no tiene como objetivo analizar el mercado ni la competencia. Para eso existe el cuaderno de contexto normativo y competitivo. Este cuaderno se centra en arquitectura, estado del repo, validación técnica, seguridad, privacidad, roadmap, QA, integración SES y decisiones de implementación.

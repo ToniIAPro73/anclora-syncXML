@@ -37,3 +37,6 @@ docs/SESION_*.md
 *.sln
 *.sw?
 .vercel
+
+# Local knowledge vault snapshots
+knowledge-vault/repo-snapshots/
