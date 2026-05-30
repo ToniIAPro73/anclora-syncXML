@@ -13,7 +13,7 @@ lo está.
 | Origen de la contraseña | Variable de entorno `SYNCXML_ADMIN_PASSWORD` |
 | Cuentas por usuario | **No existen** (no hay registro ni tabla de usuarios) |
 | Estados `pending/approved/invited/rejected` | **Proceso manual**, sin persistencia |
-| Tabla / backend de leads | **No existe** (la solicitud se gestiona por email) |
+| Tabla / backend de leads | **No existe** (la solicitud se envía por email transaccional) |
 | Fail-closed si faltan secretos | Sí (ver `src/lib/security/env.ts`) |
 | Logout | Existe como `POST /api/auth/logout`; borra solo la cookie de sesión |
 
@@ -39,7 +39,8 @@ controlada y debe revisarse si se introducen usuarios individuales.
 ## Cómo se concede el acceso (flujo real)
 
 1. El interesado envía la solicitud desde `/piloto` (formulario estructurado
-   que compone un `mailto:`; no hay backend ni almacenamiento de leads).
+   que llama a `POST /api/pilot/request` y envía un email con Resend; no hay
+   tabla ni almacenamiento de leads).
 2. La solicitud se **revisa manualmente** por correo. No hay aprobación
    automática ni cola persistida.
 3. Si se aprueba, se comparte **fuera de banda** (por correo) la **clave de
@@ -100,3 +101,20 @@ SYNCXML_DISABLE_AUTH="false"
 ```
 
 `SYNCXML_DISABLE_AUTH=true` no debe usarse en producción.
+
+## Envío de solicitudes con Resend
+
+`/piloto` no usa `mailto:`. El navegador envía la solicitud a una API route
+server-side y Resend entrega el email al buzón configurado. Esto evita abrir el
+cliente de correo local y mantiene la API key fuera del frontend.
+
+Variables necesarias:
+
+```env
+RESEND_API_KEY="re_..."
+RESEND_FROM_EMAIL="Anclora SyncXML <piloto@tu-dominio-verificado.com>"
+SYNCXML_PILOT_REQUEST_TO="buzon-destino@tu-dominio.com"
+```
+
+El dominio del `RESEND_FROM_EMAIL` debe estar verificado en Resend. El email
+introducido por el solicitante se usa como `replyTo` para responder manualmente.

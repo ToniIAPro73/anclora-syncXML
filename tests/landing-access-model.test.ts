@@ -113,4 +113,14 @@ describe("app routing guards", () => {
     expect(logout).toContain("clearSessionCookie");
     expect(logout).toContain("{ ok: true }");
   });
+
+  it("sends pilot requests through the server-side Resend route, not mailto", () => {
+    const pilotForm = readFileSync(`${root}/src/components/landing/PilotRequestForm.tsx`, "utf8");
+    const pilotRoute = readFileSync(`${root}/src/app/api/pilot/request/route.ts`, "utf8");
+    expect(pilotForm).toContain('fetch("/api/pilot/request"');
+    expect(pilotForm).not.toContain("window.location.href = buildMailto");
+    expect(pilotRoute).toContain("new Resend");
+    expect(pilotRoute).toContain("RESEND_API_KEY");
+    expect(pilotRoute).toContain("SYNCXML_PILOT_REQUEST_TO");
+  });
 });
