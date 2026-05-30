@@ -10,6 +10,7 @@ import type { AutoCorrection } from "@/lib/autoCorrect";
 import { buildSyntheticParsedExcel } from "@/lib/demo/syntheticDataset";
 import { track } from "@/components/landing/analytics";
 import { PILOT_HREF } from "@/components/landing/landingData";
+import { PilotFeedback } from "./PilotFeedback";
 import Link from "next/link";
 import { buildXmlDownloadFileName } from "@/lib/xml/fileName";
 import { usePreferences } from "./AppPreferencesProvider";
@@ -595,7 +596,13 @@ export function SyncXmlWorkflow() {
           </section>
           {/* Modo privado */}
           <PrivacyModeCard onClear={clearOperation} hasData={Boolean(parsed || generated || selectedFile)} />
+          {/* Feedback de cierre del piloto (9.3) */}
+          <PilotFeedback variant="close" />
         </>
+      )}
+
+      {parsed && (activeStep === 2 || activeStep === 3) && (
+        <PilotFeedback variant="during" />
       )}
 
       {parsed && activeStep >= 2 && (
