@@ -979,6 +979,25 @@ button[aria-disabled="true"]:hover {
   .l-hero { min-height: calc(100svh - var(--l-header-h)); }
 }
 
+.l-input {
+  width: 100%;
+  min-height: 2.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--l-border-strong);
+  background: color-mix(in srgb, var(--l-surface) 80%, transparent);
+  padding: 0 0.9rem;
+  color: var(--l-fg);
+  transition: border-color 140ms ease, box-shadow 140ms ease;
+}
+
+.l-input::placeholder { color: color-mix(in srgb, var(--l-muted) 70%, transparent); }
+
+.l-input:focus {
+  outline: none;
+  border-color: color-mix(in srgb, var(--l-gold) 60%, transparent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--l-gold) 22%, transparent);
+}
+
 .l-lang-trigger {
   display: inline-flex;
   align-items: center;

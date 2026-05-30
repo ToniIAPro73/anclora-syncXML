@@ -14,6 +14,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const isPublicLegalPage = pathname === "/privacy" || pathname === "/terms";
   const isLandingPage = pathname === "/";
+  const isLoginPage = pathname === "/login";
 
   function startNewReservation() {
     sessionStorage.removeItem("syncxml-session");
@@ -24,9 +25,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     }
   }
 
-  // The public landing page renders its own header/footer and must not be
-  // wrapped in the authenticated application shell.
-  if (isLandingPage) {
+  // The public landing and login pages render their own full-screen chrome and
+  // must not be wrapped in the authenticated application shell.
+  if (isLandingPage || isLoginPage) {
     return <>{children}</>;
   }
 
