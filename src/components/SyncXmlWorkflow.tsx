@@ -8,6 +8,9 @@ import { smartValidateParsedExcel, validateGuest } from "@/lib/validation";
 import { autoCorrectParsedExcel } from "@/lib/autoCorrect";
 import type { AutoCorrection } from "@/lib/autoCorrect";
 import { buildSyntheticParsedExcel } from "@/lib/demo/syntheticDataset";
+import { track } from "@/components/landing/analytics";
+import { PILOT_HREF } from "@/components/landing/landingData";
+import Link from "next/link";
 import { buildXmlDownloadFileName } from "@/lib/xml/fileName";
 import { usePreferences } from "./AppPreferencesProvider";
 import { unresolvedDuplicates } from "@/lib/duplicates";
@@ -208,6 +211,7 @@ export function SyncXmlWorkflow() {
   }
 
   function loadSyntheticDemo() {
+    track("click_ver_demo_sintetica");
     const { data: correctedData, corrections } = autoCorrectParsedExcel(buildSyntheticParsedExcel());
     setSelectedFile(null);
     setParsed(correctedData);
@@ -221,6 +225,23 @@ export function SyncXmlWorkflow() {
     if (fileInputRef.current) fileInputRef.current.value = "";
     setActiveStep(2);
     setMessage(t.demoLoaded);
+  }
+
+  function openAnonGate() {
+    track("click_subir_muestra_anonimizada");
+    setAnonConfirmed(false);
+    setAnonGateOpen(true);
+  }
+
+  function cancelAnonGate() {
+    track("cancel_anon_sample_confirmation");
+    setAnonGateOpen(false);
+  }
+
+  function acceptAnonGate() {
+    track("accept_anon_sample_confirmation");
+    setAnonGateOpen(false);
+    void upload();
   }
 
   async function generate() {
@@ -388,14 +409,14 @@ export function SyncXmlWorkflow() {
       <div className="process-message is-warning" role="note">{t.validationBanner}</div>
 
       {anonGateOpen && (
-        <div className="anon-gate-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setAnonGateOpen(false); }}>
+        <div className="anon-gate-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) cancelAnonGate(); }}>
           <div className="panel anon-gate-card p-6" role="dialog" aria-modal="true" aria-labelledby="anon-gate-title">
             <div className="flex items-start justify-between gap-4">
               <div className="flex items-center gap-3">
                 <div className="icon-tile"><ShieldCheck className="h-5 w-5" /></div>
                 <h2 id="anon-gate-title" className="font-heading text-xl font-black">{t.anonGateTitle}</h2>
               </div>
-              <button type="button" className="rounded-full p-1.5 text-premium hover:bg-[var(--surface-elevated)]" onClick={() => setAnonGateOpen(false)} aria-label={t.anonGateCancel}><X className="h-5 w-5" /></button>
+              <button type="button" className="rounded-full p-1.5 text-premium hover:bg-[var(--surface-elevated)]" onClick={cancelAnonGate} aria-label={t.anonGateCancel}><X className="h-5 w-5" /></button>
             </div>
             <label className="checkbox-row mt-5">
               <input type="checkbox" checked={anonConfirmed} onChange={(event) => setAnonConfirmed(event.target.checked)} />
@@ -406,11 +427,11 @@ export function SyncXmlWorkflow() {
                 type="button"
                 className="btn-primary w-full justify-center sm:w-auto"
                 disabled={!anonConfirmed || busy}
-                onClick={() => { setAnonGateOpen(false); void upload(); }}
+                onClick={acceptAnonGate}
               >
                 {t.anonGateContinue}
               </button>
-              <button type="button" className="btn-secondary w-full justify-center sm:w-auto" onClick={() => setAnonGateOpen(false)}>{t.anonGateCancel}</button>
+              <button type="button" className="btn-secondary w-full justify-center sm:w-auto" onClick={cancelAnonGate}>{t.anonGateCancel}</button>
             </div>
           </div>
         </div>
@@ -489,8 +510,7 @@ export function SyncXmlWorkflow() {
                   aria-disabled={Boolean(selectedFile && !consentAccepted)}
                   onClick={() => {
                     if (!consentAccepted) { requireConsentNotice(); return; }
-                    setAnonConfirmed(false);
-                    setAnonGateOpen(true);
+                    openAnonGate();
                   }}
                 >
                   {busyAction === "upload" ? <WorkingLabel label={t.processing} /> : t.importAction}
@@ -544,7 +564,7 @@ export function SyncXmlWorkflow() {
           activeView={activeView}
           busy={busy}
           busyAction={busyAction}
-          onViewChange={setActiveView}
+          onViewChange={(view) => { if (view === "xml") track("view_xml_demo"); setActiveView(view); }}
           onDownload={downloadXml}
           onConsolidate={consolidate}
           canConsolidate={!consolidationBlocker}
@@ -576,6 +596,21 @@ export function SyncXmlWorkflow() {
           {/* Modo privado */}
           <PrivacyModeCard onClear={clearOperation} hasData={Boolean(parsed || generated || selectedFile)} />
         </>
+      )}
+
+      {parsed && activeStep >= 2 && (
+        <section className="panel border-accent/30 p-6">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <h2 className="font-heading text-xl font-black">{t.postDemoTitle}</h2>
+              <p className="mt-2 max-w-2xl text-sm text-secondary">{t.postDemoText}</p>
+              <p className="mt-2 max-w-2xl text-xs text-muted">{t.postDemoNote}</p>
+            </div>
+            <Link className="btn-primary shrink-0" href={PILOT_HREF} onClick={() => track("click_post_demo_pilot")}>
+              {t.postDemoCta}
+            </Link>
+          </div>
+        </section>
       )}
     </div>
   );
