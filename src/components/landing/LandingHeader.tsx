@@ -1,8 +1,7 @@
 import Link from "next/link";
 import { Menu } from "lucide-react";
-import { AppAccessButton } from "./AppAccessButton";
 import { LandingLanguageToggle } from "./LandingLanguageToggle";
-import { NAV_LINKS, PILOT_MAILTO } from "./landingData";
+import { LOGIN_HREF, NAV_LINKS, PILOT_MAILTO } from "./landingData";
 
 export function LandingHeader() {
   return (
@@ -31,13 +30,19 @@ export function LandingHeader() {
 
         <div className="hidden items-center gap-3 lg:flex">
           <LandingLanguageToggle />
-          <AppAccessButton variant="link">Abrir app</AppAccessButton>
+          <Link
+            href={LOGIN_HREF}
+            className="l-applink"
+            data-track="click_iniciar_sesion"
+          >
+            Iniciar sesión
+          </Link>
           <a
             href={PILOT_MAILTO}
             className="l-btn l-btn-primary"
             data-track="click_solicitar_piloto_controlado"
           >
-            Solicitar piloto
+            Solicitar piloto controlado
           </a>
         </div>
 
@@ -72,11 +77,15 @@ export function LandingHeader() {
                 className="l-btn l-btn-primary w-full"
                 data-track="click_solicitar_piloto_controlado"
               >
-                Solicitar piloto
+                Solicitar piloto controlado
               </a>
-              <AppAccessButton variant="ghost" fullWidth>
-                Abrir app
-              </AppAccessButton>
+              <Link
+                href={LOGIN_HREF}
+                className="l-btn l-btn-ghost w-full"
+                data-track="click_iniciar_sesion"
+              >
+                Iniciar sesión
+              </Link>
             </div>
           </div>
         </details>

@@ -1,6 +1,6 @@
+import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { AppAccessButton } from "./AppAccessButton";
-import { DIAGNOSTIC_MAILTO, PILOT_MAILTO } from "./landingData";
+import { DIAGNOSTIC_MAILTO, LOGIN_HREF, PILOT_MAILTO } from "./landingData";
 
 export function FinalCTA() {
   return (
@@ -33,9 +33,13 @@ export function FinalCTA() {
             >
               Solicitar diagnóstico inicial
             </a>
-            <AppAccessButton variant="ghost">
-              Abrir aplicación en validación controlada
-            </AppAccessButton>
+            <Link
+              href={LOGIN_HREF}
+              className="l-btn l-btn-ghost"
+              data-track="click_iniciar_sesion"
+            >
+              Iniciar sesión
+            </Link>
           </div>
           <p className="l-text mx-auto mt-6 max-w-xl text-sm">
             El piloto se plantea siempre con datos sintéticos o anonimizados. No
