@@ -979,6 +979,57 @@ button[aria-disabled="true"]:hover {
   .l-hero { min-height: calc(100svh - var(--l-header-h)); }
 }
 
+.l-lang-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 2.25rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--l-border-strong);
+  background: color-mix(in srgb, var(--l-surface) 70%, transparent);
+  padding: 0 0.65rem;
+  color: var(--l-fg);
+  transition: border-color 140ms ease, background 140ms ease;
+}
+
+.l-lang-trigger:hover {
+  border-color: color-mix(in srgb, var(--l-gold) 45%, transparent);
+  background: var(--l-surface-2);
+}
+
+.l-lang-menu {
+  position: absolute;
+  z-index: 60;
+  margin-top: 0.5rem;
+  width: 11rem;
+  overflow: hidden;
+  list-style: none;
+  padding: 0.3rem;
+  border: 1px solid var(--l-border-strong);
+  border-radius: 0.6rem;
+  background: linear-gradient(180deg, var(--l-surface-2), var(--l-bg-2));
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+}
+
+.l-lang-option {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  border-radius: 0.4rem;
+  padding: 0.5rem 0.7rem;
+  text-align: left;
+  font-size: 0.85rem;
+  color: var(--l-muted);
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.l-lang-option:hover:not(:disabled) { background: var(--l-surface); color: var(--l-fg); }
+.l-lang-option.is-active { color: var(--l-gold); }
+.l-lang-option.is-active svg { color: var(--l-gold); }
+.l-lang-option:disabled { opacity: 0.45; cursor: not-allowed; }
+
 .l-applink {
   display: inline-flex;
   align-items: center;

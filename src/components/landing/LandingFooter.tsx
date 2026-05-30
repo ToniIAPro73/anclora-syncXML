@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { AppAccessButton } from "./AppAccessButton";
-import { CONTACT_MAILTO, PRIVACY_HREF } from "./landingData";
+import { LandingLanguageToggle } from "./LandingLanguageToggle";
+import { CONTACT_MAILTO, PRIVACY_HREF, TERMS_HREF } from "./landingData";
 
 const SECTION_LINKS = [
   { label: "Producto", href: "#producto" },
@@ -48,6 +49,9 @@ export function LandingFooter() {
               <Link href={PRIVACY_HREF} className="l-nav-link">
                 Privacidad
               </Link>
+              <Link href={TERMS_HREF} className="l-nav-link">
+                Términos
+              </Link>
               <a href={CONTACT_MAILTO} className="l-nav-link">
                 Contacto
               </a>
@@ -56,6 +60,11 @@ export function LandingFooter() {
               </AppAccessButton>
             </nav>
           </div>
+        </div>
+
+        <div className="mt-8 flex items-center gap-3">
+          <span className="l-eyebrow">Idioma</span>
+          <LandingLanguageToggle align="left" />
         </div>
 
         <hr className="l-divider my-8" />
