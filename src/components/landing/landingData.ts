@@ -29,7 +29,7 @@ export const TERMS_HREF = "/terms";
 
 /* Contact channel for the controlled pilot. Change this to the official
    pilot inbox when one is available. */
-export const PILOT_EMAIL = "pmi140979@gmail.com";
+export const PILOT_EMAIL = "antonio@anclora.com";
 
 function mailto(subject: string, body?: string) {
   let href = `mailto:${PILOT_EMAIL}?subject=${encodeURIComponent(subject)}`;

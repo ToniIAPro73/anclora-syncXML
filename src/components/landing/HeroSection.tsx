@@ -1,27 +1,24 @@
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
-import { HERO_BADGES, HERO_FLOW, LOGIN_HREF, PILOT_HREF } from "./landingData";
+import { HERO_FLOW, LOGIN_HREF, PILOT_HREF } from "./landingData";
 
 export function HeroSection() {
   return (
     <section className="l-hero relative overflow-hidden">
-      <div className="l-container grid w-full items-center gap-10 py-10 md:py-12 lg:grid-cols-[1.05fr_0.95fr] lg:py-8">
-        <div>
+      <div className="l-container grid w-full items-center gap-12 py-12 md:py-14 lg:grid-cols-[0.95fr_1.05fr] lg:py-10">
+        <div className="max-w-2xl">
           <span className="l-eyebrow">
             <span className="inline-block h-1.5 w-1.5 rounded-full bg-[color:var(--l-gold)]" />
-            PRE-MVP · PILOTO CONTROLADO
+            Piloto controlado
           </span>
 
-          <h1 className="l-h1 mt-4">
-            Revisa datos de huéspedes desde Excel antes de generar un{" "}
-            <span className="l-gold">XML revisable</span>
+          <h1 className="l-h1 mt-5">
+            De Excel a <span className="l-gold">XML revisable</span>, sin fricción.
           </h1>
 
-          <p className="l-lead mt-5 max-w-xl">
-            Anclora SyncXML ayuda a pequeños alojamientos, viviendas turísticas y
-            gestores que trabajan con Excel/XLSX a revisar datos de huéspedes,
-            detectar errores operativos y preparar un XML revisable orientado al
-            flujo SES.HOSPEDAJES.
+          <p className="l-lead mt-5 max-w-lg">
+            Revisa datos de huéspedes, detecta errores y prepara un XML de
+            trabajo para SES.HOSPEDAJES desde tu Excel.
           </p>
 
           <div className="mt-6 flex flex-wrap items-center gap-3">
@@ -50,26 +47,10 @@ export function HeroSection() {
             </Link>
           </div>
 
-          <p className="l-text mt-3 text-xs">
-            Sin datos reales de huéspedes durante la validación inicial.
+          <p className="l-text mt-4 max-w-lg text-xs">
+            Validación inicial con datos sintéticos o anonimizados. Sin envío
+            automático a SES.HOSPEDAJES.
           </p>
-
-          <p className="l-text mt-5 max-w-xl text-xs leading-relaxed">
-            Fase pre-MVP / validación controlada. No garantiza cumplimiento legal,
-            no evita sanciones y no incluye integración oficial ni envío
-            automático a SES.HOSPEDAJES. No uses datos reales de huéspedes sin
-            cerrar previamente seguridad, RGPD, DPA, retención y validación
-            técnica.
-          </p>
-
-          <ul className="mt-5 flex flex-wrap gap-2">
-            {HERO_BADGES.map(({ label, icon: Icon }) => (
-              <li key={label} className="l-badge">
-                <Icon className="h-4 w-4" aria-hidden="true" />
-                {label}
-              </li>
-            ))}
-          </ul>
         </div>
 
         {/* Visual: logo + flow card */}
