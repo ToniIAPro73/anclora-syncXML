@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { CookiePreferencesButton } from "./CookiePreferencesButton";
-import { LandingLanguageToggle } from "./LandingLanguageToggle";
 import { CONTACT_MAILTO, LOGIN_HREF, PRIVACY_HREF, TERMS_HREF } from "./landingData";
 
 const SECTION_LINKS = [
@@ -67,10 +66,10 @@ export function LandingFooter() {
           </div>
         </div>
 
-        <div className="mt-8 flex items-center gap-3">
-          <span className="l-eyebrow">Idioma</span>
-          <LandingLanguageToggle align="left" />
-        </div>
+        <p className="l-text mt-8 text-xs">
+          Esta página está disponible en español. La aplicación está disponible
+          en español, català, English, Deutsch, Français, Italiano y Português.
+        </p>
 
         <hr className="l-divider my-8" />
 
