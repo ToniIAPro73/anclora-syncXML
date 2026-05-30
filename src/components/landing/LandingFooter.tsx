@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { AppAccessButton } from "./AppAccessButton";
-import { CONTACT_MAILTO, PRIVACY_HREF } from "./landingData";
+import { CookiePreferencesButton } from "./CookiePreferencesButton";
+import { CONTACT_MAILTO, LOGIN_HREF, PRIVACY_HREF, TERMS_HREF } from "./landingData";
 
 const SECTION_LINKS = [
   { label: "Producto", href: "#producto" },
@@ -48,18 +48,28 @@ export function LandingFooter() {
               <Link href={PRIVACY_HREF} className="l-nav-link">
                 Privacidad
               </Link>
-              <Link href="/terms" className="l-nav-link">
+              <Link href={TERMS_HREF} className="l-nav-link">
                 Términos
               </Link>
+              <CookiePreferencesButton />
               <a href={CONTACT_MAILTO} className="l-nav-link">
                 Contacto
               </a>
-              <AppAccessButton variant="link">
+              <Link
+                href={LOGIN_HREF}
+                className="l-nav-link"
+                data-track="click_iniciar_sesion"
+              >
                 Aplicación en validación controlada
-              </AppAccessButton>
+              </Link>
             </nav>
           </div>
         </div>
+
+        <p className="l-text mt-8 text-xs">
+          Esta página está disponible en español. La aplicación está disponible
+          en español, català, English, Deutsch, Français, Italiano y Português.
+        </p>
 
         <hr className="l-divider my-8" />
 

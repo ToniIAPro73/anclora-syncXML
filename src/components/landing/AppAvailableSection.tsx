@@ -1,6 +1,7 @@
+import Link from "next/link";
 import { AlertTriangle } from "lucide-react";
-import { AppAccessButton } from "./AppAccessButton";
 import { SectionHeading } from "./SectionHeading";
+import { LOGIN_HREF, PILOT_HREF } from "./landingData";
 
 export function AppAvailableSection() {
   return (
@@ -11,8 +12,8 @@ export function AppAvailableSection() {
             <div>
               <SectionHeading
                 eyebrow="Validación controlada"
-                title="Aplicación disponible en validación controlada"
-                intro="La aplicación funcional existe y puede explorarse en un entorno de validación controlada. Su objetivo actual es mostrar el flujo de trabajo y validar el producto con datos sintéticos o anonimizados."
+                title="Aplicación disponible para participantes del piloto"
+                intro="La aplicación funcional existe y se explora dentro del piloto controlado, con acceso aprobado de forma manual. Su objetivo actual es mostrar el flujo de trabajo y validar el producto con datos sintéticos o anonimizados."
               />
               <div className="l-notice mt-6">
                 <AlertTriangle className="h-5 w-5" aria-hidden="true" />
@@ -26,11 +27,24 @@ export function AppAvailableSection() {
             </div>
 
             <div className="lg:text-right">
-              <AppAccessButton variant="primary">
-                Abrir aplicación en validación controlada
-              </AppAccessButton>
+              <Link
+                href={PILOT_HREF}
+                className="l-btn l-btn-primary"
+                data-track="click_solicitar_piloto_controlado"
+              >
+                Solicitar piloto controlado
+              </Link>
+              <div className="mt-3">
+                <Link
+                  href={LOGIN_HREF}
+                  className="l-applink"
+                  data-track="click_iniciar_sesion"
+                >
+                  Ya participo · Iniciar sesión
+                </Link>
+              </div>
               <p className="l-text mt-2.5 text-xs">
-                Solo para pruebas con datos sintéticos o anonimizados.
+                Acceso aprobado manualmente. Solo datos sintéticos o anonimizados.
               </p>
             </div>
           </div>

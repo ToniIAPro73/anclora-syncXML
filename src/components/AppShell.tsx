@@ -14,6 +14,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const isPublicLegalPage = pathname === "/privacy" || pathname === "/terms";
   const isLandingPage = pathname === "/";
+  const isLoginPage = pathname === "/login";
+  const isPilotPage = pathname === "/piloto";
 
   function startNewReservation() {
     sessionStorage.removeItem("syncxml-session");
@@ -24,9 +26,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     }
   }
 
-  // The public landing page renders its own header/footer and must not be
-  // wrapped in the authenticated application shell.
-  if (isLandingPage) {
+  // Public, self-rendering pages must not be wrapped in the authenticated
+  // application shell.
+  if (isLandingPage || isLoginPage || isPilotPage) {
     return <>{children}</>;
   }
 
@@ -38,7 +40,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <div className="flex flex-wrap items-center gap-4">
             <button type="button" className="nav-link" onClick={startNewReservation}>{t.newBooking}</button>
             <Link className="nav-link" href="/dashboard">{t.dashboard}</Link>
-            <Link className="nav-link" href="/" aria-label="Volver a la web pública">← Web</Link>
             <ThemeToggle />
             <GlobalPreferencesTrigger />
           </div>
@@ -49,7 +50,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </main>
       <footer className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 border-t border-app px-4 py-6 text-sm text-muted">
         <span>{t.appName} · {t.privateModeTitle}</span>
-        <span className="flex flex-wrap gap-3"><Link href="/privacy">{t.privacy}</Link><Link href="/terms">{t.terms}</Link></span>
+        <span className="flex flex-wrap gap-3"><Link href="/privacy">{t.privacy}</Link><Link href="/terms">{t.terms}</Link><Link href="/" aria-label="Web pública">Web pública</Link></span>
       </footer>
     </div>
   );
