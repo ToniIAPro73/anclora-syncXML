@@ -46,7 +46,7 @@ export function ReservationDashboard() {
   return (
     <div className="space-y-6">
       {hasPendingSession && (
-        <Link href="/" className="flex items-center gap-2 rounded-lg border border-accent/40 bg-accent/10 px-4 py-3 text-sm font-semibold text-accent transition hover:bg-accent/20">
+        <Link href="/app" className="flex items-center gap-2 rounded-lg border border-accent/40 bg-accent/10 px-4 py-3 text-sm font-semibold text-accent transition hover:bg-accent/20">
           <ArrowLeft className="h-4 w-4 shrink-0" />
           Continuar con la reserva en curso
         </Link>

@@ -8,6 +8,9 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const sora = Sora({ subsets: ["latin"], variable: "--font-sora" });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL ?? "https://anclora-syncxml.vercel.app",
+  ),
   title: "Anclora SyncXML",
   description: "Excel seguro de reservas a XML de hospedaje por reserva.",
   icons: {

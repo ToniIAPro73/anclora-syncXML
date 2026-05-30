@@ -13,14 +13,21 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const isPublicLegalPage = pathname === "/privacy" || pathname === "/terms";
+  const isLandingPage = pathname === "/";
 
   function startNewReservation() {
     sessionStorage.removeItem("syncxml-session");
-    if (pathname === "/") {
+    if (pathname === "/app") {
       window.dispatchEvent(new CustomEvent("syncxml:new"));
     } else {
-      router.push("/");
+      router.push("/app");
     }
+  }
+
+  // The public landing page renders its own header/footer and must not be
+  // wrapped in the authenticated application shell.
+  if (isLandingPage) {
+    return <>{children}</>;
   }
 
   return (
