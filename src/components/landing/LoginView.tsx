@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight, LockKeyhole, ShieldCheck } from "lucide-react";
+import { ArrowLeft, ArrowRight, ShieldCheck } from "lucide-react";
+import { AncloraAuthCard } from "@/components/auth/AncloraAuthCard";
 import { track } from "./analytics";
 import { APP_HREF, PILOT_HREF } from "./landingData";
 
@@ -23,6 +24,7 @@ export function LoginView() {
   const [phase, setPhase] = useState<Phase>("checking");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
+  const [logoutBusy, setLogoutBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -51,7 +53,13 @@ export function LoginView() {
           body: JSON.stringify({ password }),
         });
         if (!response.ok) {
-          setError("Acceso no aprobado o credenciales no válidas.");
+          setError(
+            response.status === 503
+              ? process.env.NODE_ENV === "development"
+                ? "Configura SYNCXML_ADMIN_PASSWORD y SESSION_SECRET para probar el login, o usa SYNCXML_LOCAL_DEMO=true para demo local sin datos reales."
+                : "La configuración de acceso no está disponible. Contacta con el administrador."
+              : "Acceso no aprobado o credenciales no válidas.",
+          );
           return;
         }
         track("login_success");
@@ -65,95 +73,124 @@ export function LoginView() {
     [password, router],
   );
 
+  const logout = useCallback(async () => {
+    setLogoutBusy(true);
+    setError(null);
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+      setPassword("");
+      setPhase("form");
+      track("logout_success");
+    } catch {
+      setError("No se pudo cerrar la sesión. Inténtalo de nuevo.");
+    } finally {
+      setLogoutBusy(false);
+    }
+  }, []);
+
   return (
-    <main className="l-container flex min-h-[100svh] flex-col items-center justify-center py-12">
-      <div className="w-full max-w-md">
+    <main className="auth-screen-bg flex min-h-[100svh] flex-col items-center justify-center px-4 py-4">
+      <div className="w-full max-w-[460px]">
         <Link
           href="/"
-          className="l-nav-link mb-6 inline-flex items-center gap-2"
+          className="mb-4 inline-flex items-center gap-2 rounded-full px-1 text-sm font-bold text-muted hover:text-premium"
           aria-label="Volver a la landing"
         >
           <ArrowLeft className="h-4 w-4" aria-hidden="true" />
           Volver a la landing
         </Link>
 
-        <div className="l-card l-card-gold p-7">
-          <span className="l-icon-tile" aria-hidden="true">
-            <LockKeyhole className="h-5 w-5" />
-          </span>
-          <h1 className="l-h2 mt-4 text-2xl">Iniciar sesión</h1>
-          <p className="l-text mt-3 text-sm">
-            Acceso reservado a participantes aprobados del piloto controlado.
-            Iniciar sesión no concede acceso por sí mismo: la participación se
-            revisa de forma manual antes de habilitar la aplicación.
-          </p>
-
+        <AncloraAuthCard
+          mode={phase === "authenticated" ? "authenticated" : "login"}
+          title="Iniciar sesión"
+          badge="PILOTO CONTROLADO"
+          description="Acceso reservado a participantes aprobados del piloto controlado. Iniciar sesión no concede acceso por sí mismo: la participación se revisa manualmente antes de habilitar la aplicación."
+          footer={
+            <p>
+              Al acceder aceptas los{" "}
+              <Link href="/terms">Términos</Link> y la{" "}
+              <Link href="/privacy">Política de Privacidad</Link>.
+            </p>
+          }
+        >
           {phase === "authenticated" ? (
-            <div className="mt-6">
-              <div className="l-notice" role="status">
+            <div className="flex flex-col gap-3">
+              <div className="auth-card-status" role="status">
                 <ShieldCheck className="h-5 w-5" aria-hidden="true" />
-                <p>Tu sesión está activa. Puedes continuar a la aplicación.</p>
+                <p>Tu sesión está activa.</p>
               </div>
               <Link
                 href={APP_HREF}
-                className="l-btn l-btn-primary mt-4 w-full"
+                className="btn-primary auth-card-action"
                 data-track="click_continue_to_app"
               >
                 Continuar a la aplicación
                 <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </Link>
+              <button
+                type="button"
+                className="btn-secondary auth-card-action"
+                onClick={logout}
+                disabled={logoutBusy}
+              >
+                {logoutBusy ? "Cerrando sesión…" : "Cerrar sesión"}
+              </button>
+              <Link className="auth-card-note text-center font-bold" href="/">
+                Volver a la landing
+              </Link>
             </div>
           ) : (
-            <form className="mt-6 flex flex-col gap-4" onSubmit={login}>
-              <label className="flex flex-col gap-1.5">
-                <span className="l-eyebrow">Clave de acceso al piloto</span>
+            <form className="flex flex-col gap-3" onSubmit={login}>
+              <label className="auth-card-field-label">
+                Clave de acceso al piloto
                 <input
-                  className="l-input"
+                  className="input"
                   type="password"
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
                   placeholder="••••••••"
                   autoComplete="current-password"
                   disabled={phase === "checking"}
+                  aria-required="true"
                 />
-                <span className="l-text text-xs">
+                <span className="auth-card-help">
                   Recibirás la clave de acceso al piloto por correo una vez
                   aprobada tu solicitud. Es una clave compartida del piloto, no
                   una cuenta personal.
                 </span>
               </label>
               {error ? (
-                <p className="text-sm text-[color:var(--l-amber)]" role="alert">
+                <p className="auth-card-error" role="alert">
                   {error}
                 </p>
               ) : null}
               <button
                 type="submit"
-                className="l-btn l-btn-primary w-full"
+                className="btn-primary auth-card-action"
                 disabled={busy || phase === "checking" || !password}
               >
-                {busy ? "Comprobando…" : "Iniciar sesión"}
+                {busy ? "Comprobando…" : "Entrar a la aplicación"}
               </button>
             </form>
           )}
-        </div>
 
-        <div className="l-card mt-4 p-5 text-center">
-          <p className="l-text text-sm">
-            ¿Todavía no participas en el piloto?
-          </p>
-          <Link
-            href={PILOT_HREF}
-            className="l-btn l-btn-secondary mt-3 w-full"
-            data-track="click_solicitar_piloto_controlado"
-          >
-            Solicitar piloto controlado
-          </Link>
-          <p className="l-text mt-3 text-xs">
-            No subas datos reales de huéspedes. La validación se realiza con
-            datos sintéticos o anonimizados.
-          </p>
-        </div>
+          <div className="auth-card-pilot-box">
+            <p className="text-sm font-bold text-premium">
+              ¿Todavía no participas en el piloto?
+            </p>
+            <Link
+              href={PILOT_HREF}
+              className="btn-secondary auth-card-action mt-3"
+              data-track="click_solicitar_piloto_controlado"
+            >
+              Solicitar piloto controlado
+            </Link>
+            <p className="auth-card-note mt-3">
+              No subas datos reales de huéspedes. La validación se realiza con
+              datos sintéticos o anonimizados.
+            </p>
+          </div>
+        </AncloraAuthCard>
       </div>
     </main>
   );
