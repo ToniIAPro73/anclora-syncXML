@@ -17,7 +17,7 @@ export type AutoCorrectionResult = {
 // Convert DD/MM/YYYY or DD-MM-YYYY to YYYY-MM-DD.
 // Returns null if the input does not match, preserving any other format.
 function parseDMY(value: string): string | null {
-  const m = value.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+  const m = value.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/);
   if (!m) return null;
   const [, d, mo, y] = m;
   return `${y}-${mo.padStart(2, "0")}-${d.padStart(2, "0")}`;
@@ -63,7 +63,7 @@ function applyCorrectorsToGuest(
   correctors: Corrector<GuestRecord>[],
   corrections: AutoCorrection[],
 ): GuestRecord {
-  let changed = { ...guest };
+  const changed = { ...guest };
   for (const { field, label, transform } of correctors) {
     const original = guest[field] as string | undefined;
     const next = transform(original);
