@@ -20,8 +20,9 @@ import {
   Users,
 } from "lucide-react";
 
-/* Routes that the landing CTAs point to (the existing application). */
+/* Routes that the landing CTAs point to. */
 export const APP_HREF = "/app";
+export const LOGIN_HREF = "/login";
 export const PRIVACY_HREF = "/privacy";
 export const TERMS_HREF = "/terms";
 
