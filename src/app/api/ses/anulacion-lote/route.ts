@@ -4,6 +4,7 @@ import { requireAuth } from "@/lib/auth";
 import { getRateLimitKey, sensitiveRateLimiter } from "@/lib/security/rateLimit";
 import { cancelSesLote } from "@/lib/ses/client";
 import { summarizeSesHttpResponse } from "@/lib/ses/response";
+import { cancelSesSubmissionByBatchCode } from "@/lib/ses/submissionRepository";
 
 export async function POST(request: Request) {
   try {
@@ -18,9 +19,16 @@ export async function POST(request: Request) {
       dryRun: z.boolean().optional(),
     }).safeParse(body);
     if (!parsed.success) return NextResponse.json({ error: "Payload inválido" }, { status: 400 });
-    const result = await cancelSesLote(parsed.data.loteCode, { environment: parsed.data.environment, dryRun: parsed.data.dryRun ?? true });
+    const { loteCode, environment, dryRun = true } = parsed.data;
+    const result = await cancelSesLote(loteCode, { environment, dryRun });
     if (!("status" in result)) return NextResponse.json({ dryRun: true, environment: result.environment, endpoint: result.endpoint });
-    return NextResponse.json(summarizeSesHttpResponse(result));
+    const summary = summarizeSesHttpResponse(result);
+    // Mark the corresponding submission as CANCELLED in the database so it no longer
+    // blocks duplicate-detection on re-send. Only mark after a non-dry-run call.
+    if (!dryRun) {
+      await cancelSesSubmissionByBatchCode(loteCode).catch(() => { /* best-effort — do not fail the response */ });
+    }
+    return NextResponse.json(summary);
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : "Error SES" }, { status: 503 });
   }

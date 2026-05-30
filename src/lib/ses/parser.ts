@@ -225,19 +225,23 @@ export function deriveSesStatus(
   responseCode: string,
   sesBatchCode: string | undefined,
   resultados: ParsedWsComunicacion[],
-): "ACCEPTED" | "PROCESSING" | "PROCESSED" | "FAILED" | "PARTIAL" | "UNKNOWN" {
+): "ACCEPTED" | "PROCESSING" | "PROCESSED" | "FAILED" | "PARTIAL" | "UNKNOWN" | "CANCELLED" {
   if (responseCode !== "0") return "FAILED";
   if (!sesBatchCode) return "UNKNOWN";
 
   if (resultados.length === 0) return "ACCEPTED";
 
+  const hasCancelled = resultados.some((r) =>
+    r.communicationResults.some((rc) => rc.anulada),
+  );
   const hasErrors = resultados.some((r) =>
     r.communicationResults.some((rc) => rc.error || rc.errorType),
   );
   const hasSuccess = resultados.some((r) =>
-    r.communicationResults.some((rc) => rc.communicationCode),
+    r.communicationResults.some((rc) => rc.communicationCode && !rc.anulada),
   );
 
+  if (hasCancelled && !hasSuccess && !hasErrors) return "CANCELLED";
   if (hasErrors && hasSuccess) return "PARTIAL";
   if (hasErrors) return "FAILED";
   if (hasSuccess) return "PROCESSED";

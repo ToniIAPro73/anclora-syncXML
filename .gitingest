@@ -40,3 +40,6 @@ pnpm-debug.log*
 *.sqlite3
 exports/
 tmp/
+
+# Knowledge management local snapshots
+knowledge-vault/repo-snapshots/
