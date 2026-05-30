@@ -218,4 +218,5 @@ enum SesSubmissionStatus {
   FAILED
   PARTIAL
   UNKNOWN
+  CANCELLED
 }
