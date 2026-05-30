@@ -23,6 +23,7 @@ import {
 /* Routes that the landing CTAs point to. */
 export const APP_HREF = "/app";
 export const LOGIN_HREF = "/login";
+export const PILOT_HREF = "/piloto";
 export const PRIVACY_HREF = "/privacy";
 export const TERMS_HREF = "/terms";
 
@@ -295,7 +296,7 @@ export const ACCESS_TIERS: AccessTier[] = [
       "Informe de límites y siguientes pasos.",
     ],
     ctaLabel: "Solicitar piloto controlado",
-    ctaHref: PILOT_MAILTO,
+    ctaHref: PILOT_HREF,
     ctaTrack: "click_solicitar_piloto_controlado",
     featured: true,
   },

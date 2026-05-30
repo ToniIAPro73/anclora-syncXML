@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { LockKeyhole } from "lucide-react";
 import { usePreferences } from "./AppPreferencesProvider";
-import { PILOT_MAILTO } from "./landing/landingData";
+import { PILOT_HREF } from "./landing/landingData";
 
 export function AuthGate({ children }: { children: React.ReactNode }) {
   const { dictionary: t } = usePreferences();
@@ -90,7 +90,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
           piloto controlado. No subas datos reales de huéspedes.
         </p>
         <div className="mt-4 flex flex-wrap gap-3">
-          <a className="btn-secondary" href={PILOT_MAILTO}>Solicitar piloto controlado</a>
+          <Link className="btn-secondary" href={PILOT_HREF}>Solicitar piloto controlado</Link>
           <Link className="btn-secondary" href="/">Volver a la landing</Link>
         </div>
       </div>

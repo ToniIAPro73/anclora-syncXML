@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, LockKeyhole, ShieldCheck } from "lucide-react";
 import { track } from "./analytics";
-import { APP_HREF, PILOT_MAILTO } from "./landingData";
+import { APP_HREF, PILOT_HREF } from "./landingData";
 
 type Phase = "checking" | "form" | "authenticated";
 
@@ -137,13 +137,13 @@ export function LoginView() {
           <p className="l-text text-sm">
             ¿Todavía no participas en el piloto?
           </p>
-          <a
-            href={PILOT_MAILTO}
+          <Link
+            href={PILOT_HREF}
             className="l-btn l-btn-secondary mt-3 w-full"
             data-track="click_solicitar_piloto_controlado"
           >
             Solicitar piloto controlado
-          </a>
+          </Link>
           <p className="l-text mt-3 text-xs">
             No subas datos reales de huéspedes. La validación se realiza con
             datos sintéticos o anonimizados.

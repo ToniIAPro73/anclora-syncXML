@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
-import { HERO_BADGES, HERO_FLOW, LOGIN_HREF, PILOT_MAILTO } from "./landingData";
+import { HERO_BADGES, HERO_FLOW, LOGIN_HREF, PILOT_HREF } from "./landingData";
 
 export function HeroSection() {
   return (
@@ -25,14 +25,14 @@ export function HeroSection() {
           </p>
 
           <div className="mt-6 flex flex-wrap items-center gap-3">
-            <a
-              href={PILOT_MAILTO}
+            <Link
+              href={PILOT_HREF}
               className="l-btn l-btn-primary"
               data-track="click_solicitar_piloto_controlado"
             >
               Solicitar piloto controlado
               <ChevronRight className="h-4 w-4" aria-hidden="true" />
-            </a>
+            </Link>
             <a
               href="#como-funciona"
               className="l-btn l-btn-secondary"

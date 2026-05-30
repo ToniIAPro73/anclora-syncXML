@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { DIAGNOSTIC_MAILTO, LOGIN_HREF, PILOT_MAILTO } from "./landingData";
+import { DIAGNOSTIC_MAILTO, LOGIN_HREF, PILOT_HREF } from "./landingData";
 
 export function FinalCTA() {
   return (
@@ -18,14 +18,14 @@ export function FinalCTA() {
             actual.
           </p>
           <div className="mt-9 flex flex-wrap justify-center gap-3">
-            <a
-              href={PILOT_MAILTO}
+            <Link
+              href={PILOT_HREF}
               className="l-btn l-btn-primary"
               data-track="click_solicitar_piloto_controlado"
             >
               Solicitar piloto controlado
               <ArrowRight className="h-4 w-4" aria-hidden="true" />
-            </a>
+            </Link>
             <a
               href={DIAGNOSTIC_MAILTO}
               className="l-btn l-btn-secondary"
