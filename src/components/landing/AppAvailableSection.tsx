@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { AlertTriangle } from "lucide-react";
 import { SectionHeading } from "./SectionHeading";
-import { LOGIN_HREF, PILOT_MAILTO } from "./landingData";
+import { LOGIN_HREF, PILOT_HREF } from "./landingData";
 
 export function AppAvailableSection() {
   return (
@@ -27,13 +27,13 @@ export function AppAvailableSection() {
             </div>
 
             <div className="lg:text-right">
-              <a
-                href={PILOT_MAILTO}
+              <Link
+                href={PILOT_HREF}
                 className="l-btn l-btn-primary"
                 data-track="click_solicitar_piloto_controlado"
               >
                 Solicitar piloto controlado
-              </a>
+              </Link>
               <div className="mt-3">
                 <Link
                   href={LOGIN_HREF}

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Menu } from "lucide-react";
 import { LandingLanguageToggle } from "./LandingLanguageToggle";
-import { LOGIN_HREF, NAV_LINKS, PILOT_MAILTO } from "./landingData";
+import { LOGIN_HREF, NAV_LINKS, PILOT_HREF } from "./landingData";
 
 export function LandingHeader() {
   return (
@@ -37,13 +37,13 @@ export function LandingHeader() {
           >
             Iniciar sesión
           </Link>
-          <a
-            href={PILOT_MAILTO}
+          <Link
+            href={PILOT_HREF}
             className="l-btn l-btn-primary"
             data-track="click_solicitar_piloto_controlado"
           >
             Solicitar piloto controlado
-          </a>
+          </Link>
         </div>
 
         {/* Compact, no-JS mobile menu */}
@@ -72,13 +72,13 @@ export function LandingHeader() {
               <LandingLanguageToggle align="right" />
             </div>
             <div className="flex flex-col gap-2">
-              <a
-                href={PILOT_MAILTO}
+              <Link
+                href={PILOT_HREF}
                 className="l-btn l-btn-primary w-full"
                 data-track="click_solicitar_piloto_controlado"
               >
                 Solicitar piloto controlado
-              </a>
+              </Link>
               <Link
                 href={LOGIN_HREF}
                 className="l-btn l-btn-ghost w-full"
