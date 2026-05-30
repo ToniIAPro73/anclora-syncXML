@@ -7,10 +7,13 @@ import { WorkflowSection } from "@/components/landing/WorkflowSection";
 import { AdvantagesSection } from "@/components/landing/AdvantagesSection";
 import { StatusSection } from "@/components/landing/StatusSection";
 import { AudienceSection } from "@/components/landing/AudienceSection";
+import { AccessSection } from "@/components/landing/AccessSection";
+import { AppAvailableSection } from "@/components/landing/AppAvailableSection";
 import { PrivacyTrustSection } from "@/components/landing/PrivacyTrustSection";
 import { NoPromiseSection } from "@/components/landing/NoPromiseSection";
 import { FinalCTA } from "@/components/landing/FinalCTA";
 import { LandingFooter } from "@/components/landing/LandingFooter";
+import { LandingAnalytics } from "@/components/landing/LandingAnalytics";
 
 const title = "Anclora SyncXML — Revisión de huéspedes desde Excel a XML revisable";
 const description =
@@ -36,6 +39,7 @@ export const metadata: Metadata = {
 export default function LandingPage() {
   return (
     <div className="landing-root">
+      <LandingAnalytics />
       <LandingHeader />
       <main>
         <HeroSection />
@@ -45,6 +49,8 @@ export default function LandingPage() {
         <AdvantagesSection />
         <StatusSection />
         <AudienceSection />
+        <AccessSection />
+        <AppAvailableSection />
         <PrivacyTrustSection />
         <NoPromiseSection />
         <FinalCTA />

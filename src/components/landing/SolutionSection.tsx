@@ -4,7 +4,7 @@ import { HERO_FLOW, SOLUTION_NOT } from "./landingData";
 
 export function SolutionSection() {
   return (
-    <section className="l-section">
+    <section id="producto" className="l-section">
       <div className="l-container">
         <SectionHeading
           eyebrow="La solución"

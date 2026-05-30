@@ -38,6 +38,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <div className="flex flex-wrap items-center gap-4">
             <button type="button" className="nav-link" onClick={startNewReservation}>{t.newBooking}</button>
             <Link className="nav-link" href="/dashboard">{t.dashboard}</Link>
+            <Link className="nav-link" href="/" aria-label="Volver a la web pública">← Web</Link>
             <ThemeToggle />
             <GlobalPreferencesTrigger />
           </div>
