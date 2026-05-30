@@ -356,6 +356,8 @@ export function SyncXmlWorkflow() {
 
   return (
     <div className="space-y-6">
+      <div className="process-message is-warning" role="note">{t.validationBanner}</div>
+
       <ProcessRail
         activeStep={activeStep}
         parsed={parsed}
@@ -504,6 +506,7 @@ export function SyncXmlWorkflow() {
             {generated && (
               <div className="mt-5">
                 <button className="btn-secondary" onClick={downloadXml}><Download className="h-4 w-4" />{t.downloadXml}</button>
+                <p className="mt-2 text-xs text-muted">{t.xmlReviewableNotice}</p>
               </div>
             )}
           </section>
@@ -711,6 +714,7 @@ function XmlViewer({
             {busyAction === "consolidate" ? <WorkingLabel label={t.processing} /> : <><CheckCircle2 className="h-4 w-4" />{t.consolidate}</>}
           </button>
         </div>
+        <p className="mt-3 text-xs text-muted">{t.xmlReviewableNotice}</p>
       </section>
 
       {/* Servicios SES.HOSPEDAJES */}
