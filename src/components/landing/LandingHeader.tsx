@@ -1,18 +1,19 @@
 import Link from "next/link";
 import { Menu } from "lucide-react";
-import { APP_HREF, DASHBOARD_HREF, NAV_LINKS, PILOT_MAILTO } from "./landingData";
+import { AppAccessButton } from "./AppAccessButton";
+import { NAV_LINKS, PILOT_MAILTO } from "./landingData";
 
 export function LandingHeader() {
   return (
     <header className="l-header">
-      <div className="l-container flex items-center justify-between gap-4 py-3.5">
+      <div className="l-container flex h-[var(--l-header-h)] items-center justify-between gap-4">
         <Link href="/" className="flex items-center gap-2.5" aria-label="Anclora SyncXML — inicio">
           <img
             src="/brand/logo-anclora-syncxml.png"
             alt="Logotipo de Anclora SyncXML"
-            width={36}
-            height={36}
-            className="h-9 w-9 rounded-full"
+            width={34}
+            height={34}
+            className="h-8 w-8 rounded-full"
           />
           <span className="font-heading text-base font-semibold tracking-tight text-white">
             Anclora SyncXML
@@ -28,15 +29,14 @@ export function LandingHeader() {
         </nav>
 
         <div className="hidden items-center gap-3 lg:flex">
-          <Link href={DASHBOARD_HREF} className="l-nav-link">
-            Dashboard
-          </Link>
-          <a href={PILOT_MAILTO} className="l-btn l-btn-secondary">
-            Solicitar piloto
+          <AppAccessButton variant="link">Abrir app</AppAccessButton>
+          <a
+            href={PILOT_MAILTO}
+            className="l-btn l-btn-primary"
+            data-track="click_solicitar_piloto_controlado"
+          >
+            Solicitar piloto controlado
           </a>
-          <Link href={APP_HREF} className="l-btn l-btn-primary">
-            Abrir aplicación
-          </Link>
         </div>
 
         {/* Compact, no-JS mobile menu */}
@@ -58,21 +58,19 @@ export function LandingHeader() {
                   {link.label}
                 </a>
               ))}
-              <Link
-                href={DASHBOARD_HREF}
-                className="rounded-md px-3 py-2.5 text-sm font-semibold text-[color:var(--l-muted)] hover:bg-[color:var(--l-surface-2)] hover:text-white"
-              >
-                Dashboard
-              </Link>
             </nav>
             <hr className="l-divider my-2" />
             <div className="flex flex-col gap-2">
-              <a href={PILOT_MAILTO} className="l-btn l-btn-secondary w-full">
-                Solicitar piloto
+              <a
+                href={PILOT_MAILTO}
+                className="l-btn l-btn-primary w-full"
+                data-track="click_solicitar_piloto_controlado"
+              >
+                Solicitar piloto controlado
               </a>
-              <Link href={APP_HREF} className="l-btn l-btn-primary w-full">
-                Abrir aplicación
-              </Link>
+              <AppAccessButton variant="ghost" fullWidth>
+                Abrir app
+              </AppAccessButton>
             </div>
           </div>
         </details>

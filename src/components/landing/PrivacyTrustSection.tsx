@@ -6,7 +6,7 @@ import { PRIVACY_HREF, TERMS_HREF, TRUST_ITEMS } from "./landingData";
 
 export function PrivacyTrustSection() {
   return (
-    <section id="privacidad" className="l-section">
+    <section id="seguridad" className="l-section">
       <div className="l-container">
         <SectionHeading
           eyebrow="Confianza y privacidad"

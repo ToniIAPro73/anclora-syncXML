@@ -2,11 +2,13 @@ import type { LucideIcon } from "lucide-react";
 import {
   AlertTriangle,
   Ban,
+  ClipboardCheck,
   Copy,
   EyeOff,
   FileSpreadsheet,
   FileText,
   Fingerprint,
+  Handshake,
   ListChecks,
   Network,
   Search,
@@ -20,27 +22,39 @@ import {
 
 /* Routes that the landing CTAs point to (the existing application). */
 export const APP_HREF = "/app";
-export const DASHBOARD_HREF = "/dashboard";
 export const PRIVACY_HREF = "/privacy";
 export const TERMS_HREF = "/terms";
 
 /* Contact channel for the controlled pilot. Change this to the official
    pilot inbox when one is available. */
 export const PILOT_EMAIL = "pmi140979@gmail.com";
-export const PILOT_MAILTO =
-  `mailto:${PILOT_EMAIL}` +
-  "?subject=" +
-  encodeURIComponent("Solicitud de piloto controlado — Anclora SyncXML") +
-  "&body=" +
-  encodeURIComponent(
-    "Hola,\n\nMe gustaría solicitar un piloto controlado de Anclora SyncXML con datos sintéticos o anonimizados.\n\nAlojamiento / gestor:\nNº de inmuebles aprox.:\nHerramienta actual (Excel/PMS):\n\nGracias.",
-  );
+
+function mailto(subject: string, body?: string) {
+  let href = `mailto:${PILOT_EMAIL}?subject=${encodeURIComponent(subject)}`;
+  if (body) href += `&body=${encodeURIComponent(body)}`;
+  return href;
+}
+
+export const PILOT_MAILTO = mailto(
+  "Solicitud de piloto controlado — Anclora SyncXML",
+  "Hola,\n\nMe gustaría solicitar un piloto controlado de Anclora SyncXML con datos sintéticos o anonimizados.\n\nAlojamiento / gestor:\nNº de inmuebles aprox.:\nHerramienta actual (Excel/PMS):\n\nGracias.",
+);
+export const DIAGNOSTIC_MAILTO = mailto(
+  "Solicitud de diagnóstico inicial — Anclora SyncXML",
+  "Hola,\n\nMe gustaría solicitar un diagnóstico inicial de mi flujo Excel/XLSX para valorar el encaje con Anclora SyncXML.\n\nAlojamiento / gestor:\nNº de inmuebles aprox.:\nHerramienta actual (Excel/PMS):\n\nGracias.",
+);
+export const PLAN_MAILTO = mailto(
+  "Plan a medida — Anclora SyncXML",
+  "Hola,\n\nTras valorar el piloto, me gustaría hablar sobre un plan a medida.\n\nAlojamiento / gestor:\nVolumen aproximado de reservas:\n\nGracias.",
+);
+export const CONTACT_MAILTO = mailto("Contacto — Anclora SyncXML");
 
 export const NAV_LINKS = [
-  { label: "Problema", href: "#problema" },
+  { label: "Producto", href: "#producto" },
   { label: "Cómo funciona", href: "#como-funciona" },
-  { label: "Privacidad", href: "#privacidad" },
-  { label: "Piloto", href: "#piloto" },
+  { label: "Para quién es", href: "#para-quien-es" },
+  { label: "Acceso piloto", href: "#acceso-piloto" },
+  { label: "Seguridad y límites", href: "#seguridad" },
 ] as const;
 
 export const HERO_BADGES = [
@@ -234,6 +248,77 @@ export const AUDIENCE_NOT_FOR = [
   "Negocios que no pueden trabajar con datos sintéticos o anonimizados en piloto.",
 ];
 
+export type AccessTier = {
+  id: string;
+  icon: LucideIcon;
+  title: string;
+  text: string;
+  itemsLabel: string;
+  items: string[];
+  ctaLabel: string;
+  ctaHref: string;
+  ctaTrack: string;
+  featured: boolean;
+};
+
+export const ACCESS_TIERS: AccessTier[] = [
+  {
+    id: "diagnostico",
+    icon: Search,
+    title: "Diagnóstico inicial",
+    text: "Revisamos tu caso de uso, el tipo de Excel/XLSX que utilizas y los problemas habituales de revisión de datos.",
+    itemsLabel: "Incluye",
+    items: [
+      "Análisis del flujo actual.",
+      "Revisión de muestra sintética o anonimizada.",
+      "Identificación de campos, errores y duplicados habituales.",
+      "Valoración de encaje para piloto.",
+    ],
+    ctaLabel: "Solicitar diagnóstico inicial",
+    ctaHref: DIAGNOSTIC_MAILTO,
+    ctaTrack: "click_diagnostico_inicial",
+    featured: false,
+  },
+  {
+    id: "piloto",
+    icon: ClipboardCheck,
+    title: "Piloto controlado",
+    text: "Probamos el flujo Excel/XLSX → revisión → detección de errores → XML revisable con datos sintéticos, anonimizados o muestras controladas.",
+    itemsLabel: "Incluye",
+    items: [
+      "Importación de XLSX.",
+      "Revisión de datos de reserva y huéspedes.",
+      "Detección de incidencias.",
+      "Generación de XML revisable de prueba.",
+      "Sesión de cierre.",
+      "Informe de límites y siguientes pasos.",
+    ],
+    ctaLabel: "Solicitar piloto controlado",
+    ctaHref: PILOT_MAILTO,
+    ctaTrack: "click_solicitar_piloto_controlado",
+    featured: true,
+  },
+  {
+    id: "plan",
+    icon: Handshake,
+    title: "Plan a medida",
+    text: "Si el piloto demuestra encaje, se define una propuesta adaptada al volumen, formato de datos, necesidades operativas y estado de validación técnica/legal.",
+    itemsLabel: "Puede incluir",
+    items: [
+      "Ajustes de flujo.",
+      "Soporte de onboarding.",
+      "Plantillas de trabajo.",
+      "Acompañamiento en validación.",
+      "Condiciones de uso controlado.",
+      "Roadmap hacia MVP comercial.",
+    ],
+    ctaLabel: "Hablar sobre un plan a medida",
+    ctaHref: PLAN_MAILTO,
+    ctaTrack: "click_plan_a_medida",
+    featured: false,
+  },
+];
+
 export const TRUST_ITEMS: Card[] = [
   {
     title: "Minimización",
@@ -274,4 +359,12 @@ export const NO_PROMISE = [
   "No es integración oficial automática.",
   "No sustituye PMS, gestoría ni asesoría legal.",
   "No debe usarse con datos reales sin cerrar seguridad, privacidad, RGPD, retención y validación técnica.",
+];
+
+export const APP_MODAL_CHECKLIST = [
+  "No debes subir datos reales de huéspedes.",
+  "Debes usar solo datos sintéticos, anonimizados o muestras controladas.",
+  "El XML generado es revisable, no oficialmente aceptado por SES.HOSPEDAJES.",
+  "Anclora SyncXML no ofrece asesoramiento legal ni garantiza cumplimiento normativo.",
+  "No hay integración oficial ni envío automático a SES.HOSPEDAJES.",
 ];
