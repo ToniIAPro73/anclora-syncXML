@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { Menu } from "lucide-react";
-import { LandingLanguageToggle } from "./LandingLanguageToggle";
 import { LOGIN_HREF, NAV_LINKS, PILOT_HREF } from "./landingData";
 
 export function LandingHeader() {
@@ -29,7 +28,6 @@ export function LandingHeader() {
         </nav>
 
         <div className="hidden items-center gap-3 lg:flex">
-          <LandingLanguageToggle />
           <Link
             href={LOGIN_HREF}
             className="l-applink"
@@ -67,10 +65,6 @@ export function LandingHeader() {
               ))}
             </nav>
             <hr className="l-divider my-2" />
-            <div className="flex items-center justify-between px-1 pb-2">
-              <span className="l-eyebrow">Idioma</span>
-              <LandingLanguageToggle align="right" />
-            </div>
             <div className="flex flex-col gap-2">
               <Link
                 href={PILOT_HREF}
