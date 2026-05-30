@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { LandingAnalytics } from "@/components/landing/LandingAnalytics";
+import { CookieConsent } from "@/components/landing/CookieConsent";
 import { PilotRequestForm } from "@/components/landing/PilotRequestForm";
 
 export const metadata: Metadata = {
@@ -26,6 +27,7 @@ export default function PilotPage() {
           </div>
         </div>
       </main>
+      <CookieConsent />
     </div>
   );
 }

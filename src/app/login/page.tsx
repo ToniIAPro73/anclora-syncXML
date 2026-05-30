@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { LandingAnalytics } from "@/components/landing/LandingAnalytics";
+import { CookieConsent } from "@/components/landing/CookieConsent";
 import { LoginView } from "@/components/landing/LoginView";
 
 export const metadata: Metadata = {
@@ -14,6 +15,7 @@ export default function LoginPage() {
     <div className="landing-root">
       <LandingAnalytics />
       <LoginView />
+      <CookieConsent />
     </div>
   );
 }

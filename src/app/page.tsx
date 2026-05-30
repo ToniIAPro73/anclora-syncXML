@@ -14,6 +14,7 @@ import { NoPromiseSection } from "@/components/landing/NoPromiseSection";
 import { FinalCTA } from "@/components/landing/FinalCTA";
 import { LandingFooter } from "@/components/landing/LandingFooter";
 import { LandingAnalytics } from "@/components/landing/LandingAnalytics";
+import { CookieConsent } from "@/components/landing/CookieConsent";
 
 const title = "Anclora SyncXML — Revisión de huéspedes desde Excel a XML revisable";
 const description =
@@ -56,6 +57,7 @@ export default function LandingPage() {
         <FinalCTA />
       </main>
       <LandingFooter />
+      <CookieConsent />
     </div>
   );
 }

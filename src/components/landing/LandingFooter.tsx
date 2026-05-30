@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CookiePreferencesButton } from "./CookiePreferencesButton";
 import { LandingLanguageToggle } from "./LandingLanguageToggle";
 import { CONTACT_MAILTO, LOGIN_HREF, PRIVACY_HREF, TERMS_HREF } from "./landingData";
 
@@ -51,6 +52,7 @@ export function LandingFooter() {
               <Link href={TERMS_HREF} className="l-nav-link">
                 Términos
               </Link>
+              <CookiePreferencesButton />
               <a href={CONTACT_MAILTO} className="l-nav-link">
                 Contacto
               </a>
