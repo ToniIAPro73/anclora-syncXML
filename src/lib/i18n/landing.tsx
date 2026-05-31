@@ -44,6 +44,7 @@ export type LandingCopy = {
     cookieButton: string;
     close: string;
   };
+  langToggle: { eyebrow: string; title: string; save: string };
   nav: { product: string; how: string; audience: string; access: string; security: string };
   navMenu: {
     groups: { product: string; process: string; pilot: string; trust: string; resources: string };
@@ -193,6 +194,7 @@ const dictionaries: Record<LandingLocale, LandingCopy> = {
       cookieButton: "Abrir preferencias de cookies",
       close: "Cerrar",
     },
+    langToggle: { eyebrow: "Ajustes", title: "Idioma", save: "Guardar y cerrar" },
     nav: { product: "Producto", how: "Cómo funciona", audience: "Para quién es", access: "Acceso piloto", security: "Seguridad y límites" },
     navMenu: {
       groups: { product: "Producto", process: "Proceso", pilot: "Piloto", trust: "Confianza", resources: "Recursos" },
@@ -484,6 +486,7 @@ const dictionaries: Record<LandingLocale, LandingCopy> = {
       cookieButton: "Open cookie preferences",
       close: "Close",
     },
+    langToggle: { eyebrow: "Settings", title: "Language", save: "Save and close" },
     nav: { product: "Product", how: "How it works", audience: "Who it is for", access: "Pilot access", security: "Security and limits" },
     navMenu: {
       groups: { product: "Product", process: "Process", pilot: "Pilot", trust: "Trust", resources: "Resources" },
@@ -775,6 +778,7 @@ const dictionaries: Record<LandingLocale, LandingCopy> = {
       cookieButton: "Cookie-Einstellungen öffnen",
       close: "Schließen",
     },
+    langToggle: { eyebrow: "Einstellungen", title: "Sprache", save: "Speichern und schließen" },
     nav: { product: "Produkt", how: "So funktioniert es", audience: "Für wen", access: "Pilotzugang", security: "Sicherheit und Grenzen" },
     navMenu: {
       groups: { product: "Produkt", process: "Ablauf", pilot: "Pilot", trust: "Vertrauen", resources: "Ressourcen" },

@@ -1248,11 +1248,11 @@ footer[id] {
   gap: 0.45rem;
   border: 1px solid var(--l-border-strong);
   border-radius: 999px;
-  background: color-mix(in srgb, var(--l-surface) 78%, transparent);
+  background: var(--l-surface);
   color: var(--l-fg);
-  padding: 0 0.8rem;
+  padding: 0 0.9rem;
   font-size: 0.82rem;
-  font-weight: 800;
+  font-weight: 700;
   white-space: nowrap;
 }
 
@@ -1260,38 +1260,89 @@ footer[id] {
   color: var(--l-gold);
 }
 
+.l-language-caret {
+  color: var(--l-muted);
+  transition: transform 160ms ease;
+}
+
+.l-language-caret[data-open="true"] {
+  transform: rotate(180deg);
+}
+
+/* Language dialog popover — vault contract: trigger + popover + option list + save. */
 .l-language-popover {
   position: absolute;
   right: 0;
   top: calc(100% + 0.5rem);
   z-index: 80;
-  width: min(13rem, calc(100vw - 2rem));
+  width: min(20rem, calc(100vw - 2rem));
   border: 1px solid var(--l-border-strong);
-  border-radius: 0.7rem;
+  border-radius: 1rem;
   /* Opaque elevated surface — popovers must stay legible (no bleed-through). */
   background: linear-gradient(180deg, var(--l-surface-2), var(--l-bg-2));
-  padding: 0.35rem;
-  box-shadow: 0 20px 55px rgba(0, 0, 0, 0.55);
+  padding: 0.85rem;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(18px);
   animation: l-pop 160ms ease;
 }
 
-.l-language-option {
+.l-language-head {
   display: flex;
-  width: 100%;
-  align-items: center;
-  gap: 0.65rem;
-  border-radius: 0.5rem;
-  padding: 0.65rem 0.7rem;
-  color: var(--l-muted);
-  font-size: 0.9rem;
-  text-align: left;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
 }
 
-.l-language-option:hover,
-.l-language-option.is-active {
-  background: color-mix(in srgb, var(--l-gold) 12%, transparent);
+.l-language-eyebrow {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--l-gold) 85%, white 0%);
+}
+
+.l-language-title {
+  font-size: 0.95rem;
+  font-weight: 700;
   color: var(--l-fg);
+  margin-top: 0.1rem;
+}
+
+.l-language-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  padding: 0.35rem;
+  color: var(--l-muted);
+  transition: color 140ms ease, background 140ms ease;
+}
+
+.l-language-close:hover {
+  color: var(--l-fg);
+  background: var(--l-surface-2);
+}
+
+.l-language-select {
+  width: 100%;
+  border: 1px solid var(--l-border-strong);
+  border-radius: 0.7rem;
+  background: var(--l-bg-2);
+  color: var(--l-fg);
+  padding: 0.65rem 0.8rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.l-language-select:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--l-gold) 60%, transparent);
+  outline-offset: 1px;
+}
+
+.l-language-save {
+  width: 100%;
+  margin-top: 0.75rem;
 }
 
 .l-hero-logo {
@@ -1446,6 +1497,7 @@ footer[id] {
   .l-cookie-actions .l-btn { flex: 0 0 auto; }
 }
 
+/* Icon-only circular button (no "Cookies" label, matching the other apps). */
 .l-floating-cookie {
   position: fixed;
   left: max(0.75rem, env(safe-area-inset-left));
@@ -1453,15 +1505,13 @@ footer[id] {
   z-index: 80;
   display: inline-flex;
   align-items: center;
-  gap: 0.45rem;
-  min-height: 2.55rem;
+  justify-content: center;
+  height: 2.55rem;
+  width: 2.55rem;
   border: 1px solid color-mix(in srgb, var(--l-gold) 44%, transparent);
   border-radius: 999px;
   background: color-mix(in srgb, var(--l-bg) 82%, transparent);
   color: var(--l-gold);
-  padding: 0 0.9rem;
-  font-size: 0.82rem;
-  font-weight: 800;
   box-shadow: 0 14px 40px rgba(0, 0, 0, 0.34);
   backdrop-filter: blur(14px);
 }
@@ -1507,9 +1557,8 @@ footer[id] {
 @media (max-width: 640px) {
   .l-floating-cookie {
     bottom: calc(4.75rem + env(safe-area-inset-bottom));
-    min-height: 2.25rem;
-    padding: 0 0.7rem;
-    font-size: 0.76rem;
+    height: 2.25rem;
+    width: 2.25rem;
   }
 
   .l-section-nav {
