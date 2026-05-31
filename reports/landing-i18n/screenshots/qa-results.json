@@ -1,0 +1,134 @@
+[
+  {
+    "locale": "es",
+    "viewport": "375",
+    "lang": "es",
+    "title": "De Excel a XML revisable, sin fricción.",
+    "hasToggle": true,
+    "hasCookieButton": true,
+    "hasSectionNav": true,
+    "toggleFits": true,
+    "horizontalOverflow": []
+  },
+  {
+    "locale": "es",
+    "viewport": "768",
+    "lang": "es",
+    "title": "De Excel a XML revisable, sin fricción.",
+    "hasToggle": true,
+    "hasCookieButton": true,
+    "hasSectionNav": true,
+    "toggleFits": true,
+    "horizontalOverflow": []
+  },
+  {
+    "locale": "es",
+    "viewport": "1024",
+    "lang": "es",
+    "title": "De Excel a XML revisable, sin fricción.",
+    "hasToggle": true,
+    "hasCookieButton": true,
+    "hasSectionNav": true,
+    "toggleFits": true,
+    "horizontalOverflow": []
+  },
+  {
+    "locale": "es",
+    "viewport": "1440",
+    "lang": "es",
+    "title": "De Excel a XML revisable, sin fricción.",
+    "hasToggle": true,
+    "hasCookieButton": true,
+    "hasSectionNav": true,
+    "toggleFits": true,
+    "horizontalOverflow": []
+  },
+  {
+    "locale": "en",
+    "viewport": "375",
+    "lang": "en",
+    "title": "From Excel to reviewable XML, without friction.",
+    "hasToggle": true,
+    "hasCookieButton": true,
+    "hasSectionNav": true,
+    "toggleFits": true,
+    "horizontalOverflow": []
+  },
+  {
+    "locale": "en",
+    "viewport": "768",
+    "lang": "en",
+    "title": "From Excel to reviewable XML, without friction.",
+    "hasToggle": true,
+    "hasCookieButton": true,
+    "hasSectionNav": true,
+    "toggleFits": true,
+    "horizontalOverflow": []
+  },
+  {
+    "locale": "en",
+    "viewport": "1024",
+    "lang": "en",
+    "title": "From Excel to reviewable XML, without friction.",
+    "hasToggle": true,
+    "hasCookieButton": true,
+    "hasSectionNav": true,
+    "toggleFits": true,
+    "horizontalOverflow": []
+  },
+  {
+    "locale": "en",
+    "viewport": "1440",
+    "lang": "en",
+    "title": "From Excel to reviewable XML, without friction.",
+    "hasToggle": true,
+    "hasCookieButton": true,
+    "hasSectionNav": true,
+    "toggleFits": true,
+    "horizontalOverflow": []
+  },
+  {
+    "locale": "de",
+    "viewport": "375",
+    "lang": "de",
+    "title": "Von Excel zu prüfbarem XML, ohne Reibung.",
+    "hasToggle": true,
+    "hasCookieButton": true,
+    "hasSectionNav": true,
+    "toggleFits": true,
+    "horizontalOverflow": []
+  },
+  {
+    "locale": "de",
+    "viewport": "768",
+    "lang": "de",
+    "title": "Von Excel zu prüfbarem XML, ohne Reibung.",
+    "hasToggle": true,
+    "hasCookieButton": true,
+    "hasSectionNav": true,
+    "toggleFits": true,
+    "horizontalOverflow": []
+  },
+  {
+    "locale": "de",
+    "viewport": "1024",
+    "lang": "de",
+    "title": "Von Excel zu prüfbarem XML, ohne Reibung.",
+    "hasToggle": true,
+    "hasCookieButton": true,
+    "hasSectionNav": true,
+    "toggleFits": true,
+    "horizontalOverflow": []
+  },
+  {
+    "locale": "de",
+    "viewport": "1440",
+    "lang": "de",
+    "title": "Von Excel zu prüfbarem XML, ohne Reibung.",
+    "hasToggle": true,
+    "hasCookieButton": true,
+    "hasSectionNav": true,
+    "toggleFits": true,
+    "horizontalOverflow": []
+  }
+]

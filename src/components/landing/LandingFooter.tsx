@@ -1,15 +1,17 @@
 import Link from "next/link";
+import { useLandingI18n } from "@/lib/i18n/landing";
 import { CookiePreferencesButton } from "./CookiePreferencesButton";
 import { CONTACT_MAILTO, PRIVACY_HREF, TERMS_HREF } from "./landingData";
 
-const SECTION_LINKS = [
-  { label: "Producto", href: "#producto" },
-  { label: "Cómo funciona", href: "#como-funciona" },
-  { label: "Acceso piloto", href: "#acceso-piloto" },
-  { label: "Seguridad y límites", href: "#seguridad" },
-];
-
 export function LandingFooter() {
+  const { copy } = useLandingI18n();
+  const sectionLinks = [
+    { label: copy.nav.product, href: "#producto" },
+    { label: copy.nav.how, href: "#como-funciona" },
+    { label: copy.nav.access, href: "#acceso-piloto" },
+    { label: copy.nav.security, href: "#seguridad" },
+  ];
+
   return (
     <footer id="legal-footer" className="border-t border-[color:var(--l-border)]">
       <div className="l-container py-12">
@@ -18,7 +20,7 @@ export function LandingFooter() {
             <div className="flex items-center gap-2.5">
               <img
                 src="/brand/logo-anclora-syncxml.png"
-                alt="Logotipo de Anclora SyncXML"
+                alt={copy.aria.logoAlt}
                 width={34}
                 height={34}
                 className="h-8 w-8 rounded-full"
@@ -28,31 +30,30 @@ export function LandingFooter() {
               </span>
             </div>
             <p className="l-text mt-4 text-sm">
-              Capa ligera para revisar datos de huéspedes desde Excel/XLSX y
-              preparar un XML revisable orientado al flujo SES.HOSPEDAJES.
+              {copy.footer.description}
             </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-8 sm:gap-12">
-            <nav aria-label="Secciones del producto" className="flex flex-col gap-3">
-              <span className="l-eyebrow">Producto</span>
-              {SECTION_LINKS.map((link) => (
+          <div className="grid grid-cols-1 gap-8 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+            <nav aria-label={copy.aria.sections} className="flex flex-col gap-3">
+              <span className="l-eyebrow">{copy.footer.productLabel}</span>
+              {sectionLinks.map((link) => (
                 <a key={link.href} href={link.href} className="l-nav-link">
                   {link.label}
                 </a>
               ))}
             </nav>
 
-            <nav aria-label="Recursos y contacto" className="flex flex-col items-start gap-3">
-              <span className="l-eyebrow">Legal</span>
+            <nav aria-label={copy.footer.legalLabel} className="flex min-w-0 flex-col items-start gap-3">
+              <span className="l-eyebrow">{copy.footer.legalLabel}</span>
               <Link href="/legal" className="l-nav-link">
-                Aviso legal
+                {copy.common.legal}
               </Link>
               <Link href={PRIVACY_HREF} className="l-nav-link">
-                Política de privacidad
+                {copy.trust.privacyCta}
               </Link>
               <Link href={TERMS_HREF} className="l-nav-link">
-                Términos del servicio
+                {copy.trust.termsCta}
               </Link>
               <CookiePreferencesButton />
               <a href={CONTACT_MAILTO} className="l-nav-link">
@@ -63,22 +64,16 @@ export function LandingFooter() {
         </div>
 
         <p className="l-text mt-8 text-xs">
-          Esta página está disponible en español. La aplicación está disponible
-          en español, català, English, Deutsch, Français, Italiano y Português.
+          {copy.footer.languageNote}
         </p>
 
         <hr className="l-divider my-8" />
 
         <p className="l-text text-xs leading-relaxed">
-          Anclora SyncXML está en fase pre-MVP / validación controlada. Ayuda a
-          revisar datos y preparar XML revisable, pero no constituye asesoramiento
-          legal, no garantiza cumplimiento normativo y no acredita integración
-          oficial con SES.HOSPEDAJES. El uso con datos reales requiere cerrar
-          previamente seguridad, RGPD, DPA, retención y validación técnica.
+          {copy.footer.disclaimer}
         </p>
         <p className="l-text mt-2 text-xs">
-          © 2026 Anclora Group — Todos los derechos reservados.
-          Anclora SyncXML forma parte del ecosistema operativo de Anclora Group.
+          {copy.footer.copyright}
         </p>
       </div>
     </footer>

@@ -2,6 +2,7 @@
 
 import { ProductClassification } from "./ProductClassification";
 import { usePreferences } from "./AppPreferencesProvider";
+import { LandingLocaleProvider, useLandingI18n } from "@/lib/i18n/landing";
 
 const content = {
   privacy: {
@@ -193,9 +194,17 @@ const content = {
 } as const;
 
 export function LegalPage({ type }: { type: "privacy" | "terms" }) {
+  return (
+    <LandingLocaleProvider>
+      <LegalPageInner type={type} />
+    </LandingLocaleProvider>
+  );
+}
+
+function LegalPageInner({ type }: { type: "privacy" | "terms" }) {
   const { language } = usePreferences();
-  const lang = (language in content[type] ? language : "en") as keyof typeof content[typeof type];
-  const page = content[type][lang];
+  const { copy } = useLandingI18n();
+  const page = copy.legal[type] ?? content[type][language as keyof typeof content[typeof type]] ?? content[type].es;
   return (
     <div className="space-y-6">
       <section className="panel p-6">

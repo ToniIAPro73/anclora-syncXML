@@ -14,6 +14,7 @@ import {
   type CookieConsent as Consent,
 } from "@/lib/cookies/consent";
 import { PRIVACY_HREF } from "./landingData";
+import { useLandingI18n } from "@/lib/i18n/landing";
 
 /**
  * Cookie consent banner + preferences panel (COOKIES_CONSENT_CONTRACT).
@@ -26,6 +27,7 @@ import { PRIVACY_HREF } from "./landingData";
  * - Only real categories are shown (necessary, preferences, analytics).
  */
 export function CookieConsent() {
+  const { copy } = useLandingI18n();
   const [mounted, setMounted] = useState(false);
   const [bannerOpen, setBannerOpen] = useState(false);
   const [panelOpen, setPanelOpen] = useState(false);
@@ -78,28 +80,26 @@ export function CookieConsent() {
   return (
     <>
       {bannerOpen && !panelOpen ? (
-        <div className="l-cookie-banner" role="dialog" aria-label="Aviso de cookies" aria-live="polite">
+        <div className="l-cookie-banner" role="dialog" aria-label={copy.cookies.bannerLabel} aria-live="polite">
           <div className="l-cookie-banner-inner">
             <div className="flex items-start gap-3">
               <span className="l-icon-tile hidden shrink-0 sm:inline-flex" aria-hidden="true">
                 <Cookie className="h-5 w-5" />
               </span>
               <p className="l-text text-sm">
-                Usamos cookies necesarias para el funcionamiento del sitio y, con
-                tu permiso, cookies de preferencias y analítica para mejorar la
-                experiencia. Consulta la{" "}
-                <Link href={PRIVACY_HREF} className="l-gold">política de privacidad</Link>.
+                {copy.cookies.bannerText}{" "}
+                <Link href={PRIVACY_HREF} className="l-gold">{copy.cookies.privacyLink}</Link>.
               </p>
             </div>
             <div className="l-cookie-actions">
               <button type="button" className="l-btn l-btn-ghost" onClick={() => setPanelOpen(true)}>
-                Configurar
+                {copy.cookies.configure}
               </button>
               <button type="button" className="l-btn l-btn-secondary" onClick={onRejectOptional}>
-                Rechazar opcionales
+                {copy.cookies.reject}
               </button>
               <button type="button" className="l-btn l-btn-primary" onClick={onAcceptAll}>
-                Aceptar todas
+                {copy.cookies.accept}
               </button>
             </div>
           </div>
@@ -120,29 +120,32 @@ export function CookieConsent() {
                 <span className="l-icon-tile" aria-hidden="true">
                   <Cookie className="h-5 w-5" />
                 </span>
-                <h2 id="cookie-panel-title" className="l-h3">Preferencias de cookies</h2>
+                <h2 id="cookie-panel-title" className="l-h3">{copy.cookies.panelTitle}</h2>
               </div>
-              <button ref={closeRef} type="button" className="l-modal-close" onClick={() => setPanelOpen(false)} aria-label="Cerrar">
+              <button ref={closeRef} type="button" className="l-modal-close" onClick={() => setPanelOpen(false)} aria-label={copy.aria.close}>
                 <X className="h-5 w-5" aria-hidden="true" />
               </button>
             </div>
 
             <div className="mt-5 flex flex-col gap-3">
               <CategoryRow
-                title="Necesarias"
-                description="Imprescindibles para la sesión, la seguridad y el funcionamiento básico. No pueden desactivarse."
+                title={copy.cookies.necessary}
+                description={copy.cookies.necessaryDesc}
+                alwaysOnLabel={copy.cookies.alwaysOn}
                 checked
                 locked
               />
               <CategoryRow
-                title="Preferencias"
-                description="Recuerdan tu tema e idioma entre sesiones. Si las desactivas, deberás reconfigurarlos."
+                title={copy.cookies.preferences}
+                description={copy.cookies.preferencesDesc}
+                alwaysOnLabel={copy.cookies.alwaysOn}
                 checked={draft.preferences}
                 onChange={(value) => setDraft((d) => ({ ...d, preferences: value }))}
               />
               <CategoryRow
-                title="Analítica"
-                description="Nos ayudan a entender el uso del sitio de forma agregada. No se activa ninguna herramienta sin tu consentimiento."
+                title={copy.cookies.analytics}
+                description={copy.cookies.analyticsDesc}
+                alwaysOnLabel={copy.cookies.alwaysOn}
                 checked={draft.analytics}
                 onChange={(value) => setDraft((d) => ({ ...d, analytics: value }))}
               />
@@ -150,14 +153,14 @@ export function CookieConsent() {
 
             <div className="mt-7 flex flex-col gap-2.5 sm:flex-row-reverse sm:items-center sm:justify-between">
               <button type="button" className="l-btn l-btn-primary w-full sm:w-auto" onClick={onSavePanel}>
-                Guardar preferencias
+                {copy.cookies.save}
               </button>
               <div className="flex flex-col gap-2.5 sm:flex-row">
                 <button type="button" className="l-btn l-btn-secondary w-full sm:w-auto" onClick={onRejectOptional}>
-                  Rechazar opcionales
+                  {copy.cookies.reject}
                 </button>
                 <button type="button" className="l-btn l-btn-ghost w-full sm:w-auto" onClick={onAcceptAll}>
-                  Aceptar todas
+                  {copy.cookies.accept}
                 </button>
               </div>
             </div>
@@ -174,12 +177,14 @@ function CategoryRow({
   checked,
   onChange,
   locked = false,
+  alwaysOnLabel,
 }: {
   title: string;
   description: string;
   checked: boolean;
   onChange?: (value: boolean) => void;
   locked?: boolean;
+  alwaysOnLabel: string;
 }) {
   return (
     <div className="l-card flex items-start justify-between gap-4 p-4">
@@ -188,7 +193,7 @@ function CategoryRow({
         <p className="l-text mt-1 text-sm">{description}</p>
       </div>
       {locked ? (
-        <span className="l-badge shrink-0" aria-label="Siempre activas">Siempre activas</span>
+        <span className="l-badge shrink-0" aria-label={alwaysOnLabel}>{alwaysOnLabel}</span>
       ) : (
         <label className="l-switch shrink-0">
           <input

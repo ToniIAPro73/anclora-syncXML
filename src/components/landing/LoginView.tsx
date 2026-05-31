@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, ShieldCheck } from "lucide-react";
 import { AncloraAuthCard } from "@/components/auth/AncloraAuthCard";
+import { useLandingI18n } from "@/lib/i18n/landing";
 import { track } from "./analytics";
 import { APP_HREF, PILOT_HREF } from "./landingData";
 
@@ -20,6 +21,7 @@ type Phase = "checking" | "form" | "authenticated";
  * (fail-closed) so no parallel auth system is introduced.
  */
 export function LoginView() {
+  const { copy } = useLandingI18n();
   const router = useRouter();
   const [phase, setPhase] = useState<Phase>("checking");
   const [email, setEmail] = useState("");
@@ -57,21 +59,21 @@ export function LoginView() {
           setError(
             response.status === 503
               ? process.env.NODE_ENV === "development"
-                ? "Configura SYNCXML_ADMIN_PASSWORD y SESSION_SECRET para probar el login, o usa SYNCXML_LOCAL_DEMO=true para demo local sin datos reales."
-                : "La configuración de acceso no está disponible. Contacta con el administrador."
-              : "Acceso no aprobado o credenciales no válidas.",
+                ? copy.login.configErrorDev
+                : copy.login.configError
+              : copy.login.invalid,
           );
           return;
         }
         track("login_success");
         router.push(APP_HREF);
       } catch {
-        setError("No se pudo completar la acción. Inténtalo de nuevo.");
+      setError(copy.login.actionError);
       } finally {
         setBusy(false);
       }
     },
-    [email, password, router],
+    [copy.login.configErrorDev, copy.login.configError, copy.login.invalid, copy.login.actionError, email, password, router],
   );
 
   const logout = useCallback(async () => {
@@ -83,11 +85,11 @@ export function LoginView() {
       setPhase("form");
       track("logout_success");
     } catch {
-      setError("No se pudo cerrar la sesión. Inténtalo de nuevo.");
+      setError(copy.login.actionError);
     } finally {
       setLogoutBusy(false);
     }
-  }, []);
+  }, [copy.login.actionError]);
 
   return (
     <main className="auth-screen-bg flex min-h-[100svh] flex-col items-center justify-center px-4 py-4">
@@ -95,22 +97,22 @@ export function LoginView() {
         <Link
           href="/"
           className="mb-4 inline-flex items-center gap-2 rounded-full px-1 text-sm font-bold text-muted hover:text-premium"
-          aria-label="Volver a la landing"
+          aria-label={copy.login.backAria}
         >
           <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-          Volver a la landing
+          {copy.form.back}
         </Link>
 
         <AncloraAuthCard
           mode={phase === "authenticated" ? "authenticated" : "login"}
-          title="Iniciar sesión"
-          badge="PILOTO CONTROLADO"
-          description="Acceso reservado a participantes aprobados del piloto controlado. Iniciar sesión no concede acceso por sí mismo: la participación se revisa manualmente antes de habilitar la aplicación."
+          title={copy.login.title}
+          badge={copy.login.badge}
+          description={copy.login.description}
           footer={
             <p>
-              Al acceder aceptas los{" "}
-              <Link href="/terms">Términos</Link> y la{" "}
-              <Link href="/privacy">Política de Privacidad</Link>.
+              {copy.login.footerPrefix}{" "}
+              <Link href="/terms">{copy.common.terms}</Link> {copy.login.footerMiddle}{" "}
+              <Link href="/privacy">{copy.trust.privacyCta}</Link>.
             </p>
           }
         >
@@ -118,14 +120,14 @@ export function LoginView() {
             <div className="flex flex-col gap-3">
               <div className="auth-card-status" role="status">
                 <ShieldCheck className="h-5 w-5" aria-hidden="true" />
-                <p>Tu sesión está activa.</p>
+                <p>{copy.login.active}</p>
               </div>
               <Link
                 href={APP_HREF}
                 className="btn-primary auth-card-action"
                 data-track="click_continue_to_app"
               >
-                Continuar a la aplicación
+                {copy.login.continue}
                 <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </Link>
               <button
@@ -134,16 +136,16 @@ export function LoginView() {
                 onClick={logout}
                 disabled={logoutBusy}
               >
-                {logoutBusy ? "Cerrando sesión…" : "Cerrar sesión"}
+                {logoutBusy ? copy.login.loggingOut : copy.login.logout}
               </button>
               <Link className="auth-card-note text-center font-bold" href="/">
-                Volver a la landing
+                {copy.form.back}
               </Link>
             </div>
           ) : (
             <form className="flex flex-col gap-3" onSubmit={login}>
               <label className="auth-card-field-label">
-                Email autorizado
+                {copy.login.email}
                 <input
                   className="input"
                   type="email"
@@ -156,7 +158,7 @@ export function LoginView() {
                 />
               </label>
               <label className="auth-card-field-label">
-                Contraseña temporal
+                {copy.login.password}
                 <input
                   className="input"
                   type="password"
@@ -168,8 +170,7 @@ export function LoginView() {
                   aria-required="true"
                 />
                 <span className="auth-card-help">
-                  Recibirás credenciales individuales por correo si tu solicitud
-                  queda aprobada para el piloto controlado.
+                  {copy.login.credentialHelp}
                 </span>
               </label>
               {error ? (
@@ -182,25 +183,24 @@ export function LoginView() {
                 className="btn-primary auth-card-action"
                 disabled={busy || phase === "checking" || !email || !password}
               >
-                {busy ? "Comprobando…" : "Entrar a la aplicación"}
+                {busy ? copy.login.checking : copy.login.enter}
               </button>
             </form>
           )}
 
           <div className="auth-card-pilot-box">
             <p className="text-sm font-bold text-premium">
-              ¿Todavía no participas en el piloto?
+              {copy.login.notPilot}
             </p>
             <Link
               href={PILOT_HREF}
               className="btn-secondary auth-card-action mt-3"
               data-track="click_solicitar_piloto_controlado"
             >
-              Solicitar piloto controlado
+              {copy.common.pilotCta}
             </Link>
             <p className="auth-card-note mt-3">
-              No subas datos reales de huéspedes. La validación se realiza con
-              datos sintéticos o anonimizados.
+              {copy.login.pilotNote}
             </p>
           </div>
         </AncloraAuthCard>
