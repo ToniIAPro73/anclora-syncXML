@@ -23,8 +23,10 @@ export function getRuntimeConfigError() {
   if (process.env.NODE_ENV !== "production") return null;
   if (envFlag("SYNCXML_DISABLE_AUTH")) return "SYNCXML_DISABLE_AUTH is not allowed in production";
   const missing: string[] = [];
-  if (!process.env.SYNCXML_ADMIN_PASSWORD) missing.push("SYNCXML_ADMIN_PASSWORD");
   if (!getSessionSecret()) missing.push("SESSION_SECRET");
+  if (!process.env.SYNCXML_ADMIN_PASSWORD && !process.env.DATABASE_URL && !process.env.DIRECT_URL) {
+    missing.push("SYNCXML_ADMIN_PASSWORD or DATABASE_URL");
+  }
   if (persistentStorageEnabled()) {
     if (!process.env.DATABASE_URL && !process.env.DIRECT_URL) missing.push("DATABASE_URL");
     if (!process.env.SYNCXML_ENCRYPTION_KEY && !process.env.SYNCXML_FILE_ENCRYPTION_KEY) missing.push("SYNCXML_ENCRYPTION_KEY");
@@ -40,5 +42,6 @@ export function validateRuntimeConfig() {
 export function canUsePasswordAuth() {
   if (authDisabled()) return true;
   if (process.env.SYNCXML_ADMIN_PASSWORD && getSessionSecret()) return true;
+  if ((process.env.DATABASE_URL || process.env.DIRECT_URL) && getSessionSecret()) return true;
   return isExplicitLocalDemoMode();
 }

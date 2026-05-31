@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
-import { HERO_FLOW, LOGIN_HREF, PILOT_HREF } from "./landingData";
+import { HERO_FLOW, PILOT_HREF } from "./landingData";
 
 export function HeroSection() {
   return (
-    <section className="l-hero relative overflow-hidden">
+    <section id="hero" className="l-hero relative overflow-hidden">
       <div className="l-container grid w-full items-center gap-12 py-12 md:py-14 lg:grid-cols-[0.95fr_1.05fr] lg:py-10">
         <div className="max-w-2xl">
           <span className="l-eyebrow">
@@ -17,8 +17,9 @@ export function HeroSection() {
           </h1>
 
           <p className="l-lead mt-5 max-w-lg">
-            Revisa datos de huéspedes, detecta errores y prepara un XML de
-            trabajo para SES.HOSPEDAJES desde tu Excel.
+            Valida el flujo Excel/XLSX → revisión → XML con datos sintéticos o
+            anonimizados. Sin envío automático a SES.HOSPEDAJES ni promesa de
+            cumplimiento legal definitivo.
           </p>
 
           <div className="mt-6 flex flex-wrap items-center gap-3">
@@ -31,20 +32,12 @@ export function HeroSection() {
               <ChevronRight className="h-4 w-4" aria-hidden="true" />
             </Link>
             <a
-              href="#como-funciona"
+              href="#acceso-piloto"
               className="l-btn l-btn-secondary"
-              data-track="click_ver_como_funciona"
+              data-track="click_lista_espera"
             >
-              Ver cómo funciona
+              Unirme a la lista de espera
             </a>
-            <Link
-              href={LOGIN_HREF}
-              className="l-applink"
-              data-track="click_iniciar_sesion"
-            >
-              Iniciar sesión
-              <ChevronRight className="h-4 w-4" aria-hidden="true" />
-            </Link>
           </div>
 
           <p className="l-text mt-4 max-w-lg text-xs">

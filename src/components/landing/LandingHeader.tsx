@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Menu } from "lucide-react";
-import { LOGIN_HREF, NAV_LINKS, PILOT_HREF } from "./landingData";
+import { NAV_LINKS, PILOT_HREF } from "./landingData";
 
 export function LandingHeader() {
   return (
@@ -28,13 +28,6 @@ export function LandingHeader() {
         </nav>
 
         <div className="hidden items-center gap-3 lg:flex">
-          <Link
-            href={LOGIN_HREF}
-            className="l-applink"
-            data-track="click_iniciar_sesion"
-          >
-            Iniciar sesión
-          </Link>
           <Link
             href={PILOT_HREF}
             className="l-btn l-btn-primary"
@@ -72,13 +65,6 @@ export function LandingHeader() {
                 data-track="click_solicitar_piloto_controlado"
               >
                 Solicitar piloto controlado
-              </Link>
-              <Link
-                href={LOGIN_HREF}
-                className="l-btn l-btn-ghost w-full"
-                data-track="click_iniciar_sesion"
-              >
-                Iniciar sesión
               </Link>
             </div>
           </div>

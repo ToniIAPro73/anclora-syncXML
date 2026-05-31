@@ -22,6 +22,7 @@ type Phase = "checking" | "form" | "authenticated";
 export function LoginView() {
   const router = useRouter();
   const [phase, setPhase] = useState<Phase>("checking");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [logoutBusy, setLogoutBusy] = useState(false);
@@ -50,7 +51,7 @@ export function LoginView() {
         const response = await fetch("/api/auth/login", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ password }),
+          body: JSON.stringify({ email, password }),
         });
         if (!response.ok) {
           setError(
@@ -70,7 +71,7 @@ export function LoginView() {
         setBusy(false);
       }
     },
-    [password, router],
+    [email, password, router],
   );
 
   const logout = useCallback(async () => {
@@ -142,7 +143,20 @@ export function LoginView() {
           ) : (
             <form className="flex flex-col gap-3" onSubmit={login}>
               <label className="auth-card-field-label">
-                Clave de acceso al piloto
+                Email autorizado
+                <input
+                  className="input"
+                  type="email"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  placeholder="tu@email.com"
+                  autoComplete="email"
+                  disabled={phase === "checking"}
+                  aria-required="true"
+                />
+              </label>
+              <label className="auth-card-field-label">
+                Contraseña temporal
                 <input
                   className="input"
                   type="password"
@@ -154,9 +168,8 @@ export function LoginView() {
                   aria-required="true"
                 />
                 <span className="auth-card-help">
-                  Recibirás la clave de acceso al piloto por correo una vez
-                  aprobada tu solicitud. Es una clave compartida del piloto, no
-                  una cuenta personal.
+                  Recibirás credenciales individuales por correo si tu solicitud
+                  queda aprobada para el piloto controlado.
                 </span>
               </label>
               {error ? (
@@ -167,7 +180,7 @@ export function LoginView() {
               <button
                 type="submit"
                 className="btn-primary auth-card-action"
-                disabled={busy || phase === "checking" || !password}
+                disabled={busy || phase === "checking" || !email || !password}
               >
                 {busy ? "Comprobando…" : "Entrar a la aplicación"}
               </button>

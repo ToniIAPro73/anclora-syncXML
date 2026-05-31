@@ -18,13 +18,14 @@ import { PILOT_EMAIL, PRIVACY_HREF, TERMS_HREF } from "./landingData";
 type Field = { name: string; label: string; type?: "text" | "email"; required?: boolean; placeholder?: string };
 
 const IDENTITY: Field[] = [
-  { name: "nombre", label: "Nombre", required: true },
-  { name: "apellidos", label: "Apellidos", required: true },
+  { name: "name", label: "Nombre y apellidos", required: true },
   { name: "email", label: "Email principal", type: "email", required: true },
-  { name: "alojamiento", label: "Tipo de alojamiento", placeholder: "Vivienda turística, pensión, gestor…" },
+  { name: "companyName", label: "Empresa o alojamiento", placeholder: "Opcional" },
+  { name: "role", label: "Rol", placeholder: "Propietario, gestor, recepción…" },
 ];
 
-const ACCOMMODATION_OPTIONS = ["1–2 inmuebles", "3–10 inmuebles", "11–30 inmuebles", "Más de 30"];
+const ACCOMMODATION_OPTIONS = ["Vivienda turística", "Pequeño hotel", "Pensión / hostal", "Gestor de alojamientos", "Otro"];
+const PROPERTY_OPTIONS = ["1–2 inmuebles", "3–10 inmuebles", "11–30 inmuebles", "Más de 30"];
 const RESERVAS_OPTIONS = ["Menos de 10", "10–30", "31–80", "Más de 80"];
 const PAY_OPTIONS = ["Sí, me interesa", "Quizá, según resultado", "Aún no lo sé", "No por ahora"];
 const MODEL_OPTIONS = ["Pago único", "Cuota mensual", "Setup + mensual", "Por reserva", "Servicio a medida"];
@@ -32,6 +33,7 @@ const MODEL_OPTIONS = ["Pago único", "Cuota mensual", "Setup + mensual", "Por r
 export function PilotRequestForm() {
   const [values, setValues] = useState<Record<string, string>>({});
   const [excelUse, setExcelUse] = useState("");
+  const [alojamiento, setAlojamiento] = useState("");
   const [reservas, setReservas] = useState("");
   const [inmuebles, setInmuebles] = useState("");
   const [pay, setPay] = useState("");
@@ -41,8 +43,8 @@ export function PilotRequestForm() {
   const [tiempo, setTiempo] = useState("");
   const [presupuesto, setPresupuesto] = useState("");
   const [mensaje, setMensaje] = useState("");
-  const [muestraSintetica, setMuestraSintetica] = useState(false);
-  const [privacy, setPrivacy] = useState(false);
+  const [acceptsSyntheticOrAnonymizedData, setAcceptsSyntheticOrAnonymizedData] = useState(false);
+  const [acceptsPilotConditions, setAcceptsPilotConditions] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -52,8 +54,27 @@ export function PilotRequestForm() {
   }
 
   const canSubmit = useMemo(
-    () => Boolean(values.nombre && values.apellidos && values.email && privacy),
-    [values.nombre, values.apellidos, values.email, privacy],
+    () =>
+      Boolean(
+        values.name &&
+          values.email &&
+          alojamiento &&
+          reservas &&
+          problema &&
+          alternativa &&
+          acceptsSyntheticOrAnonymizedData &&
+          acceptsPilotConditions,
+      ),
+    [
+      acceptsPilotConditions,
+      acceptsSyntheticOrAnonymizedData,
+      alojamiento,
+      alternativa,
+      problema,
+      reservas,
+      values.email,
+      values.name,
+    ],
   );
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -68,18 +89,27 @@ export function PilotRequestForm() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           ...values,
+          accommodationType: alojamiento,
+          estimatedMonthlyReservations: reservas,
+          currentWorkflow: alternativa || excelUse,
+          mainPain: problema,
+          wantsToValidate: tiempo || mensaje,
+          acceptsSyntheticOrAnonymizedData,
+          acceptsPilotConditions,
+          locale: "es",
+          source: "syncxml_landing",
           inmuebles,
           reservas,
           excelUse,
           problema,
           alternativa,
           tiempo,
-          muestraSintetica,
+          muestraSintetica: acceptsSyntheticOrAnonymizedData,
           pay,
           model,
           presupuesto,
           mensaje,
-          privacy,
+          privacy: acceptsPilotConditions,
         }),
       });
       if (!response.ok) {
@@ -153,16 +183,17 @@ export function PilotRequestForm() {
       <fieldset className="mt-7 border-0 p-0">
         <legend className="l-eyebrow">Tu operativa</legend>
         <div className="mt-4 grid gap-5 sm:grid-cols-2">
-          <Choice label="Nº de inmuebles" options={ACCOMMODATION_OPTIONS} value={inmuebles} onChange={setInmuebles} name="inmuebles" />
+          <Choice label="Tipo de alojamiento" options={ACCOMMODATION_OPTIONS} value={alojamiento} onChange={setAlojamiento} name="alojamiento" />
+          <Choice label="Nº de inmuebles" options={PROPERTY_OPTIONS} value={inmuebles} onChange={setInmuebles} name="inmuebles" />
           <Choice label="Reservas al mes (aprox.)" options={RESERVAS_OPTIONS} value={reservas} onChange={setReservas} name="reservas" />
         </div>
         <div className="mt-4 grid gap-4">
           <Choice label="¿Trabajas con Excel/XLSX?" options={["Sí", "A veces", "No"]} value={excelUse} onChange={setExcelUse} name="excel" inline />
           <Text label="Principal problema operativo" value={problema} onChange={setProblema} placeholder="¿Qué te cuesta más al revisar datos de huéspedes?" />
-          <Text label="Alternativa actual" value={alternativa} onChange={setAlternativa} placeholder="PMS, hoja de cálculo, gestoría, manual…" />
-          <Text label="¿Cuánto tiempo te lleva hoy? (por reserva o por semana)" value={tiempo} onChange={setTiempo} />
+          <Text label="Flujo actual" value={alternativa} onChange={setAlternativa} placeholder="Excel, PMS, hoja de cálculo, gestoría, manual…" />
+          <Text label="Qué quieres validar en el piloto" value={tiempo} onChange={setTiempo} />
           <label className="flex items-start gap-3">
-            <input type="checkbox" className="mt-1" checked={muestraSintetica} onChange={(event) => setMuestraSintetica(event.target.checked)} />
+            <input type="checkbox" className="mt-1" checked={acceptsSyntheticOrAnonymizedData} onChange={(event) => setAcceptsSyntheticOrAnonymizedData(event.target.checked)} />
             <span className="l-text text-sm">Puedo aportar una muestra sintética o anonimizada (sin datos reales de huéspedes).</span>
           </label>
         </div>
@@ -179,12 +210,14 @@ export function PilotRequestForm() {
       </fieldset>
 
       <label className="mt-6 flex items-start gap-3">
-        <input type="checkbox" className="mt-1" checked={privacy} onChange={(event) => setPrivacy(event.target.checked)} required aria-required />
+        <input type="checkbox" className="mt-1" checked={acceptsPilotConditions} onChange={(event) => setAcceptsPilotConditions(event.target.checked)} required aria-required />
         <span className="l-text text-sm">
           He leído y acepto la{" "}
           <Link href={PRIVACY_HREF} className="l-gold">privacidad</Link> y los{" "}
-          <Link href={TERMS_HREF} className="l-gold">términos</Link>. No incluiré
-          datos reales de huéspedes en esta solicitud. <span className="l-gold">*</span>
+          <Link href={TERMS_HREF} className="l-gold">términos</Link>. Entiendo
+          que el acceso es limitado, revocable y revisable; no subiré datos
+          reales de huéspedes ni usaré el piloto para envíos oficiales.
+          <span className="l-gold"> *</span>
         </span>
       </label>
 
