@@ -1,0 +1,37 @@
+<h2>Lógica de Validación con Hermes</h2>
+<p class="subtitle">Nexus invocando a Hermes para decidir el acceso</p>
+
+<div class="mockup">
+  <div class="mockup-header">Flujo de Decisión Automática</div>
+  <div class="mockup-body" style="background: #0f172a; color: #e2e8f0; padding: 20px; font-family: monospace; font-size: 13px;">
+    <div style="color: #94a3b8;">// 1. Entrada desde SyncXML</div>
+    <div style="margin-left: 10px;">Solicitud: { nombre: "Toni", email: "...", mensaje: "Tengo 50 apartamentos..." }</div>
+    
+    <div style="color: #94a3b8; margin-top: 15px;">// 2. Invocación a Hermes (Nexus -> Hermes)</div>
+    <div style="margin-left: 10px; color: #fbbf24;">Prompt: "Analiza si este lead es apto para el piloto..."</div>
+    <div style="margin-left: 10px; color: #fbbf24;">Model: deepseek/deepseek-chat (o similar Free en OpenRouter)</div>
+    
+    <div style="color: #94a3b8; margin-top: 15px;">// 3. Respuesta de Hermes</div>
+    <div style="margin-left: 10px;">{ "decision": "APPROVED", "reason": "Perfil profesional claro", "confidence": 0.95 }</div>
+    
+    <div style="color: #94a3b8; margin-top: 15px;">// 4. Acción automática</div>
+    <div style="margin-left: 10px; color: #34d399;">Nexus: Persiste -> Envía Email de Bienvenida -> Notifica a Slack/Admin</div>
+  </div>
+</div>
+
+<div class="options" style="margin-top:20px;">
+  <div class="option" data-choice="hermes-as-service" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Hermes como Microservicio</h3>
+      <p>Nexus llama a un endpoint de Hermes. Mantiene la lógica de IA aislada.</p>
+    </div>
+  </div>
+  <div class="option" data-choice="hermes-logic-in-nexus" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Lógica Hermes "portada" a Nexus</h3>
+      <p>Reutilizamos el patrón de Hermes (OpenRouter) directamente en un Service de Nexus. Más rápido de implementar, menos latencia.</p>
+    </div>
+  </div>
+</div>

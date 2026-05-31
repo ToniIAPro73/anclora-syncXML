@@ -1,0 +1,44 @@
+<h2>Arquitectura de Centralización</h2>
+<p class="subtitle">¿Dónde debe residir la lógica y los datos de las solicitudes?</p>
+
+<div class="options">
+  <div class="option" data-choice="nexus-central" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Centralizado en Nexus (Recomendado)</h3>
+      <p>SyncXML envía la solicitud a Nexus via API. Nexus gestiona validación, persistencia y envío de correos. SyncXML queda como cliente ligero.</p>
+      <div class="mockup" style="margin-top:10px; padding:10px; font-size:12px; background: rgba(0,0,0,0.2);">
+        SyncXML UI -> Nexus API -> DB (Nexus) -> Resend/Email
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="syncxml-local" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Local en SyncXML</h3>
+      <p>SyncXML gestiona su propia tabla de solicitudes. Mayor independencia pero duplica lógica de "leads" que ya existe en Nexus.</p>
+      <div class="mockup" style="margin-top:10px; padding:10px; font-size:12px; background: rgba(0,0,0,0.2);">
+        SyncXML UI -> SyncXML API -> DB (Local) -> Resend/Email
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="pros-cons" style="margin-top:20px;">
+  <div class="pros">
+    <h4>Ventajas Nexus</h4>
+    <ul>
+      <li>Visión 360º del usuario en el ecosistema Anclora.</li>
+      <li>Reutilización de validaciones IA y SLAs ya existentes.</li>
+      <li>Panel de administración único para todos los productos.</li>
+    </ul>
+  </div>
+  <div class="cons">
+    <h4>Desafíos</h4>
+    <ul>
+      <li>Requiere comunicación segura entre servicios.</li>
+      <li>Dependencia de Nexus para el flujo de alta.</li>
+    </ul>
+  </div>
+</div>
