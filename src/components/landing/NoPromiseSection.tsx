@@ -6,7 +6,7 @@ import { NO_PROMISE } from "./landingData";
 export function NoPromiseSection() {
   const { copy } = useLandingI18n();
   return (
-    <section className="l-section">
+    <section id="limites-mvp" className="l-section">
       <div className="l-container">
         <SectionHeading
           eyebrow={copy.noPromise.eyebrow}
