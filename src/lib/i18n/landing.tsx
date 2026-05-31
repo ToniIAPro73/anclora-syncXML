@@ -45,6 +45,25 @@ export type LandingCopy = {
     close: string;
   };
   nav: { product: string; how: string; audience: string; access: string; security: string };
+  navMenu: {
+    groups: { product: string; process: string; pilot: string; trust: string; resources: string };
+    items: {
+      problem: string;
+      solution: string;
+      audience: string;
+      how: string;
+      advantages: string;
+      status: string;
+      access: string;
+      appAvailable: string;
+      request: string;
+      security: string;
+      limits: string;
+      legal: string;
+      privacy: string;
+      cookies: string;
+    };
+  };
   common: { pilotCta: string; waitlistCta: string; backLanding: string; privacy: string; terms: string; legal: string; cookies: string };
   hero: {
     eyebrow: string;
@@ -175,6 +194,25 @@ const dictionaries: Record<LandingLocale, LandingCopy> = {
       close: "Cerrar",
     },
     nav: { product: "Producto", how: "Cómo funciona", audience: "Para quién es", access: "Acceso piloto", security: "Seguridad y límites" },
+    navMenu: {
+      groups: { product: "Producto", process: "Proceso", pilot: "Piloto", trust: "Confianza", resources: "Recursos" },
+      items: {
+        problem: "El problema",
+        solution: "La solución",
+        audience: "Para quién es",
+        how: "Cómo funciona",
+        advantages: "Ventajas actuales",
+        status: "Estado y evolución",
+        access: "Acceso piloto",
+        appAvailable: "App disponible",
+        request: "Solicitar piloto",
+        security: "Seguridad y privacidad",
+        limits: "Límites del MVP",
+        legal: "Aviso legal",
+        privacy: "Privacidad",
+        cookies: "Cookies",
+      },
+    },
     common: { pilotCta: "Solicitar piloto controlado", waitlistCta: "Unirme a la lista de espera", backLanding: "Volver a la landing", privacy: "privacidad", terms: "términos", legal: "Aviso legal", cookies: "Cookies" },
     hero: {
       eyebrow: "Piloto controlado",
@@ -447,6 +485,25 @@ const dictionaries: Record<LandingLocale, LandingCopy> = {
       close: "Close",
     },
     nav: { product: "Product", how: "How it works", audience: "Who it is for", access: "Pilot access", security: "Security and limits" },
+    navMenu: {
+      groups: { product: "Product", process: "Process", pilot: "Pilot", trust: "Trust", resources: "Resources" },
+      items: {
+        problem: "The problem",
+        solution: "The solution",
+        audience: "Who it is for",
+        how: "How it works",
+        advantages: "Current advantages",
+        status: "Status and roadmap",
+        access: "Pilot access",
+        appAvailable: "App available",
+        request: "Request pilot",
+        security: "Security and privacy",
+        limits: "MVP limits",
+        legal: "Legal notice",
+        privacy: "Privacy",
+        cookies: "Cookies",
+      },
+    },
     common: { pilotCta: "Request controlled pilot", waitlistCta: "Join the waitlist", backLanding: "Back to landing", privacy: "privacy policy", terms: "terms", legal: "Legal notice", cookies: "Cookies" },
     hero: {
       eyebrow: "Controlled pilot",
@@ -719,6 +776,25 @@ const dictionaries: Record<LandingLocale, LandingCopy> = {
       close: "Schließen",
     },
     nav: { product: "Produkt", how: "So funktioniert es", audience: "Für wen", access: "Pilotzugang", security: "Sicherheit und Grenzen" },
+    navMenu: {
+      groups: { product: "Produkt", process: "Ablauf", pilot: "Pilot", trust: "Vertrauen", resources: "Ressourcen" },
+      items: {
+        problem: "Das Problem",
+        solution: "Die Lösung",
+        audience: "Für wen",
+        how: "So funktioniert es",
+        advantages: "Aktuelle Vorteile",
+        status: "Status und Roadmap",
+        access: "Pilotzugang",
+        appAvailable: "App verfügbar",
+        request: "Pilot anfragen",
+        security: "Sicherheit und Datenschutz",
+        limits: "MVP-Grenzen",
+        legal: "Impressum",
+        privacy: "Datenschutz",
+        cookies: "Cookies",
+      },
+    },
     common: { pilotCta: "Kontrollierten Pilot anfragen", waitlistCta: "Zur Warteliste", backLanding: "Zurück zur Landingpage", privacy: "Datenschutz", terms: "Bedingungen", legal: "Impressum", cookies: "Cookies" },
     hero: {
       eyebrow: "Kontrollierter Pilotbetrieb",

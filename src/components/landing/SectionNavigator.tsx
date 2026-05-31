@@ -3,16 +3,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { useLandingI18n } from "@/lib/i18n/landing";
+import { LANDING_SECTION_IDS } from "./navigation";
 
-const SECTION_IDS = [
-  "hero",
-  "producto",
-  "como-funciona",
-  "para-quien-es",
-  "acceso-piloto",
-  "seguridad",
-  "legal-footer",
-] as const;
+/*
+ * The up/down section controls live in the BOTTOM-RIGHT corner (see
+ * `.l-section-nav` in globals.css). The central-right rail is intentionally
+ * left empty and reserved for a future social rail; the section controls are
+ * placed at the bottom right to avoid a visual conflict with it.
+ */
+const SECTION_IDS = LANDING_SECTION_IDS;
 
 export function SectionNavigator() {
   const { copy } = useLandingI18n();
