@@ -12,9 +12,9 @@ export function FloatingCookieButton() {
       className="l-floating-cookie"
       onClick={() => openCookiePreferences()}
       aria-label={copy.aria.cookieButton}
+      title={copy.aria.cookieButton}
     >
-      <Cookie className="h-4 w-4" aria-hidden="true" />
-      <span>{copy.common.cookies}</span>
+      <Cookie className="h-[1.1rem] w-[1.1rem]" aria-hidden="true" />
     </button>
   );
 }

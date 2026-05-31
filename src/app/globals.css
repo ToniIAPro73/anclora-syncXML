@@ -1497,6 +1497,7 @@ footer[id] {
   .l-cookie-actions .l-btn { flex: 0 0 auto; }
 }
 
+/* Icon-only circular button (no "Cookies" label, matching the other apps). */
 .l-floating-cookie {
   position: fixed;
   left: max(0.75rem, env(safe-area-inset-left));
@@ -1504,15 +1505,13 @@ footer[id] {
   z-index: 80;
   display: inline-flex;
   align-items: center;
-  gap: 0.45rem;
-  min-height: 2.55rem;
+  justify-content: center;
+  height: 2.55rem;
+  width: 2.55rem;
   border: 1px solid color-mix(in srgb, var(--l-gold) 44%, transparent);
   border-radius: 999px;
   background: color-mix(in srgb, var(--l-bg) 82%, transparent);
   color: var(--l-gold);
-  padding: 0 0.9rem;
-  font-size: 0.82rem;
-  font-weight: 800;
   box-shadow: 0 14px 40px rgba(0, 0, 0, 0.34);
   backdrop-filter: blur(14px);
 }
@@ -1558,9 +1557,8 @@ footer[id] {
 @media (max-width: 640px) {
   .l-floating-cookie {
     bottom: calc(4.75rem + env(safe-area-inset-bottom));
-    min-height: 2.25rem;
-    padding: 0 0.7rem;
-    font-size: 0.76rem;
+    height: 2.25rem;
+    width: 2.25rem;
   }
 
   .l-section-nav {
