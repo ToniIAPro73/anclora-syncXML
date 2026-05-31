@@ -7,7 +7,7 @@ import { PILOT_HREF } from "./landingData";
 export function AppAvailableSection() {
   const { copy } = useLandingI18n();
   return (
-    <section className="l-section">
+    <section id="app-disponible" className="l-section">
       <div className="l-container">
         <div className="l-card l-card-gold p-7 md:p-10">
           <div className="grid gap-8 lg:grid-cols-[1.2fr_0.8fr] lg:items-center">

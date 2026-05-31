@@ -1,18 +1,74 @@
+"use client";
+
+import { useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
-import { Menu } from "lucide-react";
+import { ChevronDown, Menu } from "lucide-react";
 import { useLandingI18n } from "@/lib/i18n/landing";
+import type { LandingCopy } from "@/lib/i18n/landing";
 import { PILOT_HREF } from "./landingData";
+import { NAV_GROUPS, type NavGroup } from "./navigation";
 import { LanguageToggle } from "./LanguageToggle";
+
+type NavMenuCopy = LandingCopy["navMenu"];
+
+function NavDropdown({ group, menu }: { group: NavGroup; menu: NavMenuCopy }) {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const panelId = useId();
+  const groupLabel = menu.groups[group.key as keyof NavMenuCopy["groups"]];
+
+  useEffect(() => {
+    if (!open) return;
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") setOpen(false);
+    }
+    function onPointerDown(event: PointerEvent) {
+      if (!rootRef.current?.contains(event.target as Node)) setOpen(false);
+    }
+    document.addEventListener("keydown", onKeyDown);
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      document.removeEventListener("pointerdown", onPointerDown);
+    };
+  }, [open]);
+
+  return (
+    <div ref={rootRef} className="l-nav-group">
+      <button
+        type="button"
+        className="l-nav-trigger"
+        aria-haspopup="true"
+        aria-expanded={open}
+        aria-controls={panelId}
+        onClick={() => setOpen((value) => !value)}
+      >
+        <span>{groupLabel}</span>
+        <ChevronDown className="h-3.5 w-3.5 transition-transform" aria-hidden="true" data-open={open} />
+      </button>
+
+      {open ? (
+        <div id={panelId} className="l-nav-popover" role="menu" aria-label={groupLabel}>
+          {group.items.map((item) => (
+            <a
+              key={item.href}
+              href={item.href}
+              role="menuitem"
+              className="l-nav-popover-item"
+              onClick={() => setOpen(false)}
+            >
+              {menu.items[item.key as keyof NavMenuCopy["items"]]}
+            </a>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
 
 export function LandingHeader() {
   const { copy } = useLandingI18n();
-  const navLinks = [
-    { label: copy.nav.product, href: "#producto" },
-    { label: copy.nav.how, href: "#como-funciona" },
-    { label: copy.nav.audience, href: "#para-quien-es" },
-    { label: copy.nav.access, href: "#acceso-piloto" },
-    { label: copy.nav.security, href: "#seguridad" },
-  ];
+  const menu = copy.navMenu;
 
   return (
     <header className="l-header">
@@ -30,11 +86,9 @@ export function LandingHeader() {
           </span>
         </Link>
 
-        <nav aria-label={copy.aria.sections} className="hidden items-center gap-7 lg:flex">
-          {navLinks.map((link) => (
-            <a key={link.href} href={link.href} className="l-nav-link">
-              {link.label}
-            </a>
+        <nav aria-label={copy.aria.sections} className="hidden items-center gap-2 lg:flex">
+          {NAV_GROUPS.map((group) => (
+            <NavDropdown key={group.key} group={group} menu={menu} />
           ))}
         </nav>
 
@@ -59,16 +113,23 @@ export function LandingHeader() {
             >
               <Menu className="h-5 w-5" aria-hidden="true" />
             </summary>
-            <div className="l-card absolute right-0 top-12 z-50 w-64 p-3">
-              <nav aria-label={copy.aria.sections} className="flex flex-col">
-                {navLinks.map((link) => (
-                  <a
-                    key={link.href}
-                    href={link.href}
-                    className="rounded-md px-3 py-2.5 text-sm font-semibold text-[color:var(--l-muted)] hover:bg-[color:var(--l-surface-2)] hover:text-white"
-                  >
-                    {link.label}
-                  </a>
+            <div className="l-card absolute right-0 top-12 z-50 max-h-[70vh] w-72 overflow-y-auto p-3">
+              <nav aria-label={copy.aria.sections} className="flex flex-col gap-3">
+                {NAV_GROUPS.map((group) => (
+                  <div key={group.key} className="flex flex-col">
+                    <span className="px-3 pb-1 pt-1 text-[0.7rem] font-bold uppercase tracking-wide text-[color:var(--l-gold)]">
+                      {menu.groups[group.key as keyof NavMenuCopy["groups"]]}
+                    </span>
+                    {group.items.map((item) => (
+                      <a
+                        key={item.href}
+                        href={item.href}
+                        className="rounded-md px-3 py-2 text-sm font-semibold text-[color:var(--l-muted)] hover:bg-[color:var(--l-surface-2)] hover:text-white"
+                      >
+                        {menu.items[item.key as keyof NavMenuCopy["items"]]}
+                      </a>
+                    ))}
+                  </div>
                 ))}
               </nav>
               <hr className="l-divider my-2" />

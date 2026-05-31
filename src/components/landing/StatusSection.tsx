@@ -17,7 +17,7 @@ const TONE: Record<
 export function StatusSection() {
   const { copy } = useLandingI18n();
   return (
-    <section className="l-section">
+    <section id="estado" className="l-section">
       <div className="l-container">
         <SectionHeading
           eyebrow={copy.status.eyebrow}
