@@ -1192,9 +1192,10 @@ button[aria-disabled="true"]:hover {
   max-width: min(16rem, calc(100vw - 2rem));
   border: 1px solid var(--l-border-strong);
   border-radius: 0.7rem;
-  background: color-mix(in srgb, var(--l-bg-2) 96%, transparent);
+  /* Opaque elevated surface — popovers must stay legible (no bleed-through). */
+  background: linear-gradient(180deg, var(--l-surface-2), var(--l-bg-2));
   padding: 0.35rem;
-  box-shadow: 0 20px 55px rgba(0, 0, 0, 0.38);
+  box-shadow: 0 20px 55px rgba(0, 0, 0, 0.55);
   backdrop-filter: blur(18px);
   animation: l-pop 160ms ease;
 }
@@ -1215,10 +1216,19 @@ button[aria-disabled="true"]:hover {
   color: var(--l-fg);
 }
 
-/* Sticky-header offset so anchor scrolling never hides section titles. */
-section[id],
+/*
+ * Sticky-header offset for anchor / up-down navigation.
+ * Sections already carry a large top padding (4.5–6rem) that more than clears
+ * the 60px sticky header, so the compensation here is intentionally tiny — a
+ * larger value would stack on top of that padding and drop the title too far
+ * down. Footer has little top padding, so it gets the full header offset.
+ */
+section[id] {
+  scroll-margin-top: 0.5rem;
+}
+
 footer[id] {
-  scroll-margin-top: calc(var(--l-header-h) + 1rem);
+  scroll-margin-top: calc(var(--l-header-h) + 0.5rem);
 }
 
 .landing-root details:not([open]) > div {
@@ -1258,9 +1268,10 @@ footer[id] {
   width: min(13rem, calc(100vw - 2rem));
   border: 1px solid var(--l-border-strong);
   border-radius: 0.7rem;
-  background: color-mix(in srgb, var(--l-bg-2) 96%, transparent);
+  /* Opaque elevated surface — popovers must stay legible (no bleed-through). */
+  background: linear-gradient(180deg, var(--l-surface-2), var(--l-bg-2));
   padding: 0.35rem;
-  box-shadow: 0 20px 55px rgba(0, 0, 0, 0.38);
+  box-shadow: 0 20px 55px rgba(0, 0, 0, 0.55);
   backdrop-filter: blur(18px);
   animation: l-pop 160ms ease;
 }
