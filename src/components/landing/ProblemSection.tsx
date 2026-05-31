@@ -1,19 +1,21 @@
+import { useLandingI18n } from "@/lib/i18n/landing";
 import { FeatureCard } from "./FeatureCard";
 import { SectionHeading } from "./SectionHeading";
 import { PROBLEM_CARDS } from "./landingData";
 
 export function ProblemSection() {
+  const { copy } = useLandingI18n();
   return (
     <section id="problema" className="l-section">
       <div className="l-container">
         <SectionHeading
-          eyebrow="El problema"
-          title="Cuando el flujo depende de Excel, revisar datos de huéspedes puede volverse lento y delicado"
-          intro="Las hojas de cálculo son flexibles, pero revisar a mano cada reserva antes de preparar un XML deja margen al error y expone datos sensibles."
+          eyebrow={copy.problem.eyebrow}
+          title={copy.problem.title}
+          intro={copy.problem.intro}
         />
         <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {PROBLEM_CARDS.map((card) => (
-            <FeatureCard key={card.title} {...card} />
+          {PROBLEM_CARDS.map((card, index) => (
+            <FeatureCard key={copy.problem.cards[index].title} {...copy.problem.cards[index]} icon={card.icon} />
           ))}
         </div>
       </div>

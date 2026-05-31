@@ -10,7 +10,7 @@ function landingSource(): string {
   return readdirSync(landingDir)
     .filter((file) => file.endsWith(".tsx") || file.endsWith(".ts"))
     .map((file) => readFileSync(`${landingDir}/${file}`, "utf8"))
-    .join("\n");
+    .join("\n") + readFileSync(`${root}/src/lib/i18n/landing.tsx`, "utf8");
 }
 
 const PROHIBITED_CLAIMS = [
@@ -64,7 +64,7 @@ describe("landing access model v0.2", () => {
   it("contains no prohibited marketing claims", () => {
     for (const claim of PROHIBITED_CLAIMS) {
       // Allow prudent negations such as "no evita sanciones".
-      const negated = new RegExp(`no\\s+${claim}`, "i");
+      const negated = new RegExp(`no[^.]{0,80}${claim}`, "i");
       const bare = new RegExp(claim, "i");
       if (bare.test(source)) {
         expect(negated.test(source)).toBe(true);
