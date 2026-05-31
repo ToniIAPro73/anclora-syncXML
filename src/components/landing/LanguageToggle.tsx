@@ -1,9 +1,18 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Check, Globe2 } from "lucide-react";
+import { ChevronDown, Globe2, X } from "lucide-react";
 import { LANDING_LOCALE_META, LANDING_LOCALES, type LandingLocale, useLandingI18n } from "@/lib/i18n/landing";
 
+/**
+ * Language selector following the Anclora vault contract
+ * (LanguageTrigger + LanguagePopover + LanguageOptionList + SaveAndClose):
+ *  - compact trigger showing the current language (globe + native name + chevron),
+ *  - a dialog popover with eyebrow ("Ajustes") + title ("Idioma") + close,
+ *  - a language selector,
+ *  - a "Guardar y cerrar" action.
+ * Selection applies immediately; Save just closes. Closes on Escape / outside click.
+ */
 export function LanguageToggle() {
   const { locale, setLocale, copy } = useLandingI18n();
   const [open, setOpen] = useState(false);
@@ -26,46 +35,61 @@ export function LanguageToggle() {
     };
   }, [open]);
 
-  function select(nextLocale: LandingLocale) {
-    setLocale(nextLocale);
-    setOpen(false);
-  }
-
   return (
     <div ref={rootRef} className="l-language-toggle">
       <button
         type="button"
         className="l-language-trigger"
         aria-label={`${copy.aria.languageTrigger}. ${copy.aria.currentLanguage}`}
-        aria-haspopup="listbox"
+        aria-haspopup="dialog"
         aria-expanded={open}
         onClick={() => setOpen((value) => !value)}
       >
         <Globe2 className="h-4 w-4" aria-hidden="true" />
-        <span>{active.short}</span>
+        <span>{active.nativeName}</span>
+        <ChevronDown className="l-language-caret h-3.5 w-3.5" data-open={open} aria-hidden="true" />
       </button>
 
       {open ? (
-        <div className="l-language-popover" role="listbox" aria-label={copy.aria.languageExpanded}>
-          {LANDING_LOCALES.map((option) => {
-            const meta = LANDING_LOCALE_META[option];
-            const selected = option === locale;
-            return (
-              <button
-                key={option}
-                type="button"
-                role="option"
-                aria-selected={selected}
-                aria-label={copy.aria.selectLanguage[option]}
-                className={`l-language-option${selected ? " is-active" : ""}`}
-                onClick={() => select(option)}
-              >
-                <span className="font-bold">{meta.short}</span>
-                <span>{meta.nativeName}</span>
-                {selected ? <Check className="ml-auto h-4 w-4" aria-hidden="true" /> : null}
-              </button>
-            );
-          })}
+        <div className="l-language-popover" role="dialog" aria-label={copy.aria.languageExpanded}>
+          <div className="l-language-head">
+            <div>
+              <p className="l-language-eyebrow">{copy.langToggle.eyebrow}</p>
+              <h2 className="l-language-title">{copy.langToggle.title}</h2>
+            </div>
+            <button
+              type="button"
+              className="l-language-close"
+              onClick={() => setOpen(false)}
+              aria-label={copy.aria.close}
+            >
+              <X className="h-4 w-4" aria-hidden="true" />
+            </button>
+          </div>
+
+          <select
+            className="l-language-select"
+            value={locale}
+            onChange={(event) => setLocale(event.target.value as LandingLocale)}
+            aria-label={copy.langToggle.title}
+          >
+            {LANDING_LOCALES.map((option) => {
+              const meta = LANDING_LOCALE_META[option];
+              return (
+                <option key={option} value={option}>
+                  {meta.nativeName} - {meta.englishName}
+                </option>
+              );
+            })}
+          </select>
+
+          <button
+            type="button"
+            className="l-btn l-btn-primary l-language-save"
+            onClick={() => setOpen(false)}
+          >
+            {copy.langToggle.save}
+          </button>
         </div>
       ) : null}
     </div>
