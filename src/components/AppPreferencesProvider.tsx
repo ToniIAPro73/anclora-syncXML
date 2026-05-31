@@ -35,9 +35,13 @@ export function AppPreferencesProvider({ children }: { children: React.ReactNode
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
     const storedTheme = normalizeTheme(localStorage.getItem(PREFERENCE_COOKIE_NAMES.theme));
+    const publicLandingPaths = ["/", "/login", "/piloto", "/cookies", "/privacy", "/terms", "/legal"];
+    const landingLanguage = publicLandingPaths.includes(window.location.pathname)
+      ? localStorage.getItem("anclora-syncxml-landing-locale")
+      : null;
     const storedLanguage = resolveInitialLocale({
       urlLocale: searchParams.get("lang") || searchParams.get("locale"),
-      persistedLocale: localStorage.getItem(PREFERENCE_COOKIE_NAMES.language),
+      persistedLocale: landingLanguage || localStorage.getItem(PREFERENCE_COOKIE_NAMES.language),
       browserLocales: navigator.languages?.length ? navigator.languages : [navigator.language],
     });
     setThemeState(storedTheme);

@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { AlertTriangle } from "lucide-react";
+import { useLandingI18n } from "@/lib/i18n/landing";
 import { SectionHeading } from "./SectionHeading";
 import { PILOT_HREF } from "./landingData";
 
 export function AppAvailableSection() {
+  const { copy } = useLandingI18n();
   return (
     <section className="l-section">
       <div className="l-container">
@@ -11,18 +13,13 @@ export function AppAvailableSection() {
           <div className="grid gap-8 lg:grid-cols-[1.2fr_0.8fr] lg:items-center">
             <div>
               <SectionHeading
-                eyebrow="Validación controlada"
-                title="Aplicación disponible para participantes del piloto"
-                intro="La aplicación funcional existe y se explora dentro del piloto controlado, con acceso aprobado de forma manual. Su objetivo actual es mostrar el flujo de trabajo y validar el producto con datos sintéticos o anonimizados."
+                eyebrow={copy.appAvailable.eyebrow}
+                title={copy.appAvailable.title}
+                intro={copy.appAvailable.intro}
               />
               <div className="l-notice mt-6">
                 <AlertTriangle className="h-5 w-5" aria-hidden="true" />
-                <p>
-                  <strong className="text-white">Importante:</strong> no subas
-                  datos reales de huéspedes. El XML generado es revisable y no
-                  implica aceptación oficial por SES.HOSPEDAJES ni garantía legal
-                  de cumplimiento.
-                </p>
+                <p>{copy.appAvailable.important}</p>
               </div>
             </div>
 
@@ -32,10 +29,10 @@ export function AppAvailableSection() {
                 className="l-btn l-btn-primary"
                 data-track="click_solicitar_piloto_controlado"
               >
-                Solicitar piloto controlado
+                {copy.common.pilotCta}
               </Link>
               <p className="l-text mt-2.5 text-xs">
-                Acceso aprobado manualmente. Solo datos sintéticos o anonimizados.
+                {copy.appAvailable.note}
               </p>
             </div>
           </div>

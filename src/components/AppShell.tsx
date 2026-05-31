@@ -12,7 +12,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const { dictionary: t } = usePreferences();
   const pathname = usePathname();
   const router = useRouter();
-  const isPublicLegalPage = pathname === "/privacy" || pathname === "/terms";
+  const isPublicLegalPage = pathname === "/privacy" || pathname === "/terms" || pathname === "/legal" || pathname === "/cookies";
   const isLandingPage = pathname === "/";
   const isLoginPage = pathname === "/login";
   const isPilotPage = pathname === "/piloto";

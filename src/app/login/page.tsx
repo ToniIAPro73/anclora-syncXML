@@ -1,7 +1,5 @@
 import type { Metadata } from "next";
-import { LandingAnalytics } from "@/components/landing/LandingAnalytics";
-import { CookieConsent } from "@/components/landing/CookieConsent";
-import { LoginView } from "@/components/landing/LoginView";
+import { LoginPageContent } from "@/components/landing/LoginPageContent";
 
 export const metadata: Metadata = {
   title: "Iniciar sesión — Anclora SyncXML",
@@ -11,11 +9,5 @@ export const metadata: Metadata = {
 };
 
 export default function LoginPage() {
-  return (
-    <div className="landing-root">
-      <LandingAnalytics />
-      <LoginView />
-      <CookieConsent />
-    </div>
-  );
+  return <LoginPageContent />;
 }

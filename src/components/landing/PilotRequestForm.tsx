@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, CheckCircle2, Send } from "lucide-react";
+import { useLandingI18n } from "@/lib/i18n/landing";
 import { track } from "./analytics";
 import { PILOT_EMAIL, PRIVACY_HREF, TERMS_HREF } from "./landingData";
 
@@ -15,22 +16,14 @@ import { PILOT_EMAIL, PRIVACY_HREF, TERMS_HREF } from "./landingData";
  * pain, current workflow, volume, and willingness to pay.
  */
 
-type Field = { name: string; label: string; type?: "text" | "email"; required?: boolean; placeholder?: string };
-
-const IDENTITY: Field[] = [
-  { name: "name", label: "Nombre y apellidos", required: true },
-  { name: "email", label: "Email principal", type: "email", required: true },
-  { name: "companyName", label: "Empresa o alojamiento", placeholder: "Opcional" },
-  { name: "role", label: "Rol", placeholder: "Propietario, gestor, recepción…" },
-];
-
-const ACCOMMODATION_OPTIONS = ["Vivienda turística", "Pequeño hotel", "Pensión / hostal", "Gestor de alojamientos", "Otro"];
-const PROPERTY_OPTIONS = ["1–2 inmuebles", "3–10 inmuebles", "11–30 inmuebles", "Más de 30"];
-const RESERVAS_OPTIONS = ["Menos de 10", "10–30", "31–80", "Más de 80"];
-const PAY_OPTIONS = ["Sí, me interesa", "Quizá, según resultado", "Aún no lo sé", "No por ahora"];
-const MODEL_OPTIONS = ["Pago único", "Cuota mensual", "Setup + mensual", "Por reserva", "Servicio a medida"];
-
 export function PilotRequestForm() {
+  const { locale, copy } = useLandingI18n();
+  const identity = [
+    { name: "name", type: "text", required: true, ...copy.form.fields.name },
+    { name: "email", type: "email", required: true, ...copy.form.fields.email },
+    { name: "companyName", type: "text", required: false, ...copy.form.fields.companyName },
+    { name: "role", type: "text", required: false, ...copy.form.fields.role },
+  ] as const;
   const [values, setValues] = useState<Record<string, string>>({});
   const [excelUse, setExcelUse] = useState("");
   const [alojamiento, setAlojamiento] = useState("");
@@ -96,7 +89,7 @@ export function PilotRequestForm() {
           wantsToValidate: tiempo || mensaje,
           acceptsSyntheticOrAnonymizedData,
           acceptsPilotConditions,
-          locale: "es",
+          locale,
           source: "syncxml_landing",
           inmuebles,
           reservas,
@@ -113,12 +106,12 @@ export function PilotRequestForm() {
         }),
       });
       if (!response.ok) {
-        setSubmitError("No se pudo enviar la solicitud. Inténtalo de nuevo o escribe al correo de contacto.");
+        setSubmitError(copy.form.submitError);
         return;
       }
       setSubmitted(true);
     } catch {
-      setSubmitError("No se pudo enviar la solicitud. Inténtalo de nuevo o escribe al correo de contacto.");
+      setSubmitError(copy.form.submitError);
     } finally {
       setSubmitting(false);
     }
@@ -130,21 +123,19 @@ export function PilotRequestForm() {
         <span className="l-icon-tile mx-auto" aria-hidden="true">
           <CheckCircle2 className="h-5 w-5" />
         </span>
-        <h2 className="l-h2 mt-4 text-2xl">Solicitud preparada</h2>
+        <h2 className="l-h2 mt-4 text-2xl">{copy.form.successTitle}</h2>
         <p className="l-text mx-auto mt-3 max-w-md text-sm">
-          Solicitud recibida. Revisaremos el encaje del piloto antes de conceder
-          acceso. No subas datos reales de huéspedes hasta que el piloto esté
-          aprobado y configurado.
+          {copy.form.successCopy}
         </p>
         <p className="l-text mx-auto mt-3 max-w-md text-xs">
-          También puedes escribirnos a{" "}
+          {copy.form.successEmail}{" "}
           <a className="l-gold" href={`mailto:${PILOT_EMAIL}`}>
             {PILOT_EMAIL}
           </a>
           .
         </p>
         <Link href="/" className="l-btn l-btn-ghost mt-6">
-          Volver a la landing
+          {copy.form.back}
         </Link>
       </div>
     );
@@ -154,13 +145,13 @@ export function PilotRequestForm() {
     <form className="l-card p-6 md:p-8" onSubmit={onSubmit} noValidate>
       <Link href="/" className="l-nav-link mb-5 inline-flex items-center gap-2">
         <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-        Volver a la landing
+        {copy.form.back}
       </Link>
 
       <fieldset className="border-0 p-0">
-        <legend className="l-eyebrow">Tus datos</legend>
+        <legend className="l-eyebrow">{copy.form.identity}</legend>
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
-          {IDENTITY.map((field) => (
+          {identity.map((field) => (
             <label key={field.name} className="flex flex-col gap-1.5">
               <span className="l-text text-sm">
                 {field.label}
@@ -168,7 +159,7 @@ export function PilotRequestForm() {
               </span>
               <input
                 className="l-input"
-                type={field.type ?? "text"}
+                type={field.type}
                 required={field.required}
                 aria-required={field.required}
                 placeholder={field.placeholder}
@@ -181,42 +172,40 @@ export function PilotRequestForm() {
       </fieldset>
 
       <fieldset className="mt-7 border-0 p-0">
-        <legend className="l-eyebrow">Tu operativa</legend>
+        <legend className="l-eyebrow">{copy.form.operations}</legend>
         <div className="mt-4 grid gap-5 sm:grid-cols-2">
-          <Choice label="Tipo de alojamiento" options={ACCOMMODATION_OPTIONS} value={alojamiento} onChange={setAlojamiento} name="alojamiento" />
-          <Choice label="Nº de inmuebles" options={PROPERTY_OPTIONS} value={inmuebles} onChange={setInmuebles} name="inmuebles" />
-          <Choice label="Reservas al mes (aprox.)" options={RESERVAS_OPTIONS} value={reservas} onChange={setReservas} name="reservas" />
+          <Choice label={copy.form.accommodationLabel} options={copy.form.accommodationOptions} value={alojamiento} onChange={setAlojamiento} name="alojamiento" />
+          <Choice label={copy.form.propertyLabel} options={copy.form.propertyOptions} value={inmuebles} onChange={setInmuebles} name="inmuebles" />
+          <Choice label={copy.form.reservationsLabel} options={copy.form.reservationOptions} value={reservas} onChange={setReservas} name="reservas" />
         </div>
         <div className="mt-4 grid gap-4">
-          <Choice label="¿Trabajas con Excel/XLSX?" options={["Sí", "A veces", "No"]} value={excelUse} onChange={setExcelUse} name="excel" inline />
-          <Text label="Principal problema operativo" value={problema} onChange={setProblema} placeholder="¿Qué te cuesta más al revisar datos de huéspedes?" />
-          <Text label="Flujo actual" value={alternativa} onChange={setAlternativa} placeholder="Excel, PMS, hoja de cálculo, gestoría, manual…" />
-          <Text label="Qué quieres validar en el piloto" value={tiempo} onChange={setTiempo} />
+          <Choice label={copy.form.excelLabel} options={copy.form.excelOptions} value={excelUse} onChange={setExcelUse} name="excel" inline />
+          <Text label={copy.form.painLabel} value={problema} onChange={setProblema} placeholder={copy.form.painPlaceholder} />
+          <Text label={copy.form.workflowLabel} value={alternativa} onChange={setAlternativa} placeholder={copy.form.workflowPlaceholder} />
+          <Text label={copy.form.validateLabel} value={tiempo} onChange={setTiempo} />
           <label className="flex items-start gap-3">
             <input type="checkbox" className="mt-1" checked={acceptsSyntheticOrAnonymizedData} onChange={(event) => setAcceptsSyntheticOrAnonymizedData(event.target.checked)} />
-            <span className="l-text text-sm">Puedo aportar una muestra sintética o anonimizada (sin datos reales de huéspedes).</span>
+            <span className="l-text text-sm">{copy.form.syntheticConsent}</span>
           </label>
         </div>
       </fieldset>
 
       <fieldset className="mt-7 border-0 p-0">
-        <legend className="l-eyebrow">Disposición de pago</legend>
+        <legend className="l-eyebrow">{copy.form.payment}</legend>
         <div className="mt-4 grid gap-5">
-          <Choice label="¿Te interesa un piloto de pago?" options={PAY_OPTIONS} value={pay} onChange={setPay} name="pay" />
-          <Choice label="Modelo que preferirías" options={MODEL_OPTIONS} value={model} onChange={setModel} name="model" />
-          <Text label="Rango orientativo o presupuesto (opcional)" value={presupuesto} onChange={setPresupuesto} />
-          <Text label="Mensaje (opcional)" value={mensaje} onChange={setMensaje} multiline />
+          <Choice label={copy.form.payLabel} options={copy.form.payOptions} value={pay} onChange={setPay} name="pay" />
+          <Choice label={copy.form.modelLabel} options={copy.form.modelOptions} value={model} onChange={setModel} name="model" />
+          <Text label={copy.form.budgetLabel} value={presupuesto} onChange={setPresupuesto} />
+          <Text label={copy.form.messageLabel} value={mensaje} onChange={setMensaje} multiline />
         </div>
       </fieldset>
 
       <label className="mt-6 flex items-start gap-3">
         <input type="checkbox" className="mt-1" checked={acceptsPilotConditions} onChange={(event) => setAcceptsPilotConditions(event.target.checked)} required aria-required />
         <span className="l-text text-sm">
-          He leído y acepto la{" "}
-          <Link href={PRIVACY_HREF} className="l-gold">privacidad</Link> y los{" "}
-          <Link href={TERMS_HREF} className="l-gold">términos</Link>. Entiendo
-          que el acceso es limitado, revocable y revisable; no subiré datos
-          reales de huéspedes ni usaré el piloto para envíos oficiales.
+          {copy.form.termsPrefix}{" "}
+          <Link href={PRIVACY_HREF} className="l-gold">{copy.common.privacy}</Link> {copy.form.termsMiddle}{" "}
+          <Link href={TERMS_HREF} className="l-gold">{copy.common.terms}</Link>. {copy.form.termsSuffix}
           <span className="l-gold"> *</span>
         </span>
       </label>
@@ -229,11 +218,10 @@ export function PilotRequestForm() {
 
       <button type="submit" className="l-btn l-btn-primary mt-6 w-full" disabled={!canSubmit || submitting}>
         <Send className="h-4 w-4" aria-hidden="true" />
-        {submitting ? "Enviando solicitud…" : "Enviar solicitud de piloto"}
+        {submitting ? copy.form.submitting : copy.form.submit}
       </button>
       <p className="l-text mt-3 text-xs">
-        Enviar no concede acceso automático: revisamos el encaje antes de habilitar
-        la aplicación. La solicitud se gestiona de forma manual por email.
+        {copy.form.submitNote}
       </p>
     </form>
   );
