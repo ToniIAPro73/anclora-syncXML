@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
+import { useLandingI18n } from "@/lib/i18n/landing";
 
 const SECTION_IDS = [
   "hero",
@@ -14,6 +15,7 @@ const SECTION_IDS = [
 ] as const;
 
 export function SectionNavigator() {
+  const { copy } = useLandingI18n();
   const sections = useMemo(() => SECTION_IDS, []);
   const [activeIndex, setActiveIndex] = useState(0);
 
@@ -49,14 +51,14 @@ export function SectionNavigator() {
   const isLast = activeIndex >= sections.length - 1;
 
   return (
-    <nav className="l-section-nav" aria-label="Navegación por secciones">
+    <nav className="l-section-nav" aria-label={copy.aria.sectionNav}>
       {!isFirst ? (
-        <button type="button" onClick={() => scrollTo(activeIndex - 1)} aria-label="Ir a la sección anterior">
+        <button type="button" onClick={() => scrollTo(activeIndex - 1)} aria-label={copy.aria.previousSection}>
           <ChevronUp className="h-4 w-4" aria-hidden="true" />
         </button>
       ) : null}
       {!isLast ? (
-        <button type="button" onClick={() => scrollTo(activeIndex + 1)} aria-label="Ir a la sección siguiente">
+        <button type="button" onClick={() => scrollTo(activeIndex + 1)} aria-label={copy.aria.nextSection}>
           <ChevronDown className="h-4 w-4" aria-hidden="true" />
         </button>
       ) : null}

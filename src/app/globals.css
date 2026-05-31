@@ -1151,10 +1151,73 @@ button[aria-disabled="true"]:hover {
   color: var(--l-muted);
   font-size: 0.9rem;
   font-weight: 600;
+  overflow-wrap: anywhere;
   transition: color 140ms ease;
 }
 
 .l-nav-link:hover { color: var(--l-fg); }
+
+.landing-root details:not([open]) > div {
+  display: none;
+}
+
+.l-language-toggle {
+  position: relative;
+  display: inline-flex;
+}
+
+.l-language-trigger {
+  display: inline-flex;
+  min-height: 2.5rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  border: 1px solid var(--l-border-strong);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--l-surface) 78%, transparent);
+  color: var(--l-fg);
+  padding: 0 0.8rem;
+  font-size: 0.82rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.l-language-trigger svg {
+  color: var(--l-gold);
+}
+
+.l-language-popover {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.5rem);
+  z-index: 80;
+  width: min(13rem, calc(100vw - 2rem));
+  border: 1px solid var(--l-border-strong);
+  border-radius: 0.7rem;
+  background: color-mix(in srgb, var(--l-bg-2) 96%, transparent);
+  padding: 0.35rem;
+  box-shadow: 0 20px 55px rgba(0, 0, 0, 0.38);
+  backdrop-filter: blur(18px);
+  animation: l-pop 160ms ease;
+}
+
+.l-language-option {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 0.65rem;
+  border-radius: 0.5rem;
+  padding: 0.65rem 0.7rem;
+  color: var(--l-muted);
+  font-size: 0.9rem;
+  text-align: left;
+}
+
+.l-language-option:hover,
+.l-language-option.is-active {
+  background: color-mix(in srgb, var(--l-gold) 12%, transparent);
+  color: var(--l-fg);
+}
 
 .l-hero-logo {
   filter: drop-shadow(0 10px 40px rgba(212, 175, 55, 0.22));
