@@ -35,7 +35,8 @@ describe("landing access model v0.2", () => {
     const authCard = readFileSync(`${root}/src/components/auth/AncloraAuthCard.tsx`, "utf8");
     const loginContractSource = `${source}\n${authCard}`;
     expect(loginContractSource).toContain("Anclora SyncXML");
-    expect(loginContractSource).toContain("Clave de acceso al piloto");
+    expect(loginContractSource).toContain("Email autorizado");
+    expect(loginContractSource).toContain("Contraseña temporal");
     expect(loginContractSource).toContain("Solicitar piloto controlado");
     expect(loginContractSource).toContain("No subas datos reales de huéspedes");
     expect(loginContractSource).toContain("/terms");
@@ -50,9 +51,9 @@ describe("landing access model v0.2", () => {
     expect(source).toContain("Solicitar piloto controlado");
   });
 
-  it("offers 'Ver cómo funciona' and 'Iniciar sesión'", () => {
-    expect(source).toContain("Ver cómo funciona");
-    expect(source).toContain("Iniciar sesión");
+  it("offers waitlist as a discreet secondary CTA and hides public login CTA", () => {
+    expect(source).toContain("Unirme a la lista de espera");
+    expect(source).not.toContain("Ya participo · Iniciar sesión");
   });
 
   it("does not use 'Abrir app' / 'Abrir aplicación' as a landing CTA", () => {
@@ -121,6 +122,16 @@ describe("app routing guards", () => {
     expect(pilotForm).not.toContain("window.location.href = buildMailto");
     expect(pilotRoute).toContain("new Resend");
     expect(pilotRoute).toContain("RESEND_API_KEY");
+    expect(pilotRoute).toContain("NEXUS_SYNCXML_WEBHOOK_URL");
     expect(pilotRoute).toContain("SYNCXML_PILOT_REQUEST_TO");
+  });
+
+  it("renders floating cookies and section navigation controls", () => {
+    const source = landingSource();
+    expect(source).toContain("FloatingCookieButton");
+    expect(source).toContain("Abrir preferencias de cookies");
+    expect(source).toContain("SectionNavigator");
+    expect(source).toContain("Ir a la sección siguiente");
+    expect(source).toContain("Ir a la sección anterior");
   });
 });

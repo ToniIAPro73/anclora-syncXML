@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { CookiePreferencesButton } from "./CookiePreferencesButton";
-import { CONTACT_MAILTO, LOGIN_HREF, PRIVACY_HREF, TERMS_HREF } from "./landingData";
+import { CONTACT_MAILTO, PRIVACY_HREF, TERMS_HREF } from "./landingData";
 
 const SECTION_LINKS = [
   { label: "Producto", href: "#producto" },
@@ -11,7 +11,7 @@ const SECTION_LINKS = [
 
 export function LandingFooter() {
   return (
-    <footer className="border-t border-[color:var(--l-border)]">
+    <footer id="legal-footer" className="border-t border-[color:var(--l-border)]">
       <div className="l-container py-12">
         <div className="flex flex-col justify-between gap-8 md:flex-row md:items-start">
           <div className="max-w-sm">
@@ -44,24 +44,20 @@ export function LandingFooter() {
             </nav>
 
             <nav aria-label="Recursos y contacto" className="flex flex-col items-start gap-3">
-              <span className="l-eyebrow">Recursos</span>
+              <span className="l-eyebrow">Legal</span>
+              <Link href="/legal" className="l-nav-link">
+                Aviso legal
+              </Link>
               <Link href={PRIVACY_HREF} className="l-nav-link">
-                Privacidad
+                Política de privacidad
               </Link>
               <Link href={TERMS_HREF} className="l-nav-link">
-                Términos
+                Términos del servicio
               </Link>
               <CookiePreferencesButton />
               <a href={CONTACT_MAILTO} className="l-nav-link">
-                Contacto
+                hola@anclora.com
               </a>
-              <Link
-                href={LOGIN_HREF}
-                className="l-nav-link"
-                data-track="click_iniciar_sesion"
-              >
-                Aplicación en validación controlada
-              </Link>
             </nav>
           </div>
         </div>
@@ -81,7 +77,8 @@ export function LandingFooter() {
           previamente seguridad, RGPD, DPA, retención y validación técnica.
         </p>
         <p className="l-text mt-2 text-xs">
-          © {new Date().getFullYear()} Anclora Group · Anclora SyncXML
+          © 2026 Anclora Group — Todos los derechos reservados.
+          Anclora SyncXML forma parte del ecosistema operativo de Anclora Group.
         </p>
       </div>
     </footer>

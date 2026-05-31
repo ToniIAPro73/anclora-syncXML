@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { setSessionCookie } from "@/lib/auth";
+import { prisma, hasDatabase } from "@/lib/db/prisma";
+import { verifyPassword } from "@/lib/password";
 import { canUsePasswordAuth, getRuntimeConfigError, isExplicitLocalDemoMode } from "@/lib/security/env";
 import { authRateLimiter, getRateLimitKey } from "@/lib/security/rateLimit";
 
@@ -12,9 +14,29 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Configuracion de acceso incompleta" }, { status: 503 });
   }
   if (isExplicitLocalDemoMode()) return NextResponse.json({ ok: true, demo: true });
-  const { password } = await request.json().catch(() => ({ password: "" }));
-  if (process.env.SYNCXML_ADMIN_PASSWORD && password === process.env.SYNCXML_ADMIN_PASSWORD) {
-    return setSessionCookie(NextResponse.json({ ok: true }));
+  const { email, password } = await request.json().catch(() => ({ email: "", password: "" }));
+  const normalizedEmail = typeof email === "string" ? email.trim().toLowerCase() : "";
+  if (hasDatabase() && normalizedEmail && typeof password === "string") {
+    const user = await prisma.pilotUser.findUnique({ where: { email: normalizedEmail } }).catch(() => null);
+    const expired = user?.expiresAt ? user.expiresAt.getTime() < Date.now() : false;
+    if (user && user.status === "active" && !expired && verifyPassword(password, user.passwordHash)) {
+      await prisma.pilotUser.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } }).catch(() => null);
+      return setSessionCookie(NextResponse.json({ ok: true, role: user.role, email: user.email }), {
+        email: user.email,
+        role: user.role,
+      });
+    }
+  }
+  if (
+    process.env.SYNCXML_ADMIN_PASSWORD &&
+    password === process.env.SYNCXML_ADMIN_PASSWORD &&
+    (!normalizedEmail || normalizedEmail === (process.env.SYNCXML_ADMIN_EMAIL || "antonio@anclora.com").toLowerCase())
+  ) {
+    const adminEmail = process.env.SYNCXML_ADMIN_EMAIL || "antonio@anclora.com";
+    return setSessionCookie(NextResponse.json({ ok: true, role: "admin", email: adminEmail }), {
+      email: adminEmail,
+      role: "admin",
+    });
   }
   return NextResponse.json({ error: "Credenciales invalidas" }, { status: 401 });
 }

@@ -168,6 +168,33 @@ enum StoredFileType {
   VALIDATION_REPORT
 }
 
+model PilotUser {
+  id              String          @id @default(cuid())
+  email           String          @unique
+  passwordHash    String
+  role            PilotUserRole   @default(pilot_user)
+  status          PilotUserStatus @default(active)
+  sourceRequestId String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  expiresAt       DateTime?
+  lastLoginAt     DateTime?
+
+  @@index([status])
+  @@index([sourceRequestId])
+}
+
+enum PilotUserRole {
+  admin
+  pilot_user
+}
+
+enum PilotUserStatus {
+  active
+  revoked
+  expired
+}
+
 model SesSubmission {
   id                     String              @id @default(cuid())
   createdAt              DateTime            @default(now())

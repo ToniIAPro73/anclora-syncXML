@@ -1308,6 +1308,78 @@ button[aria-disabled="true"]:hover {
   .l-cookie-actions .l-btn { flex: 0 0 auto; }
 }
 
+.l-floating-cookie {
+  position: fixed;
+  left: max(0.75rem, env(safe-area-inset-left));
+  bottom: calc(5.75rem + env(safe-area-inset-bottom));
+  z-index: 80;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 2.55rem;
+  border: 1px solid color-mix(in srgb, var(--l-gold) 44%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--l-bg) 82%, transparent);
+  color: var(--l-gold);
+  padding: 0 0.9rem;
+  font-size: 0.82rem;
+  font-weight: 800;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.34);
+  backdrop-filter: blur(14px);
+}
+
+.l-floating-cookie:hover {
+  background: color-mix(in srgb, var(--l-gold) 10%, var(--l-bg));
+}
+
+.l-section-nav {
+  position: fixed;
+  right: max(0.75rem, env(safe-area-inset-right));
+  top: 50%;
+  z-index: 70;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  transform: translateY(-50%);
+}
+
+.l-section-nav button {
+  display: inline-flex;
+  height: 2.55rem;
+  width: 2.55rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid color-mix(in srgb, var(--l-gold) 46%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--l-bg) 82%, transparent);
+  color: var(--l-gold);
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.34);
+  backdrop-filter: blur(14px);
+}
+
+.l-section-nav button:hover {
+  background: color-mix(in srgb, var(--l-gold) 10%, var(--l-bg));
+}
+
+@media (max-width: 640px) {
+  .l-floating-cookie {
+    bottom: calc(4.75rem + env(safe-area-inset-bottom));
+    min-height: 2.25rem;
+    padding: 0 0.7rem;
+    font-size: 0.76rem;
+  }
+
+  .l-section-nav {
+    right: 0.55rem;
+    gap: 0.45rem;
+  }
+
+  .l-section-nav button {
+    height: 2.25rem;
+    width: 2.25rem;
+  }
+}
+
 .l-switch { position: relative; display: inline-flex; cursor: pointer; }
 .l-switch input { position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
 .l-switch-track {
