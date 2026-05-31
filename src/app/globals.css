@@ -1157,6 +1157,70 @@ button[aria-disabled="true"]:hover {
 
 .l-nav-link:hover { color: var(--l-fg); }
 
+/* Grouped header navigation (dropdowns) */
+.l-nav-group { position: relative; }
+
+.l-nav-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  border-radius: 999px;
+  padding: 0.45rem 0.7rem;
+  color: var(--l-muted);
+  font-size: 0.9rem;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: color 140ms ease, background 140ms ease;
+}
+
+.l-nav-trigger:hover,
+.l-nav-trigger[aria-expanded="true"] {
+  color: var(--l-fg);
+  background: color-mix(in srgb, var(--l-surface) 70%, transparent);
+}
+
+.l-nav-trigger svg[data-open="true"] { transform: rotate(180deg); }
+
+.l-nav-popover {
+  position: absolute;
+  left: 0;
+  top: calc(100% + 0.5rem);
+  z-index: 80;
+  display: flex;
+  flex-direction: column;
+  min-width: 13rem;
+  max-width: min(16rem, calc(100vw - 2rem));
+  border: 1px solid var(--l-border-strong);
+  border-radius: 0.7rem;
+  background: color-mix(in srgb, var(--l-bg-2) 96%, transparent);
+  padding: 0.35rem;
+  box-shadow: 0 20px 55px rgba(0, 0, 0, 0.38);
+  backdrop-filter: blur(18px);
+  animation: l-pop 160ms ease;
+}
+
+.l-nav-popover-item {
+  display: block;
+  border-radius: 0.5rem;
+  padding: 0.6rem 0.7rem;
+  color: var(--l-muted);
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-align: left;
+}
+
+.l-nav-popover-item:hover,
+.l-nav-popover-item:focus-visible {
+  background: color-mix(in srgb, var(--l-gold) 12%, transparent);
+  color: var(--l-fg);
+}
+
+/* Sticky-header offset so anchor scrolling never hides section titles. */
+section[id],
+footer[id] {
+  scroll-margin-top: calc(var(--l-header-h) + 1rem);
+}
+
 .landing-root details:not([open]) > div {
   display: none;
 }
@@ -1395,15 +1459,20 @@ button[aria-disabled="true"]:hover {
   background: color-mix(in srgb, var(--l-gold) 10%, var(--l-bg));
 }
 
+/*
+ * Section up/down controls: bottom-right corner.
+ * The central-right rail is deliberately kept clear and reserved for a future
+ * social rail; these controls sit at the bottom right to avoid conflicting
+ * with it and with the bottom-left floating cookie button.
+ */
 .l-section-nav {
   position: fixed;
-  right: max(0.75rem, env(safe-area-inset-right));
-  top: 50%;
+  right: clamp(0.75rem, 2vw, 1.5rem);
+  bottom: calc(1.5rem + env(safe-area-inset-bottom));
   z-index: 70;
   display: flex;
   flex-direction: column;
   gap: 0.55rem;
-  transform: translateY(-50%);
 }
 
 .l-section-nav button {
@@ -1434,6 +1503,7 @@ button[aria-disabled="true"]:hover {
 
   .l-section-nav {
     right: 0.55rem;
+    bottom: calc(1rem + env(safe-area-inset-bottom));
     gap: 0.45rem;
   }
 

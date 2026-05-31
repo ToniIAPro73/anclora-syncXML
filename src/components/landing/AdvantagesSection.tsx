@@ -6,7 +6,7 @@ import { ADVANTAGES } from "./landingData";
 export function AdvantagesSection() {
   const { copy } = useLandingI18n();
   return (
-    <section className="l-section">
+    <section id="ventajas" className="l-section">
       <div className="l-container">
         <SectionHeading
           eyebrow={copy.advantages.eyebrow}
