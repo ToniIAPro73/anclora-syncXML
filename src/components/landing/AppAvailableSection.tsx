@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { AlertTriangle } from "lucide-react";
 import { SectionHeading } from "./SectionHeading";
-import { LOGIN_HREF, PILOT_HREF } from "./landingData";
+import { PILOT_HREF } from "./landingData";
 
 export function AppAvailableSection() {
   return (
@@ -34,15 +34,6 @@ export function AppAvailableSection() {
               >
                 Solicitar piloto controlado
               </Link>
-              <div className="mt-3">
-                <Link
-                  href={LOGIN_HREF}
-                  className="l-applink"
-                  data-track="click_iniciar_sesion"
-                >
-                  Ya participo · Iniciar sesión
-                </Link>
-              </div>
               <p className="l-text mt-2.5 text-xs">
                 Acceso aprobado manualmente. Solo datos sintéticos o anonimizados.
               </p>
