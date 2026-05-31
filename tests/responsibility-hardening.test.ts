@@ -57,6 +57,7 @@ describe("responsibility hardening", () => {
   });
 
   it("parses quoted boolean environment flags", () => {
+    vi.stubEnv("NODE_ENV", "development");
     vi.stubEnv("SYNCXML_DISABLE_AUTH", '"true"');
     expect(envFlag("SYNCXML_DISABLE_AUTH")).toBe(true);
     expect(authDisabled()).toBe(true);
@@ -78,8 +79,19 @@ describe("responsibility hardening", () => {
     expect(canUsePasswordAuth()).toBe(false);
   });
 
-  it("allows an explicit temporary auth bypass flag", () => {
+  it("blocks auth bypass in production", () => {
     vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("SYNCXML_DISABLE_AUTH", "true");
+    vi.stubEnv("SYNCXML_ADMIN_PASSWORD", "");
+    vi.stubEnv("SESSION_SECRET", "");
+    expect(envFlag("SYNCXML_DISABLE_AUTH")).toBe(true);
+    expect(authDisabled()).toBe(false);
+    expect(() => validateRuntimeConfig()).toThrow(/not allowed in production/);
+    expect(canUsePasswordAuth()).toBe(false);
+  });
+
+  it("allows an explicit temporary auth bypass flag outside production", () => {
+    vi.stubEnv("NODE_ENV", "development");
     vi.stubEnv("SYNCXML_DISABLE_AUTH", "true");
     vi.stubEnv("SYNCXML_ADMIN_PASSWORD", "");
     vi.stubEnv("SESSION_SECRET", "");

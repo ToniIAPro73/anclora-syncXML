@@ -12,7 +12,7 @@ export function persistentStorageEnabled() {
 }
 
 export function authDisabled() {
-  return envFlag("SYNCXML_DISABLE_AUTH");
+  return envFlag("SYNCXML_DISABLE_AUTH") && process.env.NODE_ENV !== "production";
 }
 
 export function getSessionSecret() {
@@ -21,7 +21,7 @@ export function getSessionSecret() {
 
 export function getRuntimeConfigError() {
   if (process.env.NODE_ENV !== "production") return null;
-  if (authDisabled()) return null;
+  if (envFlag("SYNCXML_DISABLE_AUTH")) return "SYNCXML_DISABLE_AUTH is not allowed in production";
   const missing: string[] = [];
   if (!process.env.SYNCXML_ADMIN_PASSWORD) missing.push("SYNCXML_ADMIN_PASSWORD");
   if (!getSessionSecret()) missing.push("SESSION_SECRET");
