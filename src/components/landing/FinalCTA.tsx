@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { DIAGNOSTIC_MAILTO, LOGIN_HREF, PILOT_HREF } from "./landingData";
+import { PILOT_HREF } from "./landingData";
 
 export function FinalCTA() {
   return (
@@ -26,20 +26,9 @@ export function FinalCTA() {
               Solicitar piloto controlado
               <ArrowRight className="h-4 w-4" aria-hidden="true" />
             </Link>
-            <a
-              href={DIAGNOSTIC_MAILTO}
-              className="l-btn l-btn-secondary"
-              data-track="click_diagnostico_inicial"
-            >
-              Solicitar diagnóstico inicial
+            <a href="#acceso-piloto" className="l-btn l-btn-secondary" data-track="click_lista_espera">
+              Unirme a la lista de espera
             </a>
-            <Link
-              href={LOGIN_HREF}
-              className="l-btn l-btn-ghost"
-              data-track="click_iniciar_sesion"
-            >
-              Iniciar sesión
-            </Link>
           </div>
           <p className="l-text mx-auto mt-6 max-w-xl text-sm">
             El piloto se plantea siempre con datos sintéticos o anonimizados. No

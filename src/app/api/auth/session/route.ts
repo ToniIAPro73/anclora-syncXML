@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
-import { isAuthenticated } from "@/lib/auth";
+import { getSessionUser } from "@/lib/auth";
 
 export async function GET() {
-  return NextResponse.json({ authenticated: await isAuthenticated() });
+  const user = await getSessionUser();
+  return NextResponse.json({ authenticated: Boolean(user), user });
 }
