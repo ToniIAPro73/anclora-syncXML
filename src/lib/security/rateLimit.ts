@@ -41,13 +41,16 @@ export function createRateLimiter({ limit, windowMs }: RateLimitOptions) {
 
 const globalLimiters = globalThis as unknown as {
   syncXmlAuthLimiter?: ReturnType<typeof createRateLimiter>;
+  syncXmlPasswordRecoveryLimiter?: ReturnType<typeof createRateLimiter>;
   syncXmlSensitiveLimiter?: ReturnType<typeof createRateLimiter>;
 };
 
 globalLimiters.syncXmlAuthLimiter ??= createRateLimiter({ limit: 5, windowMs: 60_000 });
+globalLimiters.syncXmlPasswordRecoveryLimiter ??= createRateLimiter({ limit: 3, windowMs: 24 * 60 * 60_000 });
 globalLimiters.syncXmlSensitiveLimiter ??= createRateLimiter({ limit: 60, windowMs: 60_000 });
 
 export const authRateLimiter = globalLimiters.syncXmlAuthLimiter;
+export const passwordRecoveryLimiter = globalLimiters.syncXmlPasswordRecoveryLimiter;
 export const sensitiveRateLimiter = globalLimiters.syncXmlSensitiveLimiter;
 
 export function getRateLimitKey(request: Request) {
@@ -56,4 +59,3 @@ export function getRateLimitKey(request: Request) {
     || request.headers.get("cookie")
     || "anonymous";
 }
-
