@@ -167,6 +167,10 @@ export type LandingCopy = {
     actionError: string;
     checking: string;
     enter: string;
+    recover: string;
+    recovering: string;
+    recoverHelp: string;
+    recoverSuccess: string;
     notPilot: string;
     pilotNote: string;
   };
@@ -436,6 +440,10 @@ const dictionaries: Record<LandingLocale, LandingCopy> = {
       actionError: "No se pudo completar la acción. Inténtalo de nuevo.",
       checking: "Comprobando…",
       enter: "Entrar a la aplicación",
+      recover: "Reemitir contraseña temporal",
+      recovering: "Reemitiendo…",
+      recoverHelp: "Si has perdido el email de acceso, introduce tu email autorizado y reemitiremos una contraseña temporal si sigues aprobado para el piloto.",
+      recoverSuccess: "Si el email está autorizado, recibirás una nueva contraseña temporal.",
       notPilot: "¿Todavía no participas en el piloto?",
       pilotNote: "No subas datos reales de huéspedes. La validación se realiza con datos sintéticos o anonimizados.",
     },
@@ -728,6 +736,10 @@ const dictionaries: Record<LandingLocale, LandingCopy> = {
       actionError: "The action could not be completed. Try again.",
       checking: "Checking…",
       enter: "Enter the application",
+      recover: "Reissue temporary password",
+      recovering: "Reissuing…",
+      recoverHelp: "If you lost the access email, enter your authorized email and we will reissue a temporary password if your pilot access is still approved.",
+      recoverSuccess: "If the email is authorized, you will receive a new temporary password.",
       notPilot: "Not part of the pilot yet?",
       pilotNote: "Do not upload real guest data. Validation uses synthetic or anonymized data.",
     },
@@ -1020,6 +1032,10 @@ const dictionaries: Record<LandingLocale, LandingCopy> = {
       actionError: "Die Aktion konnte nicht abgeschlossen werden. Versuche es erneut.",
       checking: "Prüfung läuft…",
       enter: "Zur Anwendung anmelden",
+      recover: "Temporäres Passwort neu ausstellen",
+      recovering: "Neu ausstellen…",
+      recoverHelp: "Wenn du die Zugangsmail verloren hast, gib deine autorisierte E-Mail ein. Wir stellen ein neues temporäres Passwort aus, sofern dein Pilotzugang weiterhin genehmigt ist.",
+      recoverSuccess: "Wenn die E-Mail autorisiert ist, erhältst du ein neues temporäres Passwort.",
       notPilot: "Noch nicht im Pilotbetrieb?",
       pilotNote: "Lade keine echten Gästedaten hoch. Die Validierung erfolgt mit synthetischen oder anonymisierten Daten.",
     },
