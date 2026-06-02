@@ -1,7 +1,9 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import { z } from "zod";
 import { getRateLimitKey, sensitiveRateLimiter } from "@/lib/security/rateLimit";
 import { Resend } from "resend";
+
+export const maxDuration = 120;
 
 const APP_NAME = "Anclora SyncXML";
 const BRAND_BG = "#070A12";
@@ -233,6 +235,69 @@ function buildPilotRequestEmail(normalized: {
   return { subject, text, html };
 }
 
+async function forwardPilotRequestToNexus(input: {
+  normalized: unknown;
+  nexusWebhookUrl: string;
+  nexusApiKey: string;
+  requestId: string;
+}) {
+  const { normalized, nexusWebhookUrl, nexusApiKey, requestId } = input;
+  try {
+    console.info("Forwarding SyncXML pilot request to Nexus", {
+      requestId,
+      nexusWebhook: safeWebhookLabel(nexusWebhookUrl),
+    });
+
+    const response = await fetch(nexusWebhookUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${nexusApiKey}`,
+      },
+      body: JSON.stringify(normalized),
+      signal: AbortSignal.timeout(90000),
+    });
+
+    if (!response.ok) {
+      console.warn("Nexus rejected SyncXML pilot request", {
+        requestId,
+        status: response.status,
+        nexusWebhook: safeWebhookLabel(nexusWebhookUrl),
+      });
+    }
+  } catch (error) {
+    console.error("Failed to forward SyncXML pilot request to Nexus", {
+      requestId,
+      nexusWebhook: safeWebhookLabel(nexusWebhookUrl),
+      message: error instanceof Error ? error.message : String(error),
+    });
+  }
+}
+
+async function sendPilotRequestEmail(input: {
+  normalized: Parameters<typeof buildPilotRequestEmail>[0];
+  data: z.infer<typeof requestSchema>;
+  appUrl: string;
+  resendApiKey: string;
+  resendFrom: string;
+  resendTo: string;
+}) {
+  const resend = new Resend(input.resendApiKey);
+  const email = buildPilotRequestEmail(input.normalized, input.data, input.appUrl);
+  const { error } = await resend.emails.send({
+    from: input.resendFrom,
+    to: input.resendTo,
+    replyTo: input.normalized.email,
+    subject: email.subject,
+    text: email.text,
+    html: email.html,
+  });
+
+  if (error) {
+    throw error;
+  }
+}
+
 export async function POST(request: Request) {
   const rateLimit = sensitiveRateLimiter.check(getRateLimitKey(request));
   if (!rateLimit.allowed) return NextResponse.json({ error: "Demasiadas solicitudes" }, { status: 429 });
@@ -276,76 +341,57 @@ export async function POST(request: Request) {
       preferredModel: data.model,
       budget: data.presupuesto,
       message: data.mensaje,
+      adminEmailSentBySyncxml: false,
     },
   };
 
-  // Try Nexus first if configured
-  if (nexusWebhookUrl && nexusApiKey) {
-    try {
-      console.info("Forwarding SyncXML pilot request to Nexus", {
+  const queueNexusForward = () => {
+    if (!nexusWebhookUrl || !nexusApiKey) {
+      console.warn(`Nexus webhook is not fully configured; skipping background forward url=${Boolean(nexusWebhookUrl)} secret=${Boolean(nexusApiKey)}`, {
         requestId: normalized.requestId,
-        nexusWebhook: safeWebhookLabel(nexusWebhookUrl),
+        hasNexusWebhookUrl: Boolean(nexusWebhookUrl),
+        hasNexusWebhookSecret: Boolean(nexusApiKey),
       });
-
-      const response = await fetch(nexusWebhookUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${nexusApiKey}`
-        },
-        body: JSON.stringify(normalized),
-        signal: AbortSignal.timeout(45000),
-      });
-
-      if (response.ok) {
-        return NextResponse.json({ ok: true });
-      }
-      console.warn("Nexus rejected SyncXML pilot request, falling back to Resend if available", {
-        requestId: normalized.requestId,
-        status: response.status,
-        nexusWebhook: safeWebhookLabel(nexusWebhookUrl),
-      });
-    } catch (error) {
-      console.error("Failed to forward SyncXML pilot request to Nexus", {
-        requestId: normalized.requestId,
-        nexusWebhook: safeWebhookLabel(nexusWebhookUrl),
-        message: error instanceof Error ? error.message : String(error),
-      });
-      if (!resendApiKey) {
-        return NextResponse.json({ error: "No se pudo procesar la solicitud" }, { status: 502 });
-      }
+      return false;
     }
-  } else {
-    console.warn(`Nexus webhook is not fully configured; using Resend fallback url=${Boolean(nexusWebhookUrl)} secret=${Boolean(nexusApiKey)}`, {
-      requestId: normalized.requestId,
-      hasNexusWebhookUrl: Boolean(nexusWebhookUrl),
-      hasNexusWebhookSecret: Boolean(nexusApiKey),
-    });
-  }
 
-  // Fallback to Resend
+    after(() => forwardPilotRequestToNexus({
+      normalized,
+      nexusWebhookUrl,
+      nexusApiKey,
+      requestId: normalized.requestId,
+    }));
+    return true;
+  };
+
   if (resendApiKey && resendFrom && resendTo) {
     try {
-      const resend = new Resend(resendApiKey);
-      const email = buildPilotRequestEmail(normalized, data, appUrl);
-      const { error } = await resend.emails.send({
-        from: resendFrom,
-        to: resendTo,
-        replyTo: normalized.email,
-        subject: email.subject,
-        text: email.text,
-        html: email.html,
+      await sendPilotRequestEmail({
+        normalized,
+        data,
+        appUrl,
+        resendApiKey,
+        resendFrom,
+        resendTo,
       });
 
-      if (error) {
-        throw error;
-      }
-
+      normalized.raw.adminEmailSentBySyncxml = true;
+      queueNexusForward();
       return NextResponse.json({ ok: true });
     } catch (error) {
-      console.error("Failed to send email via Resend:", error);
+      console.error("Failed to send email via Resend", {
+        requestId: normalized.requestId,
+        message: error instanceof Error ? error.message : String(error),
+      });
+      if (queueNexusForward()) {
+        return NextResponse.json({ ok: true, warning: "email_failed_nexus_queued" });
+      }
       return NextResponse.json({ error: "No se pudo enviar la solicitud" }, { status: 502 });
     }
+  }
+
+  if (queueNexusForward()) {
+    return NextResponse.json({ ok: true, warning: "email_not_configured_nexus_queued" });
   }
 
   return NextResponse.json({ error: "Configuración de envío no disponible" }, { status: 503 });
