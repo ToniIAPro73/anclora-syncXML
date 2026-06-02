@@ -116,7 +116,7 @@ function buildPilotRequestEmail(normalized: {
   wantsToValidate: string;
 }, data: z.infer<typeof requestSchema>, appUrl: string) {
   const baseUrl = appUrl.replace(/\/$/, "");
-  const logoUrl = `${baseUrl}/brand/logo-anclora-syncxml.png`;
+  const logoUrl = `${baseUrl}/brand/logo-anclora-syncxml-email.png`;
   const preview = `Nueva solicitud de piloto controlado recibida en ${APP_NAME}.`;
   const subject = `${APP_NAME} - solicitud de piloto controlado`;
 
@@ -294,7 +294,7 @@ export async function POST(request: Request) {
           'Authorization': `Bearer ${nexusApiKey}`
         },
         body: JSON.stringify(normalized),
-        signal: AbortSignal.timeout(15000),
+        signal: AbortSignal.timeout(45000),
       });
 
       if (response.ok) {
