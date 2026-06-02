@@ -28,7 +28,9 @@ export function LoginView() {
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [logoutBusy, setLogoutBusy] = useState(false);
+  const [recoverBusy, setRecoverBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [recoverMessage, setRecoverMessage] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -49,6 +51,7 @@ export function LoginView() {
       event.preventDefault();
       setBusy(true);
       setError(null);
+      setRecoverMessage(null);
       try {
         const response = await fetch("/api/auth/login", {
           method: "POST",
@@ -90,6 +93,26 @@ export function LoginView() {
       setLogoutBusy(false);
     }
   }, [copy.login.actionError]);
+
+  const recoverPassword = useCallback(async () => {
+    if (!email) return;
+    setRecoverBusy(true);
+    setError(null);
+    setRecoverMessage(null);
+    try {
+      await fetch("/api/auth/recover", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      setRecoverMessage(copy.login.recoverSuccess);
+      track("password_recovery_requested");
+    } catch {
+      setError(copy.login.actionError);
+    } finally {
+      setRecoverBusy(false);
+    }
+  }, [copy.login.actionError, copy.login.recoverSuccess, email]);
 
   return (
     <main className="auth-screen-bg flex min-h-[100svh] flex-col items-center justify-center px-4 py-4">
@@ -178,6 +201,11 @@ export function LoginView() {
                   {error}
                 </p>
               ) : null}
+              {recoverMessage ? (
+                <p className="auth-card-note" role="status">
+                  {recoverMessage}
+                </p>
+              ) : null}
               <button
                 type="submit"
                 className="btn-primary auth-card-action"
@@ -185,6 +213,17 @@ export function LoginView() {
               >
                 {busy ? copy.login.checking : copy.login.enter}
               </button>
+              <div className="auth-card-pilot-box">
+                <p className="auth-card-note">{copy.login.recoverHelp}</p>
+                <button
+                  type="button"
+                  className="btn-secondary auth-card-action mt-3"
+                  onClick={recoverPassword}
+                  disabled={recoverBusy || phase === "checking" || !email}
+                >
+                  {recoverBusy ? copy.login.recovering : copy.login.recover}
+                </button>
+              </div>
             </form>
           )}
 
