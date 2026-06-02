@@ -3,6 +3,14 @@ import { z } from "zod";
 import { getRateLimitKey, sensitiveRateLimiter } from "@/lib/security/rateLimit";
 import { Resend } from "resend";
 
+const APP_NAME = "Anclora SyncXML";
+const BRAND_BG = "#070A12";
+const BRAND_SURFACE = "#101827";
+const BRAND_SURFACE_ELEVATED = "#151F32";
+const BRAND_ACCENT = "#BFA46A";
+const BRAND_TEXT = "#F8FAFC";
+const BRAND_MUTED = "#A8B3C7";
+
 const requestSchema = z.object({
   name: z.string().trim().min(1).max(180).optional(),
   nombre: z.string().trim().min(1).max(120).optional(),
@@ -43,6 +51,188 @@ const requestSchema = z.object({
   }
 });
 
+function escapeHtml(value: unknown) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function safeValue(value: unknown, fallback = "No especificado") {
+  const text = String(value ?? "").trim();
+  return text || fallback;
+}
+
+function safeWebhookLabel(url: string | undefined) {
+  if (!url) return "missing";
+  try {
+    const parsed = new URL(url);
+    return `${parsed.origin}${parsed.pathname}`;
+  } catch {
+    return "invalid_url";
+  }
+}
+
+function detailRow(label: string, value: unknown) {
+  return `
+    <tr>
+      <td style="padding:8px 0;color:${BRAND_MUTED};font-size:13px;line-height:18px;width:190px;">${escapeHtml(label)}</td>
+      <td style="padding:8px 0;color:${BRAND_TEXT};font-size:14px;line-height:20px;font-weight:600;">${escapeHtml(safeValue(value))}</td>
+    </tr>
+  `;
+}
+
+function section(title: string, rows: string) {
+  return `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:18px;border-collapse:collapse;">
+      <tr>
+        <td style="padding:0 0 8px;border-bottom:1px solid rgba(191,164,106,0.34);color:${BRAND_ACCENT};font-size:12px;line-height:16px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;">
+          ${escapeHtml(title)}
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
+            ${rows}
+          </table>
+        </td>
+      </tr>
+    </table>
+  `;
+}
+
+function buildPilotRequestEmail(normalized: {
+  requestId: string;
+  name: string;
+  email: string;
+  companyName?: string;
+  role?: string;
+  accommodationType: string;
+  estimatedMonthlyReservations: string;
+  currentWorkflow: string;
+  mainPain: string;
+  wantsToValidate: string;
+}, data: z.infer<typeof requestSchema>, appUrl: string) {
+  const baseUrl = appUrl.replace(/\/$/, "");
+  const logoUrl = `${baseUrl}/brand/logo-anclora-syncxml.png`;
+  const preview = `Nueva solicitud de piloto controlado recibida en ${APP_NAME}.`;
+  const subject = `${APP_NAME} - solicitud de piloto controlado`;
+
+  const text = [
+    preview,
+    "",
+    "DATOS PERSONALES",
+    `Request ID: ${normalized.requestId}`,
+    `Nombre: ${normalized.name}`,
+    `Email: ${normalized.email}`,
+    `Empresa/alojamiento: ${safeValue(normalized.companyName)}`,
+    `Rol: ${safeValue(normalized.role)}`,
+    "",
+    "OPERATIVA",
+    `Tipo alojamiento: ${normalized.accommodationType}`,
+    `Reservas/mes: ${normalized.estimatedMonthlyReservations}`,
+    `Flujo actual: ${normalized.currentWorkflow}`,
+    `Problema: ${normalized.mainPain}`,
+    `Quiere validar: ${normalized.wantsToValidate}`,
+    "Acepta muestra sintetica/anonimizada: Si",
+    "Acepta condiciones piloto: Si",
+    "",
+    "DISPOSICION DE PAGO",
+    `Interes: ${safeValue(data.pay)}`,
+    `Modelo: ${safeValue(data.model)}`,
+    `Presupuesto: ${safeValue(data.presupuesto)}`,
+    "",
+    "MENSAJE",
+    safeValue(data.mensaje, "Sin mensaje adicional."),
+  ].join("\n");
+
+  const html = `<!doctype html>
+<html lang="es">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>${escapeHtml(subject)}</title>
+  </head>
+  <body style="margin:0;padding:0;background:${BRAND_BG};font-family:Inter,Segoe UI,Arial,sans-serif;color:${BRAND_TEXT};">
+    <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">${escapeHtml(preview)}</div>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${BRAND_BG};padding:32px 16px;border-collapse:collapse;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:720px;border-collapse:collapse;">
+            <tr>
+              <td style="padding:0 0 18px;">
+                <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
+                  <tr>
+                    <td style="padding-right:12px;">
+                      <img src="${escapeHtml(logoUrl)}" width="48" height="48" alt="${APP_NAME}" style="display:block;width:48px;height:48px;border-radius:8px;object-fit:contain;">
+                    </td>
+                    <td>
+                      <div style="color:${BRAND_TEXT};font-size:18px;line-height:24px;font-weight:800;">${APP_NAME}</div>
+                      <div style="color:${BRAND_MUTED};font-size:13px;line-height:18px;">Piloto controlado</div>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <td style="border:1px solid rgba(255,255,255,0.10);border-radius:8px;background:${BRAND_SURFACE};overflow:hidden;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
+                  <tr>
+                    <td style="padding:28px 28px 10px;background:${BRAND_SURFACE_ELEVATED};border-bottom:1px solid rgba(255,255,255,0.08);">
+                      <div style="display:inline-block;margin-bottom:12px;padding:6px 10px;border:1px solid rgba(191,164,106,0.42);border-radius:999px;color:${BRAND_ACCENT};font-size:12px;line-height:16px;font-weight:800;">Nueva solicitud</div>
+                      <h1 style="margin:0;color:${BRAND_TEXT};font-size:24px;line-height:31px;font-weight:850;letter-spacing:0;">Piloto controlado recibido</h1>
+                      <p style="margin:10px 0 0;color:${BRAND_MUTED};font-size:15px;line-height:22px;">Solicitud capturada desde la landing pública de ${APP_NAME}. Revisa el encaje operativo antes de conceder acceso.</p>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding:8px 28px 28px;">
+                      ${section("Datos personales", [
+                        detailRow("Request ID", normalized.requestId),
+                        detailRow("Nombre", normalized.name),
+                        detailRow("Email", normalized.email),
+                        detailRow("Empresa/alojamiento", normalized.companyName),
+                        detailRow("Rol", normalized.role),
+                      ].join(""))}
+                      ${section("Operativa", [
+                        detailRow("Tipo alojamiento", normalized.accommodationType),
+                        detailRow("Reservas/mes", normalized.estimatedMonthlyReservations),
+                        detailRow("Flujo actual", normalized.currentWorkflow),
+                        detailRow("Problema", normalized.mainPain),
+                        detailRow("Quiere validar", normalized.wantsToValidate),
+                        detailRow("Muestra sintetica/anonimizada", "Si"),
+                        detailRow("Condiciones piloto", "Si"),
+                      ].join(""))}
+                      ${section("Disposicion de pago", [
+                        detailRow("Interes", data.pay),
+                        detailRow("Modelo", data.model),
+                        detailRow("Presupuesto", data.presupuesto),
+                      ].join(""))}
+                      <div style="margin-top:20px;padding:16px;border:1px solid rgba(255,255,255,0.10);border-radius:8px;background:rgba(255,255,255,0.035);">
+                        <div style="color:${BRAND_ACCENT};font-size:12px;line-height:16px;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;">Mensaje</div>
+                        <div style="margin-top:8px;color:${BRAND_TEXT};font-size:14px;line-height:21px;">${escapeHtml(safeValue(data.mensaje, "Sin mensaje adicional."))}</div>
+                      </div>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:16px 4px 0;color:${BRAND_MUTED};font-size:12px;line-height:18px;">
+                Email transaccional interno de ${APP_NAME}. No incluye datos reales de huespedes ni credenciales de acceso.
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>`;
+
+  return { subject, text, html };
+}
+
 export async function POST(request: Request) {
   const rateLimit = sensitiveRateLimiter.check(getRateLimitKey(request));
   if (!rateLimit.allowed) return NextResponse.json({ error: "Demasiadas solicitudes" }, { status: 429 });
@@ -53,6 +243,7 @@ export async function POST(request: Request) {
   const resendApiKey = process.env.RESEND_API_KEY;
   const resendFrom = process.env.RESEND_FROM || process.env.RESEND_FROM_EMAIL;
   const resendTo = process.env.ADMIN_EMAILS || process.env.SYNCXML_PILOT_REQUEST_TO;
+  const appUrl = process.env.SYNCXML_APP_URL || process.env.NEXT_PUBLIC_APP_URL || "https://anclora-syncxml.vercel.app";
 
   if (!nexusWebhookUrl && !resendApiKey) {
     console.error("Missing Nexus and Resend configuration for pilot request forwarding");
@@ -91,63 +282,59 @@ export async function POST(request: Request) {
   // Try Nexus first if configured
   if (nexusWebhookUrl && nexusApiKey) {
     try {
+      console.info("Forwarding SyncXML pilot request to Nexus", {
+        requestId: normalized.requestId,
+        nexusWebhook: safeWebhookLabel(nexusWebhookUrl),
+      });
+
       const response = await fetch(nexusWebhookUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${nexusApiKey}`
         },
-        body: JSON.stringify(normalized)
+        body: JSON.stringify(normalized),
+        signal: AbortSignal.timeout(15000),
       });
 
       if (response.ok) {
         return NextResponse.json({ ok: true });
       }
-      console.warn(`Nexus responded with ${response.status}, falling back to Resend if available`);
+      console.warn("Nexus rejected SyncXML pilot request, falling back to Resend if available", {
+        requestId: normalized.requestId,
+        status: response.status,
+        nexusWebhook: safeWebhookLabel(nexusWebhookUrl),
+      });
     } catch (error) {
-      console.error("Failed to forward request to Nexus:", error);
+      console.error("Failed to forward SyncXML pilot request to Nexus", {
+        requestId: normalized.requestId,
+        nexusWebhook: safeWebhookLabel(nexusWebhookUrl),
+        message: error instanceof Error ? error.message : String(error),
+      });
       if (!resendApiKey) {
         return NextResponse.json({ error: "No se pudo procesar la solicitud" }, { status: 502 });
       }
     }
+  } else {
+    console.warn(`Nexus webhook is not fully configured; using Resend fallback url=${Boolean(nexusWebhookUrl)} secret=${Boolean(nexusApiKey)}`, {
+      requestId: normalized.requestId,
+      hasNexusWebhookUrl: Boolean(nexusWebhookUrl),
+      hasNexusWebhookSecret: Boolean(nexusApiKey),
+    });
   }
 
   // Fallback to Resend
   if (resendApiKey && resendFrom && resendTo) {
     try {
       const resend = new Resend(resendApiKey);
+      const email = buildPilotRequestEmail(normalized, data, appUrl);
       const { error } = await resend.emails.send({
         from: resendFrom,
         to: resendTo,
         replyTo: normalized.email,
-        subject: `Nueva solicitud de piloto: ${normalized.name}`,
-        text: `
-Nueva solicitud de piloto controlado recibida.
-
-DATOS PERSONALES
-Request ID: ${normalized.requestId}
-Nombre: ${normalized.name}
-Email: ${normalized.email}
-Empresa/alojamiento: ${normalized.companyName || "No especificado"}
-Rol: ${normalized.role || "No especificado"}
-
-OPERATIVA
-Tipo alojamiento: ${normalized.accommodationType}
-Reservas/mes: ${normalized.estimatedMonthlyReservations}
-Flujo actual: ${normalized.currentWorkflow}
-Problema: ${normalized.mainPain}
-Quiere validar: ${normalized.wantsToValidate}
-Acepta muestra sintética/anonimizada: Sí
-Acepta condiciones piloto: Sí
-
-DISPOSICIÓN DE PAGO
-¿Interés?: ${data.pay || "No especificado"}
-Modelo: ${data.model || "No especificado"}
-Presupuesto: ${data.presupuesto || "No especificado"}
-
-MENSAJE
-${data.mensaje || "Sin mensaje adicional."}
-        `,
+        subject: email.subject,
+        text: email.text,
+        html: email.html,
       });
 
       if (error) {
