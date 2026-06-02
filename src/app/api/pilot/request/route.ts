@@ -294,7 +294,7 @@ export async function POST(request: Request) {
           'Authorization': `Bearer ${nexusApiKey}`
         },
         body: JSON.stringify(normalized),
-        signal: AbortSignal.timeout(15000),
+        signal: AbortSignal.timeout(45000),
       });
 
       if (response.ok) {
