@@ -2,14 +2,20 @@ import { createHash, randomUUID } from "node:crypto";
 import type { AppLanguage, AppTheme } from "./domain";
 
 export const auditEventTypes = [
+  "import_batch_created",
+  "reservation_imported",
   "file_import_started",
   "file_import_validated",
   "file_import_failed",
   "mapping_reviewed",
+  "validation_completed",
   "duplicates_detected",
   "consolidation_preview_generated",
   "consolidation_confirmed",
+  "local_package_generated",
+  "xml_generated",
   "xml_exported",
+  "operation_cleared",
   "session_cleared",
   "privacy_mode_enabled",
   "privacy_mode_changed",
