@@ -68,6 +68,7 @@ export function generateHospitalityXml(parsed: ParsedExcel, templateXml = TEMPLA
   const schemaValidation = validateSesHospedajesXml(xml, "altaParteHospedaje");
   return {
     xml,
+    status: "generated",
     visual: {
       reservation: parsed.reservation,
       property: parsed.property,

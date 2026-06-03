@@ -802,6 +802,19 @@ function XmlViewer({
 }) {
   const { dictionary: t } = usePreferences();
   const hasXmlErrors = generated.validation.errors.length > 0;
+
+  const statusMap: Record<string, { label: string; tone: string }> = {
+    generated: { label: "XML Generado (Revisión pendiente)", tone: "is-warning" },
+    locally_reviewed: { label: "Revisión Local Completada", tone: "is-valid" },
+    xsd_validation_pending: { label: "Validación XSD Pendiente", tone: "is-warning" },
+    xsd_validated: { label: "Validado contra XSD", tone: "is-valid" },
+    xsd_failed: { label: "Fallo de Validación XSD", tone: "is-error" },
+    ses_preprod_tested: { label: "Probado en SES Preproducción", tone: "is-valid" },
+    production_send_disabled: { label: "Envío a Producción Desactivado", tone: "is-warning" },
+  };
+
+  const currentStatus = statusMap[generated.status] || { label: "XML Revisable", tone: "is-warning" };
+
   return (
     <>
       {/* Card XML */}
@@ -809,8 +822,10 @@ function XmlViewer({
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="font-heading text-xl font-bold">XML</h2>
-            <p className="mt-1 text-sm text-muted">{t.xmlNote}</p>
-            <p className="mt-2 text-sm text-warning">{t.noticeBeforeExport}</p>
+            <div className="mt-1 flex items-center gap-2">
+              <span className={`status-pill ${currentStatus.tone}`}>{currentStatus.label}</span>
+              <span className="status-pill is-warning">Solo Piloto</span>
+            </div>
           </div>
           <div className="flex gap-2">
             <button className={`tab ${activeView === "visual" ? "is-active" : ""}`} onClick={() => onViewChange("visual")}>{t.visualView}</button>

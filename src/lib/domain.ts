@@ -103,8 +103,19 @@ export type ParsedExcel = {
   };
 };
 
+export type XmlValidationStatus = 
+  | "generated"
+  | "locally_reviewed"
+  | "xsd_validation_pending"
+  | "xsd_validated"
+  | "xsd_failed"
+  | "ses_preprod_pending"
+  | "ses_preprod_tested"
+  | "production_send_disabled";
+
 export type GeneratedXmlResult = {
   xml: string;
+  status: XmlValidationStatus;
   visual: {
     reservation: ReservationData;
     property: PropertyData;
