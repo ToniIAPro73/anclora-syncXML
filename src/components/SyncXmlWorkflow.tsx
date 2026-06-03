@@ -500,7 +500,7 @@ export function SyncXmlWorkflow() {
                 <span className="text-sm text-muted">{t.clickOrDrop}</span>
                 {selectedFile && <span className="upload-file">{t.fileSelected}: {selectedFile.name}</span>}
               </button>
-              <input ref={fileInputRef} className="hidden" type="file" accept=".xlsx" disabled={busy || !consentAccepted} onChange={(event) => chooseFile(event.target.files?.[0])} />
+              <input ref={fileInputRef} className="hidden" type="file" accept=".xlsx,.csv" disabled={busy || !consentAccepted} onChange={(event) => chooseFile(event.target.files?.[0])} />
               <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
                 <button type="button" className="btn-secondary" disabled={busy} onClick={loadSyntheticDemo} title={t.demoHint}>
                   <Sparkles className="h-4 w-4" />{t.demoLoad}

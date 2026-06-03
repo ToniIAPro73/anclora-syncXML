@@ -16,7 +16,7 @@ export async function POST(request: Request) {
   const file = formData.get("file");
   if (!(file instanceof File)) return NextResponse.json({ error: "Archivo no recibido" }, { status: 400 });
   recordAuditEvent({ eventType: "file_import_started", pseudonymousSessionId: pseudonymizeSession(request.headers.get("cookie")), language: "es", theme: "dark" });
-  const fileValidation = validateUploadFile(file, [".xlsx"]);
+  const fileValidation = validateUploadFile(file, [".xlsx", ".csv"]);
   if (!fileValidation.ok) {
     recordAuditEvent({ eventType: "file_import_failed", pseudonymousSessionId: pseudonymizeSession(request.headers.get("cookie")), validationResult: fileValidation.errorCode, language: "es", theme: "dark" });
     return NextResponse.json({ error: fileValidation.errorCode }, { status: 400 });
