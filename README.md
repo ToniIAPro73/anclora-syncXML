@@ -76,10 +76,10 @@ Para desarrollo local sin datos reales:
 SYNCXML_LOCAL_DEMO=true npm run dev
 ```
 
-Para probar el acceso real por clave compartida en local o staging:
+Para probar el acceso real por cuentas individuales en local o staging:
 
 ```env
-SYNCXML_ADMIN_PASSWORD="clave-del-piloto"
+SYNCXML_ADMIN_PASSWORD="contraseña-temporal"
 SESSION_SECRET="secreto-largo"
 SYNCXML_LOCAL_DEMO="false"
 SYNCXML_DISABLE_AUTH="false"
@@ -107,7 +107,7 @@ npm run build
 ## Modelo de acceso
 
 El acceso a `/app` y `/dashboard` esta protegido por AuthGate con una
-**contraseña unica compartida** (`SYNCXML_ADMIN_PASSWORD`). **No hay cuentas por
+**cuentas individuales de usuario** (`SYNCXML_ADMIN_PASSWORD`). **No hay cuentas por
 usuario ni tabla de leads**: la solicitud de piloto (`/piloto`) se gestiona por
 email transaccional con Resend y los estados `pending/approved/invited/rejected`
 del modelo v0.2 son hoy un **proceso manual**. Detalles y pendientes en
@@ -115,7 +115,7 @@ del modelo v0.2 son hoy un **proceso manual**. Detalles y pendientes en
 
 El `/login` y el estado no autenticado de AuthGate siguen el contrato visual
 `ANCLORA_AUTH_LOGIN_SCREEN_CONTRACT` v1.3.0 de la Boveda Anclora, adaptado al
-modelo actual de clave compartida de piloto: un unico campo de clave, sin
+modelo actual de cuentas individuales de piloto: un unico campo de clave, sin
 registro publico, sin OAuth y sin recuperacion de contraseña personal.
 
 ## i18n y tema

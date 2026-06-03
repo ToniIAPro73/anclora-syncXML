@@ -184,8 +184,8 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
               aria-required="true"
             />
             <span className="auth-card-help">
-              Recibirás la clave por correo una vez aprobada tu solicitud. Es
-              una clave compartida del piloto, no una cuenta personal.
+              Recibirás tus credenciales por correo una vez aprobada tu solicitud. Es
+              una cuentas individuales del piloto, no credenciales individuales.
             </span>
           </label>
           {error && <p className="auth-card-error" role="alert">{error}</p>}
