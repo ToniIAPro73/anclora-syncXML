@@ -2282,18 +2282,30 @@ function issueRecommendedAction(issue: { severity: string; recommendation?: stri
 }
 
 function PrivacyModeCard({ onClear, hasData }: { onClear: () => void; hasData: boolean }) {
-  const { dictionary: t } = usePreferences();
   return (
-    <section className="panel border-accent/30 p-5">
+    <section className="panel border-accent/30 p-5 bg-surface-elevated">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex min-w-0 gap-3">
           <ShieldCheck className="mt-1 h-5 w-5 shrink-0 text-accent" />
           <div>
-            <h2 className="font-heading text-base font-bold">{t.privateModeTitle}</h2>
-            <p className="mt-1 text-sm text-secondary">{t.privateModeBanner}</p>
+            <h2 className="font-heading text-base font-bold text-accent">Modo Temporal Activo</h2>
+            <p className="mt-1 text-sm text-secondary font-semibold">Sin almacenamiento permanente por defecto.</p>
           </div>
         </div>
-        <button type="button" className="btn-secondary" disabled={!hasData} onClick={onClear}><Trash2 className="h-4 w-4" />{t.clearOperationData}</button>
+        <button type="button" className="btn-danger" disabled={!hasData} onClick={onClear}>
+          <Trash2 className="h-4 w-4" />Borrar datos de esta operación
+        </button>
+      </div>
+      <div className="mt-5 border-t border-accent/20 pt-4">
+        <h3 className="font-heading text-sm font-bold text-muted mb-2">¿Qué ocurre con tus datos?</h3>
+        <ul className="grid gap-2 text-xs text-secondary sm:grid-cols-2">
+          <li className="flex items-start gap-2"><CheckCircle2 className="h-3.5 w-3.5 text-accent mt-0.5 shrink-0"/> <span><strong>Datos importados:</strong> Se procesan en memoria, no se guarda el Excel original.</span></li>
+          <li className="flex items-start gap-2"><CheckCircle2 className="h-3.5 w-3.5 text-accent mt-0.5 shrink-0"/> <span><strong>Vista previa:</strong> Datos personales enmascarados por defecto.</span></li>
+          <li className="flex items-start gap-2"><CheckCircle2 className="h-3.5 w-3.5 text-accent mt-0.5 shrink-0"/> <span><strong>XML generado:</strong> Es revisable, solo se descarga a tu dispositivo.</span></li>
+          <li className="flex items-start gap-2"><CheckCircle2 className="h-3.5 w-3.5 text-accent mt-0.5 shrink-0"/> <span><strong>Logs técnicos:</strong> No registramos PII (datos personales) en el servidor.</span></li>
+          <li className="flex items-start gap-2"><CheckCircle2 className="h-3.5 w-3.5 text-accent mt-0.5 shrink-0"/> <span><strong>Borrado operativo:</strong> Puedes destruir la operación en cualquier momento.</span></li>
+          <li className="flex items-start gap-2"><CheckCircle2 className="h-3.5 w-3.5 text-accent mt-0.5 shrink-0"/> <span><strong>Límites:</strong> No enviamos automáticamente a SES ni actuamos como tu archivo legal.</span></li>
+        </ul>
       </div>
     </section>
   );
