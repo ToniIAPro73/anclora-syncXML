@@ -13,6 +13,12 @@ Este checklist es una propuesta para estructurar la primera prueba real de Anclo
 *   [ ] **Perfil del Usuario:** "Friends & Family" o Partner de confianza con volumen bajo de reservas.
 *   [ ] **Datos Permitidos:** Excel con datos *sintéticos* o *rigurosamente anonimizados* (nombres ficticios, DNI alterados).
 
+## Responsable Operativo
+
+*   [ ] Responsable del piloto asignado: Toni / administrador designado.
+*   [ ] Ninguna sesión piloto se ejecuta sin supervisión humana.
+*   [ ] El responsable valida que el usuario entiende que solo puede usar datos sintéticos o anonimizados.
+
 ## 3. Comunicaciones y Assets
 *   [ ] **Email de Invitación:** Template en Resend que incluya:
     *   Enlace de acceso.
@@ -29,6 +35,20 @@ Este checklist es una propuesta para estructurar la primera prueba real de Anclo
     *   ¿Entendiste por qué se marcaron ciertos campos como error?
     *   ¿Qué falta para que confíes en esta herramienta en tu día a día?
 
+## Dry Run Interno Obligatorio
+
+Antes de invitar a un usuario externo:
+
+*   [ ] Crear usuario piloto interno.
+*   [ ] Usar únicamente Excel sintético.
+*   [ ] Completar login con credenciales temporales.
+*   [ ] Cargar Excel de prueba.
+*   [ ] Generar y descargar XML.
+*   [ ] Confirmar que el XML está bien formado.
+*   [ ] Revocar o desactivar el usuario piloto interno.
+*   [ ] Confirmar que no hay datos persistidos si `SYNCXML_ENABLE_PERSISTENT_STORAGE=false`.
+*   [ ] Confirmar que no hay PII en logs ni capturas.
+
 ## 4. Criterios de Éxito
 *   [ ] El usuario logra subir el Excel sin asistencia técnica en el momento.
 *   [ ] El usuario resuelve al menos 1 error de validación en la UI.
@@ -42,5 +62,5 @@ Este checklist es una propuesta para estructurar la primera prueba real de Anclo
 
 ## 6. Procedimiento de Rollback (Si algo falla)
 *   [ ] Si el XML sale malformado de forma consistente: Pausar prueba, recoger log del error en cliente, finalizar sesión.
-*   [ ] Si el AuthGate falla: El admin revoca manualmente el acceso cambiando el `PilotUserStatus` a `revoked` vía base de datos (Supabase) o rotando la clave temporal.
+*   [ ] Si el AuthGate falla: El admin revoca manualmente el acceso cambiando el estado del PilotUser a revoked/inactive en la base de datos operativa.
 *   [ ] Si se suben datos reales accidentalmente: Forzar cierre de sesión (borra estado in-memory). Si la persistencia estuviera activa por error, ejecutar borrado manual del registro en BD y vaciar logs de Vercel.
