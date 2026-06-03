@@ -21,9 +21,10 @@ export async function POST(request: Request) {
     const expired = user?.expiresAt ? user.expiresAt.getTime() < Date.now() : false;
     if (user && user.status === "active" && !expired && verifyPassword(password, user.passwordHash)) {
       await prisma.pilotUser.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } }).catch(() => null);
-      return setSessionCookie(NextResponse.json({ ok: true, role: user.role, email: user.email }), {
+      return setSessionCookie(NextResponse.json({ ok: true, role: user.role, email: user.email, temporaryPassword: user.temporaryPassword }), {
         email: user.email,
         role: user.role,
+        temporaryPassword: user.temporaryPassword,
       });
     }
   }

@@ -8,6 +8,7 @@ export const COOKIE_NAME = "anclora-syncxml-session";
 export type SessionUser = {
   email: string;
   role: "admin" | "pilot_user";
+  temporaryPassword?: boolean;
 };
 
 function signSession(payload: SessionUser) {
