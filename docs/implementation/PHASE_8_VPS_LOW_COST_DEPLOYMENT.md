@@ -34,7 +34,44 @@ Se han incluido los siguientes archivos en la raíz del repositorio:
     docker compose -f docker-compose.example.yml up -d
     ```
 
-## 4. Seguridad en Despliegue
+## 4. Alternativa sin Docker (Directo con PM2)
+Si no puedes usar Docker en tu entorno, puedes desplegar directamente sobre Node.js utilizando **PM2** para la gestión de procesos.
+
+### Requisitos en el VPS
+*   Node.js 22+ y npm.
+*   PostgreSQL instalado y configurado localmente.
+*   PM2 instalado globalmente: `npm install -g pm2`.
+
+### Pasos para Despliegue Directo
+1.  **Instalar dependencias**:
+    ```bash
+    npm ci
+    ```
+2.  **Configurar entorno**:
+    ```bash
+    cp .env.example .env
+    # Editar .env con tus credenciales de Postgres local
+    ```
+3.  **Preparar Base de Datos**:
+    ```bash
+    npx prisma generate
+    npx prisma migrate deploy
+    ```
+4.  **Construir la aplicación**:
+    ```bash
+    npm run build
+    ```
+5.  **Lanzar con PM2**:
+    ```bash
+    pm2 start npm --name "syncxml" -- start
+    ```
+6.  **Persistencia tras reinicio**:
+    ```bash
+    pm2 save
+    pm2 startup
+    ```
+
+## 5. Seguridad en Despliegue
 *   **Logs**: Asegurar que `NODE_ENV=production` está activo para minimizar el volumen de logs.
 *   **Variables Críticas**: `SYNCXML_ENCRYPTION_KEY`, `SESSION_SECRET` y `SYNCXML_ADMIN_PASSWORD` deben ser cadenas largas y aleatorias.
 *   **Acceso Admin**: Mantener `SYNCXML_ADMIN_ACCESS_ENABLED=false` a menos que se requiera mantenimiento explícito.
