@@ -6,11 +6,10 @@ import { generateTemporaryPassword, hashPassword } from "@/lib/password";
 const payloadSchema = z.object({
   requestId: z.string().trim().min(1).max(160),
   email: z.string().trim().email().max(254),
-  name: z.string().trim().min(1).max(180),
-  role: z.enum(["pilot_user", "admin"]).default("pilot_user"),
-  expiresAt: z.string().datetime().optional(),
-  source: z.literal("anclora-nexus"),
+  name: z.string().trim().min(1).max(180).optional(),
+  company: z.string().trim().max(180).optional(),
   rotatePassword: z.boolean().optional(),
+  expiresAt: z.string().datetime().optional(),
 });
 
 function getBearerToken(request: Request) {
@@ -42,22 +41,29 @@ export async function POST(request: Request) {
   if (existing?.status === "active" && !data.rotatePassword) {
     return NextResponse.json({
       ok: true,
-      pilotUserId: existing.id,
+      userId: existing.id,
       email: existing.email,
+      created: false,
+      reactivated: false,
+      rotatedPassword: false,
       temporaryPassword: null,
-      expiresAt: existing.expiresAt?.toISOString() ?? null,
-      credentialStatus: "already_active",
     });
   }
 
+  const reactivated = existing?.status !== "active";
+  const rotatedPassword = !!data.rotatePassword && !reactivated;
+
   const temporaryPassword = generateTemporaryPassword();
   const passwordHash = hashPassword(temporaryPassword);
+  
   const user = existing
     ? await prisma.pilotUser.update({
         where: { id: existing.id },
         data: {
+          name: data.name ?? existing.name,
+          company: data.company ?? existing.company,
           passwordHash,
-          role: data.role,
+          temporaryPassword: true,
           status: "active",
           sourceRequestId: data.requestId,
           expiresAt,
@@ -66,8 +72,10 @@ export async function POST(request: Request) {
     : await prisma.pilotUser.create({
         data: {
           email,
+          name: data.name,
+          company: data.company,
           passwordHash,
-          role: data.role,
+          temporaryPassword: true,
           status: "active",
           sourceRequestId: data.requestId,
           expiresAt,
@@ -76,10 +84,11 @@ export async function POST(request: Request) {
 
   return NextResponse.json({
     ok: true,
-    pilotUserId: user.id,
+    userId: user.id,
     email: user.email,
+    created: !existing,
+    reactivated,
+    rotatedPassword,
     temporaryPassword,
-    expiresAt: user.expiresAt?.toISOString() ?? null,
-    credentialStatus: existing ? "rotated" : "created",
   });
 }
