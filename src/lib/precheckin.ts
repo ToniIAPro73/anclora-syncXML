@@ -1,7 +1,7 @@
 import { randomBytes, createHash } from "node:crypto";
 import type { GuestRecord, ParsedExcel, ValidationIssue } from "./domain";
 
-export type PrecheckinStatus = "DRAFT" | "SUBMITTED_FOR_REVIEW" | "EXPIRED";
+export type PrecheckinStatus = "DRAFT" | "SUBMITTED_FOR_REVIEW" | "EXPIRED" | "REVOKED";
 
 export type PrecheckinGuestDraft = Pick<GuestRecord, "sourceRow" | "firstName" | "surname1" | "surname2">;
 
@@ -27,7 +27,7 @@ export type PrecheckinGuestSubmission = {
 };
 
 export type PrecheckinSession = {
-  token: string;
+  tokenHash: string;
   reservationReference?: string;
   propertyName?: string;
   checkInDate?: string;
@@ -48,7 +48,7 @@ export type PrecheckinSession = {
   };
 };
 
-export type PublicPrecheckinSession = Omit<PrecheckinSession, "submissionHash">;
+export type PublicPrecheckinSession = Omit<PrecheckinSession, "submissionHash" | "tokenHash">;
 
 export type PrecheckinSubmissionResult = {
   status: PrecheckinStatus;
@@ -59,10 +59,15 @@ export type PrecheckinSubmissionResult = {
 const store = globalThis as unknown as { syncXmlPrecheckinSessions?: PrecheckinSession[] };
 store.syncXmlPrecheckinSessions ??= [];
 
+function hashToken(token: string) {
+  return createHash("sha256").update(token).digest("hex");
+}
+
 export function createPrecheckinTestSession(parsed: ParsedExcel, now = new Date()) {
   const expiresAt = new Date(now.getTime() + 1000 * 60 * 60 * 24 * 7);
+  const token = randomBytes(32).toString("base64url");
   const session: PrecheckinSession = {
-    token: randomBytes(24).toString("base64url"),
+    tokenHash: hashToken(token),
     reservationReference: parsed.reservation.reference,
     propertyName: parsed.property.name,
     checkInDate: parsed.reservation.checkInDate,
@@ -83,7 +88,7 @@ export function createPrecheckinTestSession(parsed: ParsedExcel, now = new Date(
       storesLegalRegistry: false,
       purpose: "Prueba de pre-check-in para completar datos antes de revision y comunicacion SES.",
       retentionScope: [
-        "token temporal",
+        "token hash",
         "referencia de reserva",
         "estado operativo",
         "hash de envio",
@@ -92,20 +97,29 @@ export function createPrecheckinTestSession(parsed: ParsedExcel, now = new Date(
     },
   };
   store.syncXmlPrecheckinSessions?.push(session);
-  return session;
+  return { ...session, token };
 }
 
 export function getPrecheckinSession(token: string, now = new Date()) {
-  const session = store.syncXmlPrecheckinSessions?.find((item) => item.token === token);
+  const h = hashToken(token);
+  const session = store.syncXmlPrecheckinSessions?.find((item) => item.tokenHash === h);
   if (!session) return null;
+  if (session.status === "REVOKED") return session;
   if (new Date(session.expiresAt).getTime() < now.getTime()) {
     session.status = "EXPIRED";
   }
   return session;
 }
 
+export function revokePrecheckinSession(token: string) {
+  const session = getPrecheckinSession(token);
+  if (session) session.status = "REVOKED";
+  return session;
+}
+
 export function toPublicPrecheckinSession(session: PrecheckinSession): PublicPrecheckinSession {
   const publicSession = { ...session };
+  delete (publicSession as any).tokenHash;
   delete publicSession.submissionHash;
   return publicSession;
 }
