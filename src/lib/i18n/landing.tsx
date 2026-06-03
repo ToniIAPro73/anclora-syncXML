@@ -63,6 +63,7 @@ export type LandingCopy = {
       legal: string;
       privacy: string;
       cookies: string;
+      login: string;
     };
   };
   common: { pilotCta: string; waitlistCta: string; backLanding: string; privacy: string; terms: string; legal: string; cookies: string };
@@ -217,6 +218,7 @@ const dictionaries: Record<LandingLocale, LandingCopy> = {
         legal: "Aviso legal",
         privacy: "Privacidad",
         cookies: "Cookies",
+        login: "Iniciar sesión",
       },
     },
     common: { pilotCta: "Solicitar piloto controlado", waitlistCta: "Unirme a la lista de espera", backLanding: "Volver a la landing", privacy: "privacidad", terms: "términos", legal: "Aviso legal", cookies: "Cookies" },
@@ -513,6 +515,7 @@ const dictionaries: Record<LandingLocale, LandingCopy> = {
         legal: "Legal notice",
         privacy: "Privacy",
         cookies: "Cookies",
+        login: "Sign in",
       },
     },
     common: { pilotCta: "Request controlled pilot", waitlistCta: "Join the waitlist", backLanding: "Back to landing", privacy: "privacy policy", terms: "terms", legal: "Legal notice", cookies: "Cookies" },
@@ -809,6 +812,7 @@ const dictionaries: Record<LandingLocale, LandingCopy> = {
         legal: "Impressum",
         privacy: "Datenschutz",
         cookies: "Cookies",
+        login: "Anmelden",
       },
     },
     common: { pilotCta: "Kontrollierten Pilot anfragen", waitlistCta: "Zur Warteliste", backLanding: "Zurück zur Landingpage", privacy: "Datenschutz", terms: "Bedingungen", legal: "Impressum", cookies: "Cookies" },

@@ -94,6 +94,9 @@ export function LandingHeader() {
 
         <div className="hidden items-center gap-3 lg:flex">
           <LanguageToggle />
+          <Link href="/login" className="l-btn l-btn-ghost text-sm">
+            {copy.navMenu.items.login}
+          </Link>
           <Link
             href={PILOT_HREF}
             className="l-btn l-btn-primary"
@@ -133,6 +136,9 @@ export function LandingHeader() {
                 ))}
               </nav>
               <hr className="l-divider my-2" />
+              <Link href="/login" className="l-btn l-btn-ghost w-full mb-2">
+                {copy.navMenu.items.login}
+              </Link>
               <Link
                 href={PILOT_HREF}
                 className="l-btn l-btn-primary w-full"
