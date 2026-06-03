@@ -67,6 +67,7 @@ describe("responsibility hardening", () => {
     vi.stubEnv("NODE_ENV", "production");
     vi.stubEnv("SYNCXML_ADMIN_PASSWORD", "");
     vi.stubEnv("SESSION_SECRET", "");
+    vi.stubEnv("AUTH_SECRET", "");
     expect(() => validateRuntimeConfig()).toThrow(/Missing critical/);
     expect(canUsePasswordAuth()).toBe(false);
   });
@@ -84,6 +85,7 @@ describe("responsibility hardening", () => {
     vi.stubEnv("SYNCXML_DISABLE_AUTH", "true");
     vi.stubEnv("SYNCXML_ADMIN_PASSWORD", "");
     vi.stubEnv("SESSION_SECRET", "");
+    vi.stubEnv("AUTH_SECRET", "");
     expect(envFlag("SYNCXML_DISABLE_AUTH")).toBe(true);
     expect(authDisabled()).toBe(false);
     expect(() => validateRuntimeConfig()).toThrow(/not allowed in production/);
