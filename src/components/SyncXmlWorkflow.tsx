@@ -18,8 +18,9 @@ import { unresolvedDuplicates } from "@/lib/duplicates";
 import { maskAddress, maskDocument, maskEmail, maskPayment, maskPhone } from "@/lib/privacy/masking";
 import { normalizeMunicipioName, provinceCodeFromPostalCode } from "@/lib/municipios/normalize";
 import { buildValidationReportCsv, buildValidationReportFileName } from "@/lib/validationReport";
+import { generateLocalPackageZip } from "@/lib/storage/localPackage";
 
-type BusyAction = "upload" | "validate" | "generate" | "consolidate" | null;
+type BusyAction = "upload" | "validate" | "generate" | "consolidate" | "package" | null;
 type WorkflowStep = 1 | 2 | 3 | 4;
 type SesUiAction = "validate" | "prepare" | "sendPre" | "queryLot" | "queryCommunication" | "cancelLot" | "catalog" | "refreshHistory" | null;
 type SesStatus = {
@@ -341,7 +342,7 @@ export function SyncXmlWorkflow() {
     else { setMessage(t.xmlPreviewRequired); setActiveStep(parsed ? 2 : 1); }
   }
 
-  function downloadXml() {
+  async function downloadXml() {
     if (!generated) return;
     const blob = new Blob([generated.xml], { type: "application/xml" });
     const url = URL.createObjectURL(blob);
@@ -350,6 +351,24 @@ export function SyncXmlWorkflow() {
     a.download = buildXmlDownloadFileName(parsed);
     a.click();
     URL.revokeObjectURL(url);
+  }
+
+  async function downloadLocalPackage() {
+    if (!parsed || !generated) return;
+    setBusyAction("package");
+    try {
+      const blob = await generateLocalPackageZip(parsed, generated);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `syncxml-paquete-conservacion-${parsed.reservation.reference || "reserva"}.zip`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      setMessage(t.actionFailed);
+    } finally {
+      setBusyAction(null);
+    }
   }
 
   function downloadValidationReport() {
@@ -588,11 +607,14 @@ export function SyncXmlWorkflow() {
             </div>
             {parsed && <OperationSummary parsed={parsed} temporaryCleared={temporaryCleared} />}
             {generated && (
-              <div className="mt-5">
+              <div className="mt-5 flex flex-wrap gap-3">
                 <button className="btn-secondary" onClick={downloadXml}><Download className="h-4 w-4" />{t.downloadXml}</button>
-                <p className="mt-2 text-xs text-muted">{t.xmlReviewableNotice}</p>
+                <button className="btn-primary" onClick={downloadLocalPackage} disabled={busyAction === "package"}>
+                  {busyAction === "package" ? <WorkingLabel label={t.processing} /> : <><Download className="h-4 w-4" />Generar paquete local</>}
+                </button>
               </div>
             )}
+            <p className="mt-2 text-xs text-muted">{t.xmlReviewableNotice}</p>
           </section>
           {/* Modo privado */}
           <PrivacyModeCard onClear={clearOperation} hasData={Boolean(parsed || generated || selectedFile)} />
