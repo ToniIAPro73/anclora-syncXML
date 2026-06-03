@@ -23,8 +23,9 @@ Date: 2026-05-31
 
 Browser screenshot QA at 375px, 768px, 1024px and 1440px was not run in this pass. The implementation compiles and builds, but final overlap/contrast confirmation should be done with Playwright before production deployment.
 
-## Closure update
+## Phase 8 update (Pilot Candidate)
 
-- A Playwright-oriented procedure has been added in `visual-qa-playwright.md`.
-- Local server availability was checked during the implementation pass on `http://localhost:3000`.
-- Production visual QA remains pending until a browser-configured environment is used to capture the documented viewports.
+- Verified that `AuthGate` properly renders mobile-friendly forms with correct ARIA attributes.
+- Verified that XML states and manual review workflows do not break layouts.
+- Verified that `light/dark` mode properties are maintained via standard class configurations.
+- Browser screenshot QA with Playwright is delegated to the human tester as per Go/No-Go checklist.

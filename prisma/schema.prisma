@@ -126,19 +126,19 @@ model AuditEvent {
 }
 
 model IneMunicipio {
-  id                    String   @id @default(cuid())
-  codigoMunicipio       String   @unique
-  codigoProvincia       String
-  codigoMunicipioCorto  String
-  nombre                String
-  nombreNormalizado     String
-  fuente                String   @default("INE")
-  ineId                 Int?
-  ineVariableId         Int?
-  ineJerarquiaPadres    Json?
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
-  lastSyncedAt          DateTime
+  id                   String   @id @default(cuid())
+  codigoMunicipio      String   @unique
+  codigoProvincia      String
+  codigoMunicipioCorto String
+  nombre               String
+  nombreNormalizado    String
+  fuente               String   @default("INE")
+  ineId                Int?
+  ineVariableId        Int?
+  ineJerarquiaPadres   Json?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  lastSyncedAt         DateTime
 
   @@index([codigoProvincia])
   @@index([nombreNormalizado])
@@ -169,16 +169,20 @@ enum StoredFileType {
 }
 
 model PilotUser {
-  id              String          @id @default(cuid())
-  email           String          @unique
-  passwordHash    String
-  role            PilotUserRole   @default(pilot_user)
-  status          PilotUserStatus @default(active)
-  sourceRequestId String?
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
-  expiresAt       DateTime?
-  lastLoginAt     DateTime?
+  id                String          @id @default(cuid())
+  email             String          @unique
+  name              String?
+  company           String?
+  passwordHash      String
+  temporaryPassword Boolean         @default(true)
+  role              PilotUserRole   @default(pilot_user)
+  status            PilotUserStatus @default(active)
+  sourceRequestId   String?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  passwordRotatedAt DateTime?
+  expiresAt         DateTime?
+  lastLoginAt       DateTime?
 
   @@index([status])
   @@index([sourceRequestId])
@@ -196,40 +200,40 @@ enum PilotUserStatus {
 }
 
 model SesSubmission {
-  id                     String              @id @default(cuid())
-  createdAt              DateTime            @default(now())
-  updatedAt              DateTime            @updatedAt
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  xmlHash                String
-  fileName               String?
-  reference              String?
+  xmlHash   String
+  fileName  String?
+  reference String?
 
-  environment            String              @default("pre")
-  endpoint               String
+  environment String @default("pre")
+  endpoint    String
 
-  landlordCode           String
-  establishmentCode      String?
-  applicationName        String              @default("Anclora SyncXML")
+  landlordCode      String
+  establishmentCode String?
+  applicationName   String  @default("Anclora SyncXML")
 
-  operationType          String              @default("A")
-  communicationType      String?
+  operationType     String  @default("A")
+  communicationType String?
 
-  requestSoap            String?
+  requestSoap String?
 
   responseSoap           String?
   sesResponseCode        String?
   sesResponseDescription String?
   sesBatchCode           String?
 
-  batchStatus            String?
-  batchProcessedAt       DateTime?
-  communicationCode      String?
+  batchStatus       String?
+  batchProcessedAt  DateTime?
+  communicationCode String?
 
-  status                 SesSubmissionStatus @default(SENT)
+  status SesSubmissionStatus @default(SENT)
 
-  sesErrors              Json?
-  lastCheckedAt          DateTime?
-  queryHistory           Json?
+  sesErrors     Json?
+  lastCheckedAt DateTime?
+  queryHistory  Json?
 
   @@index([sesBatchCode])
   @@index([reference])

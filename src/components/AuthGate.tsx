@@ -10,9 +10,12 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   const { dictionary: t } = usePreferences();
   const [checking, setChecking] = useState(true);
   const [authenticated, setAuthenticated] = useState(false);
+  const [temporaryPassword, setTemporaryPassword] = useState(false);
   const [password, setPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -21,6 +24,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
       .then((data) => {
         if (!active) return;
         setAuthenticated(Boolean(data.authenticated));
+        setTemporaryPassword(Boolean(data.user?.temporaryPassword));
       })
       .catch(() => {
         if (active) setAuthenticated(false);
@@ -53,7 +57,38 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
         );
         return;
       }
+      const data = await response.json();
       setAuthenticated(true);
+      setTemporaryPassword(Boolean(data.temporaryPassword));
+    } catch {
+      setError(t.actionFailed);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function changePassword(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (newPassword.length < 8) {
+      setError("La contraseña debe tener al menos 8 caracteres.");
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    setSuccessMsg(null);
+    try {
+      const response = await fetch("/api/auth/change-password", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ currentPassword: password, newPassword }),
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        setError(errorData.error || "No se pudo cambiar la contraseña.");
+        return;
+      }
+      setTemporaryPassword(false);
+      setSuccessMsg("Contraseña actualizada con éxito.");
     } catch {
       setError(t.actionFailed);
     } finally {
@@ -65,7 +100,62 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
     return <div className="process-message is-working">{t.processing}</div>;
   }
 
-  if (authenticated) return <>{children}</>;
+  if (authenticated && !temporaryPassword) return <>{children}</>;
+
+  if (authenticated && temporaryPassword) {
+    return (
+      <div className="mx-auto flex w-full max-w-[460px] justify-center mt-10">
+        <AncloraAuthCard
+          mode="gate"
+          title="Cambio de contraseña"
+          badge="ACCIÓN REQUERIDA"
+          description="Por motivos de seguridad, debes cambiar tu contraseña temporal antes de acceder a la aplicación."
+        >
+          <form className="flex flex-col gap-3" onSubmit={changePassword}>
+            <label className="auth-card-field-label">
+              Contraseña actual
+              <input
+                className="input"
+                type="password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                autoComplete="current-password"
+                aria-required="true"
+              />
+            </label>
+            <label className="auth-card-field-label">
+              Nueva contraseña
+              <input
+                className="input"
+                type="password"
+                value={newPassword}
+                onChange={(event) => setNewPassword(event.target.value)}
+                placeholder="Mínimo 8 caracteres"
+                autoComplete="new-password"
+                aria-required="true"
+              />
+            </label>
+            {error && <p className="auth-card-error" role="alert">{error}</p>}
+            {successMsg && <p className="auth-card-note" role="status">{successMsg}</p>}
+            <button
+              className="btn-primary auth-card-action"
+              type="submit"
+              disabled={busy || !password || newPassword.length < 8}
+            >
+              {busy ? (
+                <>
+                  <span className="spinner" aria-hidden="true" />
+                  Actualizando...
+                </>
+              ) : (
+                "Guardar nueva contraseña"
+              )}
+            </button>
+          </form>
+        </AncloraAuthCard>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto flex w-full max-w-[460px] justify-center">

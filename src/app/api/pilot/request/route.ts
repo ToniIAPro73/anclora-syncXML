@@ -333,6 +333,8 @@ export async function POST(request: Request) {
     wantsToValidate: data.wantsToValidate || data.tiempo || data.mensaje || "No especificado",
     acceptsSyntheticOrAnonymizedData: true,
     acceptsPilotConditions: true,
+    usesRealGuestData: false,
+    needsSesAutomaticSubmission: false,
     locale: data.locale || "es",
     source: "syncxml_landing",
     raw: {
