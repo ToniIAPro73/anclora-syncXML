@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+env:
+  DATABASE_URL: "postgresql://user:password@localhost:5432/syncxml"
+  DIRECT_URL: "postgresql://user:password@localhost:5432/syncxml"
+  SESSION_SECRET: "ci-session-secret-ci-session-secret"
+  SYNCXML_ENCRYPTION_KEY: "ci-encryption-key-ci-encryption-key-32"
+  SYNCXML_ENABLE_PERSISTENT_STORAGE: "false"
+  SYNCXML_LOCAL_DEMO: "true"
+  SYNCXML_ADMIN_PASSWORD: "ci-admin-password"
+  NEXT_PUBLIC_APP_URL: "http://localhost:3000"
+  AUTH_URL: "http://localhost:3000"
+  AUTH_TRUST_HOST: "true"
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm run test
+
+      - name: Build
+        run: npm run build

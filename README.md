@@ -1,162 +1,175 @@
 # Anclora SyncXML
 
-Anclora SyncXML es una herramienta Premium de Anclora Group para preparar, validar, revisar y exportar XML a partir de datos de reservas y huespedes importados desde Excel/XLSX.
+![Project status](https://img.shields.io/badge/status-pre--MVP%20%2F%20controlled%20validation-orange)
+![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
+![Tests](https://img.shields.io/badge/tests-vitest-blue)
+![Privacy](https://img.shields.io/badge/privacy-local--first%20by%20default-brightgreen)
 
-Estado actual: **pre-MVP / validacion controlada**. No debe presentarse como garantia legal ni como integracion oficial automatizada con plataformas externas si dicha integracion no existe tecnicamente.
+Anclora SyncXML is an open-source privacy-first tool for preparing, validating,
+reviewing and exporting XML from reservation and guest data imported from
+Excel/XLSX files.
 
-## Alcance
+The project is currently **pre-MVP / controlled validation**. It should not be
+presented as legal advice, as an official SES.HOSPEDAJES integration, or as a
+guarantee of regulatory compliance.
 
-- Importacion controlada de XLSX.
-- Validacion de datos de reserva, establecimiento, huespedes y pago.
-- Vista previa con datos sensibles enmascarados por defecto.
-- Deteccion y resolucion manual de duplicados.
-- Generacion y descarga de XML revisable.
-- Modo privado sin almacenamiento permanente por defecto.
-- Auditoria operacional sin PII.
-- UI en espanol, ingles y aleman.
-- Tema dark por defecto con soporte light.
+## Open Source status
 
-## Limites legales
+Anclora SyncXML is released as an open-source project under the MIT License.
 
-Anclora SyncXML no presta asesoramiento legal y no garantiza por si sola el cumplimiento normativo. El usuario debe tener autorizacion para tratar los datos importados y revisar el XML antes de cualquier uso oficial o comunicacion a terceros.
+The repository is public to enable inspection, contribution and external review,
+especially around privacy-first handling of sensitive hospitality workflows.
 
-## Privacidad por defecto
+## Why this project matters
 
-El modo por defecto es **sin persistencia**. Los datos importados, previews, validaciones y XML generados viven en memoria/sesion de operacion y pueden borrarse con la accion "Borrar datos de esta operacion".
+Small lodging operators often depend on manual workflows, spreadsheets,
+fragmented tools or proprietary cloud-first platforms to prepare guest and
+reservation data.
 
-La persistencia en base de datos solo debe habilitarse explicitamente con:
+Anclora SyncXML explores a privacy-first, auditable and inspectable alternative
+for preparing, validating and exporting structured XML workflows from
+reservation data.
+
+## Who this is for
+
+- Independent property owners.
+- Small accommodation operators.
+- Developers building hospitality, XML, privacy or compliance-adjacent tooling.
+- Contributors interested in local-first data handling and safer handling of
+  sensitive guest data.
+
+## Current scope
+
+- Controlled XLSX import.
+- Reservation, property, guest and payment validation.
+- Masked preview of sensitive data by default.
+- Duplicate detection and manual review workflow.
+- Reviewable XML generation and download.
+- Local-first operation without persistent storage by default.
+- Optional Prisma-backed persistence when explicitly configured.
+- Spanish public landing and multi-language app experience.
+- Controlled pilot access flow with cautious onboarding copy.
+
+## Not in scope
+
+- Legal advice.
+- Guarantee of compliance.
+- Automatic official production submission unless explicitly implemented and
+  audited.
+- Storage of real guest data unless security, retention and privacy controls are
+  configured and reviewed.
+
+## Architecture at a glance
+
+- Next.js App Router for UI and API routes.
+- Prisma for optional persistence and pilot-user support.
+- Vitest for tests.
+- `xlsx` for defensive spreadsheet parsing.
+- `fast-xml-parser` for XML parsing and generation with defensive restrictions.
+
+## Privacy-first defaults
+
+By default, imported data, previews, validations and generated XML stay in the
+current operation context and are not persisted permanently.
+
+Persistent storage must be enabled explicitly:
 
 ```bash
 SYNCXML_ENABLE_PERSISTENT_STORAGE="true"
 ```
 
-Si se habilita, el despliegue debe aplicar cifrado, retencion, control de acceso y borrado operativo antes de usar datos reales.
+If persistence is enabled, the deployment must add encryption, retention,
+access-control and deletion safeguards before handling real guest data.
 
-## Arquitectura general
+## Access model
 
-- Next.js App Router para UI y API routes.
-- Prisma como capa opcional de base de datos.
-- Vitest para tests unitarios.
-- `xlsx` para lectura defensiva de hojas Excel.
-- `fast-xml-parser` para parseo/generacion XML con bloqueo de estructuras peligrosas.
-- i18n local en `src/lib/i18n.ts`.
+The current access model is intentionally limited and should be described
+carefully:
 
-## Variables de entorno
+- `/app` and `/dashboard` are protected.
+- Local demo mode is available with `SYNCXML_LOCAL_DEMO=true`.
+- In controlled environments, access can be backed by Prisma `PilotUser`
+  records.
+- A shared admin/password fallback also exists for controlled pilot scenarios.
+- Pilot approval and invitation remain partially manual workflows.
 
-Variables criticas en produccion:
+More detail is documented in [docs/ACCESS_MODEL.md](docs/ACCESS_MODEL.md).
 
-- `SYNCXML_ADMIN_PASSWORD`
-- `SYNCXML_ENCRYPTION_KEY`
-- `SESSION_SECRET`
-- `DATABASE_URL`
-- `NODE_ENV=production`
+## Installation
 
-Variables operativas:
+### Requirements
 
-- `SYNCXML_ENABLE_PERSISTENT_STORAGE=false` por defecto.
-- `SYNCXML_LOCAL_DEMO=true` solo en desarrollo local sin datos reales.
-- `RESEND_API_KEY` para enviar solicitudes de piloto por Resend.
-- `RESEND_FROM_EMAIL` remitente verificado en Resend, por ejemplo
-  `Anclora SyncXML <piloto@tu-dominio.com>`.
-- `SYNCXML_PILOT_REQUEST_TO` buzón que recibe las solicitudes del piloto.
-- `BLOB_READ_WRITE_TOKEN` si se incorpora almacenamiento externo.
+- Node.js 22 recommended.
+- npm 10+ recommended.
 
-En produccion, si faltan secretos criticos, el acceso falla de forma segura.
-
-## Instalacion y ejecucion local
+### Local setup
 
 ```bash
+cp .env.example .env
 npm install
 npm run dev
 ```
 
-Para desarrollo local sin datos reales:
+For a local demo without real data:
 
 ```bash
 SYNCXML_LOCAL_DEMO=true npm run dev
 ```
 
-Para probar el acceso real por cuentas individuales en local o staging:
+For controlled access flows in local or staging, configure `.env` carefully and
+use synthetic or anonymized data only.
 
-```env
-SYNCXML_ADMIN_PASSWORD="contraseña-temporal"
-SESSION_SECRET="secreto-largo"
-SYNCXML_LOCAL_DEMO="false"
-SYNCXML_DISABLE_AUTH="false"
-```
+## Environment notes
 
-No uses datos reales en la fase pre-MVP / validacion controlada. No uses
-`SYNCXML_DISABLE_AUTH=true` en produccion.
+Common variables you may need during development:
 
-## Tests y build
+- `SESSION_SECRET`
+- `SYNCXML_ADMIN_PASSWORD`
+- `DATABASE_URL`
+- `DIRECT_URL`
+- `SYNCXML_ENABLE_PERSISTENT_STORAGE=false`
+- `SYNCXML_LOCAL_DEMO=true` for local demo mode
+
+Email and pilot-request related variables are documented in
+[.env.example](.env.example) and [docs/env-syncxml-pilot.md](docs/env-syncxml-pilot.md).
+
+## Quality checks
 
 ```bash
 npm run lint
+npm run typecheck
 npm run test
 npm run build
 ```
 
-## Seguridad
+## Security expectations
 
-- No loguear nombres, documentos, telefonos, emails, direcciones, pagos, XML completo ni Excel completo.
-- Rechazar extensiones no permitidas, archivos vacios, tamano excesivo, MIME inesperado y archivos corruptos.
-- Bloquear XML mal formado, DOCTYPE y ENTITY.
-- Enmascarar documentos, emails, telefonos, direcciones y pagos por defecto.
-- Bloquear consolidacion con errores criticos o duplicados sin resolver.
+- Do not log names, IDs, phone numbers, emails, addresses, payments or full XML
+  payloads.
+- Do not commit real guest data, exported XML files or spreadsheets containing
+  PII.
+- Use synthetic or anonymized data for tests, screenshots and bug reports.
+- Reject malformed uploads, unexpected MIME types and dangerous XML structures.
 
-## Modelo de acceso
+## Roadmap
 
-El acceso a `/app` y `/dashboard` esta protegido por AuthGate con una
-**cuentas individuales de usuario** (`SYNCXML_ADMIN_PASSWORD`). **No hay cuentas por
-usuario ni tabla de leads**: la solicitud de piloto (`/piloto`) se gestiona por
-email transaccional con Resend y los estados `pending/approved/invited/rejected`
-del modelo v0.2 son hoy un **proceso manual**. Detalles y pendientes en
-[`docs/ACCESS_MODEL.md`](docs/ACCESS_MODEL.md).
+See [ROADMAP.md](ROADMAP.md).
 
-El `/login` y el estado no autenticado de AuthGate siguen el contrato visual
-`ANCLORA_AUTH_LOGIN_SCREEN_CONTRACT` v1.3.0 de la Boveda Anclora, adaptado al
-modelo actual de cuentas individuales de piloto: un unico campo de clave, sin
-registro publico, sin OAuth y sin recuperacion de contraseña personal.
+## Contributing
 
-## i18n y tema
+See [CONTRIBUTING.md](CONTRIBUTING.md).
 
-El idioma por defecto es espanol. La aplicacion (`/app`, `/dashboard`, `/privacy`, `/terms`) esta disponible en ES/CA/EN/DE/FR/IT/PT con toggle de idioma visible. El tema por defecto es dark, con toggle dark/light/system dentro de la app.
+## Security
 
-### Landing publica (decision de localizacion)
+See [SECURITY.md](SECURITY.md).
 
-La landing publica (`/`, `/login`, `/piloto`) esta redactada **solo en espanol** durante la fase pre-MVP y **no muestra selector de idioma**. Es una decision deliberada alineada con `LOCALIZATION_CONTRACT`: no se expone un selector que aparente una traduccion que no existe, evitando deuda de traduccion y mezcla de idiomas. El footer informa de que la aplicacion si es multi-idioma.
+## Additional documentation
 
-Pendiente documentado: si se decide internacionalizar la landing, mover el copy a la capa i18n y traducir con calidad (cobertura sugerida ES/EN/DE) antes de reactivar un selector en la landing.
+- [docs/ACCESS_MODEL.md](docs/ACCESS_MODEL.md)
+- [docs/PRIVACY_MODEL.md](docs/PRIVACY_MODEL.md)
+- [docs/manual/manual-usuario.en.md](docs/manual/manual-usuario.en.md)
+- [docs/manual/manual-usuario.md](docs/manual/manual-usuario.md)
 
-## Flujo funcional
+## License
 
-1. Dashboard o nueva operacion.
-2. Estado de privacidad visible.
-3. Consentimiento informado obligatorio.
-4. Importacion XLSX.
-5. Analisis y validacion.
-6. Preview enmascarada.
-7. Revision de mapeo y vista previa.
-8. Revision de errores y duplicados.
-9. Preview XML.
-10. Confirmacion y consolidacion.
-11. Descarga XML.
-12. Limpieza de datos temporales.
-
-## Checklist antes de produccion
-
-- Auditoria legal y de privacidad completada.
-- Persistencia desactivada o cifrado/retencion/borrado auditados.
-- Secretos configurados en entorno seguro.
-- Pruebas visuales dark/light/mobile revisadas.
-- Tests y build pasando.
-- Contacto legal real definido en politicas.
-- No usar datos reales hasta completar auditoria de seguridad y privacidad.
-## Global Preferences Toggle
-
-Esta app sigue el contrato global de preferencias de Anclora Group.
-
-Incluye:
-- idioma
-
-El Theme Toggle se gestiona por separado y solo aparece en grupos Premium, Internal y Portfolio.
+MIT. See [LICENSE](LICENSE).
