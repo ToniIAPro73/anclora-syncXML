@@ -24,6 +24,7 @@ npm run dev
 ## Quality checks
 
 ```bash
+npm run check:public-docs
 npm run lint
 npm run typecheck
 npm run test
@@ -45,6 +46,8 @@ npm run build
 - Never commit real names, IDs, phone numbers, emails, addresses, payments, XML
   exports or Excel files containing real guest data.
 - Mask or remove PII in screenshots.
+- Do not place spreadsheet fixtures in `docs/`; keep test fixtures under
+  `test-data/fixtures/`.
 
 ## Issue labels
 

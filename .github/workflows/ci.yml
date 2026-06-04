@@ -38,6 +38,9 @@ jobs:
       - name: Generate Prisma client
         run: npx prisma generate
 
+      - name: Check public docs policy
+        run: npm run check:public-docs
+
       - name: Lint
         run: npm run lint
 
