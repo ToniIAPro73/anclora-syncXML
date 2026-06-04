@@ -97,7 +97,7 @@ Declared in `.env.example`:
 
 - The expected analysis artifacts are not present in the repository:
   - `Artefacto_1_Analisis_Exhaustivo_Integrado_Anclora_SyncXML.md`
-  - `Artefacto_2_Plan_de_Mejoras_por_Fases_Anclora_SyncXML.md`
+  - `docs/archive/Artefacto_2_Plan_de_Mejoras_por_Fases_Anclora_SyncXML.md`
 - No XSD file is present.
 - No accepted SES.HOSPEDAJES XML evidence is present.
 - Persistent DB mode does not currently have an explicit `generatedXml`/`xml` column in `Reservation`; in-memory storage has XML, but persistent download cannot reliably return the XML.
@@ -108,4 +108,3 @@ Declared in `.env.example`:
 ## Differences Versus Prior Analysis
 
 Prior phase documents are not available in the repository, so differences cannot be verified directly. Based on the current code, the product has already received an initial privacy/responsibility hardening pass: private mode, legal pages, masking, safe audit helpers and auth checks exist. The remaining hardening work should focus on persistence correctness, backend validation, rate limiting, timezone correctness and proof-backed XSD/SES validation.
-

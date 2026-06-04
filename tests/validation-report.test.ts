@@ -5,8 +5,10 @@ import { smartValidateParsedExcel, validateGuest } from "@/lib/validation";
 import { buildValidationReportCsv, buildValidationReportFileName } from "@/lib/validationReport";
 
 describe("validation report CSV", () => {
+  const workbookPath = "test-data/fixtures/registro_huespedes_synthetic.xlsx";
+
   it("exports blocking validation issues with reservation and guest context", () => {
-    const parsed = smartValidateParsedExcel(parseExcelBuffer(readFileSync("docs/registro_huespedes.xlsx")));
+    const parsed = smartValidateParsedExcel(parseExcelBuffer(readFileSync(workbookPath)));
     const csv = buildValidationReportCsv(parsed);
 
     expect(csv).toContain("tipo;ambito;severidad;codigo;fila;campo;mensaje");
@@ -16,7 +18,7 @@ describe("validation report CSV", () => {
   });
 
   it("exports a clean corrected flow as valid guests", () => {
-    const parsed = parseExcelBuffer(readFileSync("docs/registro_huespedes.xlsx"));
+    const parsed = parseExcelBuffer(readFileSync(workbookPath));
     const corrected = smartValidateParsedExcel({
       ...parsed,
       guests: parsed.guests.map((guest) => validateGuest({
@@ -29,7 +31,7 @@ describe("validation report CSV", () => {
     const csv = buildValidationReportCsv(corrected);
 
     expect(corrected.validation.errors).toHaveLength(0);
-    expect(csv).toContain("huesped;Aina Tamarit;VALID");
+    expect(csv).toContain("huesped;Lucia Romero;VALID");
   });
 
   it("normalizes validation report filenames", () => {

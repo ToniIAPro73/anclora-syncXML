@@ -58,7 +58,7 @@ Evidence command:
 ```bash
 node - <<'NODE'
 const XLSX=require('xlsx');
-const wb=XLSX.readFile('docs/registro_huespedes.xlsx',{cellDates:true});
+const wb=XLSX.readFile('test-data/fixtures/registro_huespedes_synthetic.xlsx',{cellDates:true});
 ...
 NODE
 ```
@@ -109,7 +109,7 @@ The generator replaces the primary contract and guest structures, but the placeh
 | Element | Type | Source of truth | State | Action of closure | Blocks phase |
 |---|---|---|---|---|---|
 | Stack real | Technical | Code, package scripts | RESOLVED | Next.js App Router documented. | No |
-| Villa Kentia data flow | Technical | `docs/registro_huespedes.xlsx`, parser tests | RESOLVED | 7 guests confirmed. | No |
+| Villa Kentia data flow | Technical | `test-data/fixtures/registro_huespedes_synthetic.xlsx`, parser tests | RESOLVED | 7 guests confirmed. | No |
 | Origin of Excel | External | Villa Kentia/property owner | NO BLOQUEANTE | Ask source/export workflow. | No |
 | Lodgify as central source | Product/external | Owner/PMS evidence | HIPOTESIS | Ask whether Lodgify is source of truth. | Yes for importer roadmap |
 | Accepted SES XML | External/technical | SES acceptance receipt/XML | BLOQUEANTE | Request accepted XML sample or rejection report. | Yes for official compliance claims |
@@ -121,7 +121,7 @@ The generator replaces the primary contract and guest structures, but the placeh
 
 ## Questions for Villa Kentia
 
-1. Is `registro_huespedes.xlsx` exported manually, from Lodgify, from another PMS, or assembled by hand?
+1. Was the original workbook exported manually, from Lodgify, from another PMS, or assembled by hand before it was replaced by a synthetic fixture?
 2. Is Lodgify the source of truth for bookings and guest data?
 3. Do you have an XML file accepted by SES.HOSPEDAJES for Villa Kentia?
 4. Do you have the official XSD/schema currently required by SES.HOSPEDAJES?
@@ -138,4 +138,3 @@ The generator replaces the primary contract and guest structures, but the placeh
 - Fase 5 is blocked by privacy/DPA/retention governance.
 - Fase 6 can proceed as documentation/governance preparation, but operational retention decisions require controller input.
 - Fase 7 is blocked until phases 1-6 are closed or explicitly scoped as roadmap only.
-
