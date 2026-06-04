@@ -3,9 +3,10 @@ import { describe, expect, it } from "vitest";
 import { parseExcelBuffer } from "@/lib/excel/parseExcel";
 
 describe("parseExcelBuffer", () => {
-  const parsed = parseExcelBuffer(readFileSync("docs/registro_huespedes.xlsx"), "registro_huespedes.xlsx");
+  const workbookPath = "test-data/fixtures/registro_huespedes_synthetic.xlsx";
+  const parsed = parseExcelBuffer(readFileSync(workbookPath), "registro_huespedes_synthetic.xlsx");
 
-  it("detects the real guests and metadata", () => {
+  it("detects the synthetic guests and metadata", () => {
     expect(parsed.guests).toHaveLength(7);
     expect(parsed.property.establishmentCode).toBe("0000044116");
     expect(parsed.property.name).toBe("VILLA KENTIA");

@@ -4,7 +4,7 @@
 
 - Date: 2026-05-24
 - Branch: `feat/syncxml-phased-hardening`
-- Basis: `Artefacto_2_Plan_de_Mejoras_por_Fases_Anclora_SyncXML.md` plus existing `docs/audit/` reports.
+- Basis: `docs/archive/Artefacto_2_Plan_de_Mejoras_por_Fases_Anclora_SyncXML.md` plus existing `docs/audit/` reports.
 
 ## Current Position
 

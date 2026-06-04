@@ -4,8 +4,10 @@ import { parseExcelBuffer } from "@/lib/excel/parseExcel";
 import { smartValidateParsedExcel } from "@/lib/validation";
 
 describe("smartValidateParsedExcel", () => {
+  const workbookPath = "test-data/fixtures/registro_huespedes_synthetic.xlsx";
+
   it("flags missing SES municipality codes before XML generation", () => {
-    const parsed = parseExcelBuffer(readFileSync("docs/registro_huespedes.xlsx"), "registro_huespedes.xlsx");
+    const parsed = parseExcelBuffer(readFileSync(workbookPath), "registro_huespedes_synthetic.xlsx");
     const validated = smartValidateParsedExcel(parsed);
 
     expect(validated.validation.errors.filter((error) => error.code === "guest.municipalityCode.required")).toHaveLength(7);
@@ -14,7 +16,7 @@ describe("smartValidateParsedExcel", () => {
   });
 
   it("allows SES readiness when Spanish municipality codes are present", () => {
-    const parsed = parseExcelBuffer(readFileSync("docs/registro_huespedes.xlsx"), "registro_huespedes.xlsx");
+    const parsed = parseExcelBuffer(readFileSync(workbookPath), "registro_huespedes_synthetic.xlsx");
     const validated = smartValidateParsedExcel({
       ...parsed,
       guests: parsed.guests.map((guest) => ({ ...guest, municipalityCode: "07040", documentSupport: "123456789" })),
@@ -26,17 +28,17 @@ describe("smartValidateParsedExcel", () => {
   });
 
   it("detects invalid Spanish document control letters", () => {
-    const parsed = parseExcelBuffer(readFileSync("docs/registro_huespedes.xlsx"), "registro_huespedes.xlsx");
+    const parsed = parseExcelBuffer(readFileSync(workbookPath), "registro_huespedes_synthetic.xlsx");
     const validated = smartValidateParsedExcel({
       ...parsed,
-      guests: parsed.guests.map((guest, index) => index === 0 ? { ...guest, documentNumber: "73662591A" } : guest),
+      guests: parsed.guests.map((guest, index) => index === 0 ? { ...guest, documentNumber: "12345678A" } : guest),
     });
 
     expect(validated.validation.errors.some((error) => error.code === "guest.document.control.invalid")).toBe(true);
   });
 
   it("detects invalid IBAN checksums", () => {
-    const parsed = parseExcelBuffer(readFileSync("docs/registro_huespedes.xlsx"), "registro_huespedes.xlsx");
+    const parsed = parseExcelBuffer(readFileSync(workbookPath), "registro_huespedes_synthetic.xlsx");
     const validated = smartValidateParsedExcel({
       ...parsed,
       payment: { ...parsed.payment, iban: "ES9121000418450200051333" },
