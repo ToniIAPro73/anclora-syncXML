@@ -163,9 +163,18 @@ See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 See [SECURITY.md](SECURITY.md).
 
+## Support
+
+See [SUPPORT.md](SUPPORT.md).
+
+## Governance
+
+See [GOVERNANCE.md](GOVERNANCE.md).
+
 ## Additional documentation
 
 - [docs/ACCESS_MODEL.md](docs/ACCESS_MODEL.md)
+- [docs/community/INITIAL_ISSUES.md](docs/community/INITIAL_ISSUES.md)
 - [docs/PRIVACY_MODEL.md](docs/PRIVACY_MODEL.md)
 - [docs/manual/manual-usuario.en.md](docs/manual/manual-usuario.en.md)
 - [docs/manual/manual-usuario.md](docs/manual/manual-usuario.md)
