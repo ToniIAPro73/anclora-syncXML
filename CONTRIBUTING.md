@@ -63,3 +63,12 @@ Suggested labels:
 ## Code of conduct
 
 See [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
+
+## Governance
+
+See [GOVERNANCE.md](GOVERNANCE.md).
+
+## Support and questions
+
+See [SUPPORT.md](SUPPORT.md) for where to ask usage questions, report bugs and
+handle sensitive security concerns.
