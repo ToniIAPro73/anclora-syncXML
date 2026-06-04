@@ -26,7 +26,7 @@ The phase does not claim SES.HOSPEDAJES official compliance because no official 
 
 ### Villa Kentia Excel Parser
 
-The existing parser already segments the Villa Kentia workbook into guest rows and lower metadata. The regression suite verifies that `docs/registro_huespedes.xlsx` produces:
+The existing parser already segments the Villa Kentia workbook into guest rows and lower metadata. The regression suite verifies that `test-data/fixtures/registro_huespedes_synthetic.xlsx` produces:
 
 - 7 guests.
 - Establishment code `0000044116`.

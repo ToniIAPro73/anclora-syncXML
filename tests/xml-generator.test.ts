@@ -5,8 +5,9 @@ import { generateHospitalityXml } from "@/lib/xml/generateHospitalityXml";
 import { validateGuest } from "@/lib/validation";
 
 describe("generateHospitalityXml", () => {
+  const workbookPath = "test-data/fixtures/registro_huespedes_synthetic.xlsx";
   const parsed = (() => {
-    const imported = parseExcelBuffer(readFileSync("docs/registro_huespedes.xlsx"));
+    const imported = parseExcelBuffer(readFileSync(workbookPath));
     const guests = imported.guests.map((guest) => validateGuest({
       ...guest,
       municipalityCode: "07040",

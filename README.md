@@ -173,6 +173,7 @@ See [GOVERNANCE.md](GOVERNANCE.md).
 
 ## Additional documentation
 
+- [docs/README.md](docs/README.md)
 - [docs/ACCESS_MODEL.md](docs/ACCESS_MODEL.md)
 - [docs/community/INITIAL_ISSUES.md](docs/community/INITIAL_ISSUES.md)
 - [docs/PRIVACY_MODEL.md](docs/PRIVACY_MODEL.md)
