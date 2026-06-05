@@ -3,8 +3,7 @@
  * Restricts sensitive operations to admin users only
  */
 
-import { NextResponse, type NextRequest } from "next/server";
-import { requireAuth } from "@/lib/auth";
+import { NextResponse } from "next/server";
 
 /**
  * Check if current environment allows admin SES access
