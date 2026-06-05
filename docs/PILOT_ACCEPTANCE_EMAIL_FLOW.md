@@ -1,6 +1,6 @@
 # Flujo de Email: Aceptación de Piloto
 
-**Documento:** Instrucciones para enviar email de aceptación a usuarios piloto aprobados  
+**Documento:** Instrucciones para integración de template de aceptación con anclora-nexus  
 **Versión:** 1.0  
 **Fecha:** 2026-06-05
 
@@ -10,9 +10,9 @@
 
 Cuando un usuario solicita acceso al piloto controlado de Anclora SyncXML:
 
-1. **Recibe confirmación automática** de solicitud recibida
-2. **Espera revisión manual** por responsable técnico (Toni)
-3. **Si es aceptado**, recibe email con:
+1. **Recibe confirmación automática** de solicitud recibida (enviada vía anclora-nexus)
+2. **Espera revisión manual** por responsable técnico (Toni) en anclora-nexus
+3. **Si es aceptado**, anclora-nexus envía email de aceptación con:
    - Enlace de acceso a la aplicación
    - Dataset sintético adjunto/enlazado
    - Guía rápida de prueba
