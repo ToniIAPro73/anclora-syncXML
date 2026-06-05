@@ -58,3 +58,53 @@ export function sesAccessDeniedResponse(reason: "pilot" | "admin-disabled" | "en
     { status: 403 }
   );
 }
+
+/**
+ * Read admin access configuration from environment
+ */
+export function readAdminAccessConfig() {
+  return {
+    enabled: process.env.SYNCXML_ADMIN_ACCESS_ENABLED === "true",
+    token: process.env.SYNCXML_ADMIN_ACCESS_TOKEN || "",
+    env: process.env.NODE_ENV || "development",
+    allowedEnvs: (process.env.SYNCXML_ADMIN_ACCESS_ALLOWED_ENV || "")
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean),
+    allowInProduction: process.env.SYNCXML_ALLOW_ADMIN_ACCESS_IN_PRODUCTION === "true",
+    email: process.env.SYNCXML_ADMIN_EMAIL || "admin@anclora.com",
+    redirect: process.env.SYNCXML_ADMIN_ACCESS_REDIRECT || "/app",
+  };
+}
+
+/**
+ * Evaluate if admin access should be granted
+ */
+export function evaluateAdminAccess(config: {
+  enabled: boolean;
+  token: string;
+  providedToken: string;
+  env: string;
+  allowedEnvs: string[];
+  allowInProduction: boolean;
+}): boolean {
+  // If disabled globally, deny
+  if (!config.enabled) return false;
+
+  // If in production without explicit opt-in, deny
+  if (config.env === "production" && !config.allowInProduction) {
+    return false;
+  }
+
+  // If env not in allowed list, deny
+  if (!config.allowedEnvs.includes(config.env)) {
+    return false;
+  }
+
+  // If token provided and matches, allow
+  if (config.token && config.providedToken === config.token) {
+    return true;
+  }
+
+  return false;
+}
