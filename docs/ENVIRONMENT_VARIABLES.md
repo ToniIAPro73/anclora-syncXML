@@ -7,7 +7,7 @@
 ## Visión general
 
 | Categoría | Development | Preview | Production |
-|-----------|-------------|---------|------------|
+| --------- | ----------- | ------- | ---------- |
 | **Donde** | `.env.local` (local) | Vercel Settings (Preview scope) | Vercel Settings (Production scope) |
 | **Secretos** | No (dev values) | Sí (reales) | Sí (reales) |
 | **DB** | Local/dev | Preview DB | Production DB |
@@ -22,6 +22,7 @@
 **Archivo:** `.env.local` (git-ignored, local only)
 
 ### Requeridas
+
 ```env
 # Database (local)
 DATABASE_URL="postgresql://USER:PASSWORD@localhost:5432/anclora_syncxml_dev"
@@ -48,6 +49,7 @@ SYNCXML_ALLOW_ADMIN_ACCESS_IN_PRODUCTION="false"
 ```
 
 ### Opcionales (por feature)
+
 ```env
 # Encryption (si implementado)
 SYNCXML_ENCRYPTION_KEY=""
@@ -67,6 +69,7 @@ BLOB_READ_WRITE_TOKEN=""
 ```
 
 ### Shared (same values)
+
 ```env
 SYNCXML_DISABLE_AUTH="false"
 SYNCXML_LOCAL_DEMO="false"
@@ -79,6 +82,7 @@ AUTH_TRUST_HOST="true"
 ```
 
 ### Que NO incluyas en Development
+
 - ❌ `DATABASE_URL` de producción
 - ❌ `SYNCXML_SES_ENDPOINT` (dejar vacío)
 - ❌ `SYNCXML_SES_USERNAME` (dejar vacío)
@@ -92,12 +96,14 @@ AUTH_TRUST_HOST="true"
 **Ubicación:** Vercel Console → Project Settings → Environment Variables → **Scope: Preview**
 
 ### Requeridas (COPIAR de Development y actualizar)
+
 ```env
 SESSION_SECRET=<GENERAR-NUEVO-VALOR>
 SYNCXML_ADMIN_ACCESS_TOKEN=<GENERAR-NUEVO-VALOR>
 ```
 
 ### Requeridas (URLs Preview)
+
 ```env
 NEXT_PUBLIC_APP_URL=https://<branch-name>-anclora-syncxml.vercel.app
 AUTH_URL=https://<branch-name>-anclora-syncxml.vercel.app
@@ -106,6 +112,7 @@ SYNCXML_LOGIN_URL=https://<branch-name>-anclora-syncxml.vercel.app/login
 ```
 
 ### Admin Access Preview
+
 ```env
 SYNCXML_ADMIN_ACCESS_ENABLED="true"
 SYNCXML_ADMIN_ACCESS_ALLOWED_ENV="preview,development"
@@ -113,12 +120,14 @@ SYNCXML_ALLOW_ADMIN_ACCESS_IN_PRODUCTION="false"
 ```
 
 ### Database Preview
+
 ```env
 DATABASE_URL=<PREVIEW-DB-URL>
 DIRECT_URL=<PREVIEW-DB-URL>
 ```
 
 ### SES (VACÍO - NO COPIAR credenciales)
+
 ```env
 SYNCXML_SES_ENDPOINT=""
 SYNCXML_SES_USERNAME=""
@@ -127,6 +136,7 @@ SYNCXML_SES_LANDLORD_CODE=""
 ```
 
 ### Shared (same as development)
+
 ```env
 AUTH_TRUST_HOST="true"
 SYNCXML_ADMIN_EMAIL="antonio@anclora.com"
@@ -139,6 +149,7 @@ NODE_OPTIONS="--use-system-ca"
 ```
 
 ### Opcionales (si habilitados)
+
 ```env
 RESEND_API_KEY=<SI-NECESARIO>
 BLOB_READ_WRITE_TOKEN=<SI-NECESARIO>
@@ -146,6 +157,7 @@ ENABLE_MINERU_PARSER="false"
 ```
 
 ### Que NO incluyas en Preview
+
 - ❌ `SYNCXML_SES_ENDPOINT` (prodre)
 - ❌ `SYNCXML_SES_USERNAME` (prodre)
 - ❌ `SYNCXML_SES_PASSWORD` (prodre)
@@ -159,11 +171,13 @@ ENABLE_MINERU_PARSER="false"
 **Ubicación:** Vercel Console → Project Settings → Environment Variables → **Scope: Production**
 
 ### Requeridas (DIFERENTE de Preview)
+
 ```env
 SESSION_SECRET=<GENERAR-NUEVO-VALOR-DISTINTO-A-PREVIEW>
 ```
 
 ### Requeridas (URLs Production)
+
 ```env
 NEXT_PUBLIC_APP_URL="https://anclora-syncxml.vercel.app"
 AUTH_URL="https://anclora-syncxml.vercel.app"
@@ -172,6 +186,7 @@ SYNCXML_LOGIN_URL="https://anclora-syncxml.vercel.app/login"
 ```
 
 ### Admin Access Production (STRICT)
+
 ```env
 SYNCXML_ADMIN_ACCESS_ENABLED="false"
 SYNCXML_ADMIN_ACCESS_ALLOWED_ENV="development"
@@ -179,12 +194,14 @@ SYNCXML_ALLOW_ADMIN_ACCESS_IN_PRODUCTION="false"
 ```
 
 ### Database Production
+
 ```env
 DATABASE_URL=<PRODUCTION-DB-URL>
 DIRECT_URL=<PRODUCTION-DB-URL>
 ```
 
 ### SES Production (SOLO si necesitas)
+
 ```env
 SYNCXML_SES_ENDPOINT="https://ses-api-preprod-url.com"
 SYNCXML_SES_USERNAME="<preprod-username>"
@@ -195,6 +212,7 @@ SYNCXML_SES_LANDLORD_CODE="<code>"
 **⚠️ CRÍTICO:** SES debe apuntar a **preproducción**, NUNCA a producción real sin autorización explícita.
 
 ### Shared (same)
+
 ```env
 AUTH_TRUST_HOST="true"
 SYNCXML_ADMIN_EMAIL="antonio@anclora.com"
@@ -207,6 +225,7 @@ NODE_OPTIONS="--use-system-ca"
 ```
 
 ### Que NO incluyas en Production
+
 - ❌ `SYNCXML_ADMIN_ACCESS_ENABLED="true"` (must be false)
 - ❌ `SYNCXML_ALLOW_ADMIN_ACCESS_IN_PRODUCTION="true"` (must be false)
 - ❌ Credenciales SES de **producción real** (usar preprod)
@@ -217,13 +236,15 @@ NODE_OPTIONS="--use-system-ca"
 ## 📋 Checklist de Setup
 
 ### Para Development (.env.local)
+
 - [ ] DATABASE_URL apunta a local/dev DB
-- [ ] URLs apuntan a http://localhost:3000
+- [ ] URLs apuntan a <http://localhost:3000>
 - [ ] SESSION_SECRET es diferente de production
 - [ ] SES_ENDPOINT está vacío
 - [ ] ADMIN_ACCESS_ENABLED="true"
 
 ### Para Preview (Vercel)
+
 - [ ] SESSION_SECRET es diferente a Development y Production
 - [ ] NEXT_PUBLIC_APP_URL = URL preview correcto
 - [ ] DATABASE_URL apunta a preview DB (no production)
@@ -231,6 +252,7 @@ NODE_OPTIONS="--use-system-ca"
 - [ ] ADMIN_ACCESS_ENABLED="true"
 
 ### Para Production (Vercel)
+
 - [ ] SESSION_SECRET es diferente a Development y Preview
 - [ ] URLs apuntan a anclora-syncxml.vercel.app
 - [ ] DATABASE_URL apunta a production DB
@@ -243,7 +265,7 @@ NODE_OPTIONS="--use-system-ca"
 ## 🔐 Variables sensibles
 
 | Variable | Development | Preview | Production |
-|----------|-------------|---------|------------|
+| -------- | ----------- | ------- | ---------- |
 | `SESSION_SECRET` | dev-value | Generated | Generated (different) |
 | `DATABASE_URL` | Local | Preview DB | Production DB |
 | `SYNCXML_ADMIN_ACCESS_TOKEN` | dev-token | Generated | N/A (disabled) |
@@ -255,7 +277,7 @@ NODE_OPTIONS="--use-system-ca"
 
 ## 🚫 Variables que NUNCA debes copiar entre entornos
 
-```
+```text
 ❌ DATABASE_URL (cada env su DB)
 ❌ SESSION_SECRET (debe ser único por env)
 ❌ SES credentials (nunca copiar a Preview)
@@ -279,7 +301,8 @@ NODE_OPTIONS="--use-system-ca"
 ## 🔄 Cheat Sheet: Copiar entre envs
 
 **De Development a Preview:**
-```
+
+```text
 ✅ SYNCXML_ADMIN_EMAIL
 ✅ SYNCXML_SES_ENV
 ✅ SYNCXML_SES_APPLICATION
@@ -290,7 +313,8 @@ NODE_OPTIONS="--use-system-ca"
 ```
 
 **De Preview a Production:**
-```
+
+```text
 ✅ SYNCXML_ADMIN_EMAIL
 ✅ SYNCXML_SES_APPLICATION
 ✅ NODE_OPTIONS
