@@ -13,6 +13,7 @@
     "test": "vitest run",
     "sync:municipios:ine": "tsx scripts/sync-municipios-ine.ts",
     "preview": "next start",
+    "ingest:doc": "bash scripts/ingest_document_with_mineru.sh",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:deploy": "DATABASE_URL=${DATABASE_URL:-$DIRECT_URL} prisma migrate deploy"

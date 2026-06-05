@@ -40,3 +40,7 @@ docs/SESION_*.md
 
 # Local knowledge vault snapshots
 knowledge-vault/repo-snapshots/
+.mineru/
+mineru-output/
+parsed-documents/
+uploads/
