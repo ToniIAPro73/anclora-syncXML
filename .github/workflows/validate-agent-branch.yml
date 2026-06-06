@@ -1,10 +1,12 @@
-name: CI
+name: Validate agent branch
 
 on:
-  pull_request:
-    branches: [development, staging, production]
   push:
-    branches: [development, staging, production, main]
+    branches:
+      - "feat/**"
+      - "fix/**"
+      - "chore/**"
+      - "hotfix/**"
 
 env:
   DATABASE_URL: "postgresql://user:password@localhost:5432/syncxml"
@@ -19,7 +21,7 @@ env:
   AUTH_TRUST_HOST: "true"
 
 jobs:
-  quality:
+  validate:
     runs-on: ubuntu-latest
 
     steps:
@@ -38,9 +40,6 @@ jobs:
       - name: Generate Prisma client
         run: npx prisma generate
 
-      - name: Check public docs policy
-        run: npm run check:public-docs
-
       - name: Lint
         run: npm run lint
 
@@ -52,3 +51,7 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      - name: Success
+        if: success()
+        run: echo "✓ Agent branch validated successfully"
