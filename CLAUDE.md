@@ -77,3 +77,34 @@ memanto remember "Cierre: se completo <tarea>. Rama: <rama>. Commit: <sha>. Pend
 memanto memory sync --project-dir .
 ```
 <!-- /MEMANTO-MANAGED-SECTION -->
+
+---
+
+## Flujo Git obligatorio
+
+**Antes de modificar código, lee:**
+
+- `docs/devops/AGENT_GIT_WORKFLOW_CONTRACT.md` — Contrato obligatorio
+- `docs/devops/BRANCHING_MODEL.md` — Modelo detallado
+
+### Regla base
+
+Crea rama desde `development` usando `feat/<tu-nombre>-<descripcion>`:
+
+```bash
+git fetch origin --prune
+git checkout development
+git pull --ff-only origin development
+git checkout -b feat/claude-<descripcion>
+```
+
+Ejecuta checks y haz commit:
+
+```bash
+npm run lint && npm run typecheck && npm run test && npm run build
+git add .
+git commit -m "<tipo>(<scope>): <resumen>"
+git push -u origin feat/claude-<descripcion>
+```
+
+**No hagas merge, promoción ni push a ramas permanentes.** Toni integra tu rama.
