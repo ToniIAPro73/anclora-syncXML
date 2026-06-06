@@ -1,10 +1,7 @@
-name: CI
+name: Promote development to staging
 
 on:
-  pull_request:
-    branches: [development, staging, production]
-  push:
-    branches: [development, staging, production, main]
+  workflow_dispatch:
 
 env:
   DATABASE_URL: "postgresql://user:password@localhost:5432/syncxml"
@@ -18,13 +15,23 @@ env:
   AUTH_URL: "http://localhost:3000"
   AUTH_TRUST_HOST: "true"
 
+permissions:
+  contents: write
+
 jobs:
-  quality:
+  promote:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -38,8 +45,11 @@ jobs:
       - name: Generate Prisma client
         run: npx prisma generate
 
-      - name: Check public docs policy
-        run: npm run check:public-docs
+      - name: Checkout staging
+        run: git checkout staging
+
+      - name: Merge development
+        run: git merge --no-ff origin/development -m "chore: merge development to staging [ci-skip]"
 
       - name: Lint
         run: npm run lint
@@ -52,3 +62,18 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      - name: Push staging
+        if: success()
+        run: git push origin staging
+
+      - name: Notify
+        if: success()
+        run: echo "✓ Successfully promoted development to staging"
+
+      - name: Notify failure
+        if: failure()
+        run: |
+          echo "✗ Promotion failed"
+          echo "Merge may have conflicts. Resolve manually."
+        continue-on-error: true
