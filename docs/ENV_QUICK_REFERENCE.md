@@ -147,7 +147,7 @@ NODE_OPTIONS="--use-system-ca"
 
 ## 🎯 Qué cambiar en cada variable entre entornos
 
-```
+```text
 DATABASE_URL
 ├─ Dev: postgresql://localhost:5432/dev
 ├─ Preview: postgresql://neon-preview.db/preview
@@ -184,7 +184,8 @@ SYNCXML_ADMIN_ACCESS_ALLOWED_ENV
 ## ✅ Verificación rápida
 
 **Antes de pushear a Preview:**
-```
+
+```text
 ☑️ SESSION_SECRET generado nuevo
 ☑️ ADMIN_ACCESS_TOKEN generado nuevo
 ☑️ URLs actualizadas a preview-url
@@ -194,7 +195,8 @@ SYNCXML_ADMIN_ACCESS_ALLOWED_ENV
 ```
 
 **Antes de pushear a Production:**
-```
+
+```text
 ☑️ SESSION_SECRET generado nuevo (diferente a Preview)
 ☑️ URLs actualizadas a anclora-syncxml.vercel.app
 ☑️ DATABASE_URL apunta a production DB
