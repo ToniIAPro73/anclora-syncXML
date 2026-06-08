@@ -3,6 +3,7 @@ import { Resend } from "resend";
 import { z } from "zod";
 import { prisma, hasDatabase } from "@/lib/db/prisma";
 import { generateTemporaryPassword, hashPassword } from "@/lib/password";
+import { pseudonymizeSession } from "@/lib/audit";
 import { authRateLimiter, getRateLimitKey, passwordRecoveryLimiter } from "@/lib/security/rateLimit";
 
 const APP_NAME = "Anclora SyncXML";
@@ -127,7 +128,7 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     console.error("Failed to send password recovery email", {
-      email,
+      emailHash: pseudonymizeSession(email),
       message: error instanceof Error ? error.message : String(error),
     });
   }
