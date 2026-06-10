@@ -39,7 +39,7 @@ export async function GET(request: Request) {
     return denied();
   }
 
-  console.info(`[admin-access] granted env=${config.env} email=${config.email}`);
+  console.info(`[admin-access] granted env=${config.env}`);
 
   const redirectTarget = new URL(config.redirect || "/app", url.origin);
   const response = NextResponse.redirect(redirectTarget, 302);
