@@ -185,6 +185,14 @@ Todo desarrollo en este repo sigue la metodología SDD unificada del ecosistema 
 **Referencia canónica**: `agency-agents/docs/guides/SDD_INTEGRATION_GUIDE.md`
 **Workflow OpenSpec**: `agency-agents/docs/guides/OPENSPEC_WORKFLOW.md`
 
+### Flujo de trabajo Git
+
+- Rama base de desarrollo: **`development`**
+- Los agentes crean ramas desde `development`: `feat/<agente>-<descripcion>`, `fix/...`, `chore/...`
+- Las ramas se mergean de vuelta a `development` via PR
+- Promoción manual: `development → staging → production → main`
+- Nunca commitear directamente en `main`, `staging` ni `production`
+
 ### Principios de desarrollo (Specboot)
 
 1. **Small Tasks, One at a Time** — baby steps, nunca saltarse pasos
@@ -204,7 +212,7 @@ Toda feature o fix sigue este flujo antes de escribir código:
 - Crear tasks: `sdd/features/<nombre>/<nombre>-tasks-v1.md`
 - Implementar tarea a tarea (tests primero)
 - Validar contra criterios de aceptación de la spec
-- PR con referencia a la spec
+- PR contra `development`, con referencia a la spec
 
 ### Reglas obligatorias
 
