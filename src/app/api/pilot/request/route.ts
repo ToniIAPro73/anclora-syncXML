@@ -320,8 +320,19 @@ export async function POST(request: Request) {
   if (!parsed.success) return NextResponse.json({ error: "Solicitud inválida" }, { status: 400 });
 
   const data = parsed.data;
+  const idempotencyKey = crypto.randomUUID();
   const normalized = {
-    requestId: crypto.randomUUID(),
+    // Anclora Intake Contract v1
+    schema_version: "anclora-intake-v1" as const,
+    intake_domain: "access_request" as const,
+    request_type: "pilot_request" as const,
+    source: "syncxml_landing" as const,
+    target_product: "syncxml" as const,
+    service_interest: null,
+    idempotency_key: idempotencyKey,
+
+    // Legacy / service fields
+    requestId: idempotencyKey,
     name: data.name || [data.nombre, data.apellidos].filter(Boolean).join(" ").trim(),
     email: data.email,
     companyName: data.companyName || data.alojamiento,
@@ -336,7 +347,6 @@ export async function POST(request: Request) {
     usesRealGuestData: false,
     needsSesAutomaticSubmission: false,
     locale: data.locale || "es",
-    source: "syncxml_landing",
     raw: {
       properties: data.inmuebles,
       paymentInterest: data.pay,
@@ -344,6 +354,7 @@ export async function POST(request: Request) {
       budget: data.presupuesto,
       message: data.mensaje,
       adminEmailSentBySyncxml: false,
+      idempotency_key: idempotencyKey,
     },
   };
 
