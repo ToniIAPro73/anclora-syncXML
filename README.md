@@ -1,30 +1,17 @@
 # Anclora SyncXML
 
-> **DEPRECATED: This repository is archived and read-only.**
->
-> As of June 2026, Anclora SyncXML has been superseded by the
-> `unified_ingestion` module in
-> [Anclora Nexus](https://github.com/ToniIAPro73/Anclora-Nexus).
-> XML ingestion, portal synchronization and feed processing now live in Nexus.
->
-> No further development, bug fixes or security patches will be made here.
-> If you are using SyncXML, migrate to `unified_ingestion` in Nexus.
-
-The content below is retained for historical context only.
-
----
-
-![Project status](https://img.shields.io/badge/status-DEPRECATED-red)
+![Project status](https://img.shields.io/badge/status-pre--MVP%20%2F%20controlled%20validation-orange)
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 ![Tests](https://img.shields.io/badge/tests-vitest-blue)
 ![Privacy](https://img.shields.io/badge/privacy-local--first%20by%20default-brightgreen)
 
-Anclora SyncXML was an open-source privacy-first tool for preparing, validating,
+Anclora SyncXML is an open-source privacy-first tool for preparing, validating,
 reviewing and exporting XML from reservation and guest data imported from
 Excel/XLSX files.
 
-The project is deprecated and should not be presented as legal advice, as an
-official SES.HOSPEDAJES integration, or as a guarantee of regulatory compliance.
+The project is currently **pre-MVP / controlled validation**. It should not be
+presented as legal advice, as an official SES.HOSPEDAJES integration, or as a
+guarantee of regulatory compliance.
 
 ## Open Source status
 
@@ -196,3 +183,4 @@ See [GOVERNANCE.md](GOVERNANCE.md).
 ## License
 
 MIT. See [LICENSE](LICENSE).
+
