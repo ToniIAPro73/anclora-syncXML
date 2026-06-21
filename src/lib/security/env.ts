@@ -19,6 +19,21 @@ export function getSessionSecret() {
   return process.env.SESSION_SECRET || process.env.AUTH_SECRET || "";
 }
 
+export function getPersistentPilotAuthConfigError() {
+  const missing: string[] = [];
+  if (!process.env.DATABASE_URL && !process.env.DIRECT_URL) missing.push("DATABASE_URL");
+  if (!getSessionSecret()) missing.push("SESSION_SECRET");
+  if (!process.env.SYNCXML_INTERNAL_API_SECRET) missing.push("SYNCXML_INTERNAL_API_SECRET");
+  if (process.env.NODE_ENV === "production" && envFlag("SYNCXML_DISABLE_AUTH")) {
+    return "SYNCXML_DISABLE_AUTH is not allowed for persistent pilot auth in production";
+  }
+  return missing.length ? `Missing persistent pilot auth configuration: ${missing.join(", ")}` : null;
+}
+
+export function canProvisionPersistentPilotUsers() {
+  return getPersistentPilotAuthConfigError() === null;
+}
+
 export function getRuntimeConfigError() {
   if (process.env.NODE_ENV !== "production") return null;
   if (envFlag("SYNCXML_DISABLE_AUTH")) return "SYNCXML_DISABLE_AUTH is not allowed in production";
