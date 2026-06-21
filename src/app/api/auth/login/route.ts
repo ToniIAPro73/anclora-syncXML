@@ -9,9 +9,23 @@ export async function POST(request: Request) {
   const rateLimit = authRateLimiter.check(getRateLimitKey(request));
   if (!rateLimit.allowed) return NextResponse.json({ error: "Demasiados intentos" }, { status: 429 });
   const configError = getRuntimeConfigError();
-  if (configError) return NextResponse.json({ error: "Configuracion de acceso incompleta" }, { status: 503 });
+  if (configError) {
+    return NextResponse.json(
+      {
+        error: "Configuracion de acceso incompleta",
+        code: "SYNCXML_AUTH_CONFIG_INCOMPLETE",
+      },
+      { status: 503 },
+    );
+  }
   if (!canUsePasswordAuth()) {
-    return NextResponse.json({ error: "Configuracion de acceso incompleta" }, { status: 503 });
+    return NextResponse.json(
+      {
+        error: "Configuracion de acceso incompleta",
+        code: "SYNCXML_AUTH_CONFIG_INCOMPLETE",
+      },
+      { status: 503 },
+    );
   }
   if (isExplicitLocalDemoMode()) return NextResponse.json({ ok: true, demo: true });
   const { email, password } = await request.json().catch(() => ({ email: "", password: "" }));
@@ -19,6 +33,15 @@ export async function POST(request: Request) {
   if (hasDatabase() && normalizedEmail && typeof password === "string") {
     const user = await prisma.pilotUser.findUnique({ where: { email: normalizedEmail } }).catch(() => null);
     const expired = user?.expiresAt ? user.expiresAt.getTime() < Date.now() : false;
+    if (user && user.status === "active" && expired) {
+      return NextResponse.json(
+        {
+          error: "El acceso temporal ha caducado.",
+          code: "SYNCXML_PILOT_ACCESS_EXPIRED",
+        },
+        { status: 401 },
+      );
+    }
     if (user && user.status === "active" && !expired && verifyPassword(password, user.passwordHash)) {
       await prisma.pilotUser.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } }).catch(() => null);
       return setSessionCookie(NextResponse.json({ ok: true, role: user.role, email: user.email, temporaryPassword: user.temporaryPassword }), {
@@ -39,5 +62,5 @@ export async function POST(request: Request) {
       role: "admin",
     });
   }
-  return NextResponse.json({ error: "Credenciales invalidas" }, { status: 401 });
+  return NextResponse.json({ error: "Credenciales invalidas", code: "SYNCXML_INVALID_CREDENTIALS" }, { status: 401 });
 }
