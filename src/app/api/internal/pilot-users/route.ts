@@ -60,6 +60,7 @@ export async function POST(request: Request) {
   if (existing?.status === "active" && !data.rotatePassword) {
     return NextResponse.json({
       ok: true,
+      pilotUserId: existing.id,
       userId: existing.id,
       email: existing.email,
       status: existing.status,
@@ -125,6 +126,7 @@ export async function POST(request: Request) {
 
   return NextResponse.json({
     ok: true,
+    pilotUserId: persisted.id,
     userId: persisted.id,
     email: persisted.email,
     status: persisted.status,
