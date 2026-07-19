@@ -16,6 +16,8 @@ describe("pilot request synthetic sample handling", () => {
   it("forwards the real sample availability value to Nexus", () => {
     const source = readFileSync("src/app/api/pilot/request/route.ts", "utf8");
 
+    expect(source).not.toContain("after(");
+    expect(source).toContain("const nexusResult = await forwardToNexus()");
     expect(source).toContain("acceptsSyntheticOrAnonymizedData: z.boolean().optional()");
     expect(source).toContain("const acceptsSyntheticOrAnonymizedData = Boolean");
     expect(source).toContain("acceptsSyntheticOrAnonymizedData,");
