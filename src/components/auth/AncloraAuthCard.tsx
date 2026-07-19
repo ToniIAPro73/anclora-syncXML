@@ -10,6 +10,7 @@ type AncloraAuthCardProps = {
 };
 
 export function AncloraAuthCard({
+  mode,
   title,
   badge = "PILOTO CONTROLADO",
   description,
@@ -17,7 +18,7 @@ export function AncloraAuthCard({
   footer,
 }: AncloraAuthCardProps) {
   return (
-    <section className="auth-card" aria-label={title ?? "Acceso a Anclora SyncXML"}>
+    <section className={`auth-card auth-card-${mode}`} aria-label={title ?? "Acceso a Anclora SyncXML"}>
       <header className="auth-card-header">
         <AppLogo size={50} showName={false} variant="mark" />
         <div className="auth-card-divider" aria-hidden="true" />

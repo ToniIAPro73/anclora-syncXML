@@ -191,9 +191,9 @@ button[aria-disabled="true"]:hover {
 .auth-card {
   width: 100%;
   max-width: 460px;
-  min-height: min(560px, calc(100svh - 72px));
-  max-height: calc(100svh - 72px);
-  overflow: hidden;
+  max-height: calc(100svh - 24px);
+  overflow-x: hidden;
+  overflow-y: auto;
   border: 1px solid color-mix(in srgb, var(--accent) 18%, var(--border));
   border-radius: 24px;
   background:
@@ -203,6 +203,8 @@ button[aria-disabled="true"]:hover {
   backdrop-filter: blur(22px);
   transition: transform 300ms cubic-bezier(0.25, 0.46, 0.45, 0.94), box-shadow 300ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
   will-change: transform, box-shadow;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--accent) 42%, transparent) transparent;
 }
 
 .auth-card:hover {
@@ -211,12 +213,12 @@ button[aria-disabled="true"]:hover {
 }
 
 .auth-card-header {
-  padding: 24px 24px 14px;
+  padding: 20px 24px 10px;
   text-align: center;
 }
 
 .auth-card-header .app-logo-mark {
-  margin: 0 auto 8px;
+  margin: 0 auto 6px;
 }
 
 .auth-card-divider {
@@ -235,7 +237,7 @@ button[aria-disabled="true"]:hover {
 
 .auth-card-badge {
   display: inline-flex;
-  margin-top: 8px;
+  margin-top: 6px;
   border: 1px solid color-mix(in srgb, var(--accent) 28%, transparent);
   border-radius: 999px;
   background: color-mix(in srgb, var(--accent) 10%, transparent);
@@ -249,8 +251,8 @@ button[aria-disabled="true"]:hover {
 .auth-card-body {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 2px 24px 14px;
+  gap: 9px;
+  padding: 2px 24px 12px;
 }
 
 .auth-card-title {
@@ -271,6 +273,22 @@ button[aria-disabled="true"]:hover {
   text-align: center;
 }
 
+.auth-card-gate .auth-card-header,
+.auth-card-login .auth-card-header {
+  padding-top: 18px;
+}
+
+.auth-card-gate .auth-card-body,
+.auth-card-login .auth-card-body {
+  gap: 8px;
+}
+
+.auth-card-gate .auth-card-description,
+.auth-card-login .auth-card-description {
+  font-size: 12px;
+  line-height: 1.35;
+}
+
 .auth-card-field-label {
   display: flex;
   flex-direction: column;
@@ -281,7 +299,7 @@ button[aria-disabled="true"]:hover {
 }
 
 .auth-card-field-label .input {
-  min-height: 40px;
+  min-height: 38px;
   border-radius: 14px;
   padding: 0 14px;
 }
@@ -317,7 +335,7 @@ button[aria-disabled="true"]:hover {
 }
 
 .auth-card-action {
-  min-height: 40px;
+  min-height: 38px;
   width: 100%;
   justify-content: center;
   border-radius: 14px;
@@ -333,7 +351,7 @@ button[aria-disabled="true"]:hover {
 }
 
 .auth-card-footer {
-  padding: 8px 24px 18px;
+  padding: 6px 24px 14px;
   color: var(--muted);
   font-size: 11px;
   line-height: 1.35;
@@ -347,11 +365,103 @@ button[aria-disabled="true"]:hover {
 
 .auth-screen-bg {
   height: 100svh;
-  overflow: hidden;
+  overflow: auto;
   background:
     radial-gradient(38rem 28rem at 20% 8%, color-mix(in srgb, var(--accent) 14%, transparent), transparent 65%),
     radial-gradient(34rem 26rem at 84% 18%, rgba(255, 255, 255, 0.07), transparent 70%),
     linear-gradient(180deg, var(--bg), color-mix(in srgb, var(--bg) 88%, #000 12%));
+}
+
+.auth-gate-screen {
+  display: flex;
+  width: 100%;
+  max-width: 460px;
+  min-height: calc(100svh - 112px);
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+  padding: 16px 0;
+}
+
+.app-user-menu {
+  position: relative;
+}
+
+.app-user-trigger {
+  display: inline-flex;
+  min-height: 2.65rem;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-elevated);
+  padding: 0 0.85rem;
+  color: var(--fg);
+  font-size: 0.85rem;
+  font-weight: 800;
+}
+
+.app-user-trigger:hover,
+.app-user-trigger:focus-visible {
+  border-color: color-mix(in srgb, var(--accent) 44%, var(--border));
+  color: var(--accent);
+}
+
+.app-user-popover {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.55rem);
+  z-index: 60;
+  width: min(18rem, calc(100vw - 2rem));
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--surface) 96%, transparent);
+  box-shadow: 0 24px 70px -38px color-mix(in srgb, var(--accent) 48%, transparent);
+  padding: 0.55rem;
+}
+
+.app-user-meta {
+  margin: 0 0 0.35rem;
+  padding: 0.45rem 0.55rem;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.app-user-action {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 0.55rem;
+  border-radius: 10px;
+  padding: 0.65rem 0.6rem;
+  color: var(--fg);
+  font-size: 0.88rem;
+  font-weight: 850;
+  text-align: left;
+}
+
+.app-user-action:hover,
+.app-user-action:focus-visible {
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  color: var(--accent);
+}
+
+@media (max-height: 760px) {
+  .auth-card-header .app-logo-mark {
+    width: 42px;
+    height: 42px;
+  }
+
+  .auth-card-title {
+    font-size: 19px;
+  }
+
+  .auth-card-pilot-box {
+    padding: 8px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

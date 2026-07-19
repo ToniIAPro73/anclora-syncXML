@@ -4,13 +4,13 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { AncloraAuthCard } from "@/components/auth/AncloraAuthCard";
 import { usePreferences } from "./AppPreferencesProvider";
-import { PILOT_HREF } from "./landing/landingData";
 
 export function AuthGate({ children }: { children: React.ReactNode }) {
   const { dictionary: t } = usePreferences();
   const [checking, setChecking] = useState(true);
   const [authenticated, setAuthenticated] = useState(false);
   const [temporaryPassword, setTemporaryPassword] = useState(false);
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [busy, setBusy] = useState(false);
@@ -45,7 +45,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
       const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ password }),
+        body: JSON.stringify({ email, password }),
       });
       if (!response.ok) {
         setError(
@@ -60,6 +60,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
       const data = await response.json();
       setAuthenticated(true);
       setTemporaryPassword(Boolean(data.temporaryPassword));
+      window.dispatchEvent(new CustomEvent("syncxml:auth-changed"));
     } catch {
       setError(t.actionFailed);
     } finally {
@@ -104,7 +105,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
 
   if (authenticated && temporaryPassword) {
     return (
-      <div className="mx-auto flex w-full max-w-[460px] justify-center mt-10">
+      <div className="auth-gate-screen">
         <AncloraAuthCard
           mode="gate"
           title="Cambio de contraseña"
@@ -158,7 +159,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-[460px] justify-center">
+    <div className="auth-gate-screen">
       <AncloraAuthCard
         mode="gate"
         title="Iniciar sesión"
@@ -173,7 +174,19 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
       >
         <form className="flex flex-col gap-3" onSubmit={login}>
           <label className="auth-card-field-label">
-            Clave de acceso al piloto
+            Email autorizado
+            <input
+              className="input"
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              placeholder="tu@email.com"
+              autoComplete="email"
+              aria-required="true"
+            />
+          </label>
+          <label className="auth-card-field-label">
+            Contraseña
             <input
               className="input"
               type="password"
@@ -184,15 +197,14 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
               aria-required="true"
             />
             <span className="auth-card-help">
-              Recibirás tus credenciales por correo una vez aprobada tu solicitud. Es
-              una cuentas individuales del piloto, no credenciales individuales.
+              Recibirás tus credenciales individuales por correo una vez aprobada tu solicitud.
             </span>
           </label>
           {error && <p className="auth-card-error" role="alert">{error}</p>}
           <button
             className="btn-primary auth-card-action"
             type="submit"
-            disabled={busy || !password}
+            disabled={busy || !email || !password}
           >
             {busy ? (
               <>
@@ -204,25 +216,6 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
             )}
           </button>
         </form>
-
-        <div className="auth-card-pilot-box">
-          <p className="text-sm font-bold text-premium">
-            ¿Todavía no participas en el piloto?
-          </p>
-          <Link className="btn-secondary auth-card-action mt-3" href={PILOT_HREF}>
-            Solicitar piloto controlado
-          </Link>
-          <Link
-            className="mt-3 inline-flex text-xs font-bold text-muted hover:text-premium"
-            href="/"
-          >
-            Volver a la landing
-          </Link>
-          <p className="auth-card-note mt-3">
-            No subas datos reales de huéspedes. La validación se realiza con
-            datos sintéticos o anonimizados.
-          </p>
-        </div>
       </AncloraAuthCard>
     </div>
   );
