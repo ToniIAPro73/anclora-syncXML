@@ -7,8 +7,8 @@ import type { AppLanguage } from "@/lib/domain";
  * shared i18n file, while still honouring LOCALIZATION_CONTRACT: every active
  * locale is covered, no hardcoded UI strings, no language mixing.
  *
- * The widget never asks for guest data; on submit it composes a mailto so the
- * feedback is handled manually (no backend, no PII storage).
+ * The widget never asks for guest data; feedback is sent through the internal
+ * email route without storing guest data.
  */
 export type FeedbackCopy = {
   // During use (9.2)
@@ -37,6 +37,8 @@ export type FeedbackCopy = {
   modelPerBooking: string;
   modelTailored: string;
   send: string;
+  sending: string;
+  sendError: string;
   open: string;
   dismiss: string;
   privacyNote: string;
@@ -67,6 +69,8 @@ const es: FeedbackCopy = {
   modelPerBooking: "Por reserva",
   modelTailored: "Servicio a medida",
   send: "Enviar feedback",
+  sending: "Enviando...",
+  sendError: "No se pudo enviar el feedback. Inténtalo de nuevo.",
   open: "Dar feedback del piloto",
   dismiss: "Ahora no",
   privacyNote: "Se enviará por correo. No incluye datos de huéspedes.",
@@ -97,6 +101,8 @@ const en: FeedbackCopy = {
   modelPerBooking: "Per booking",
   modelTailored: "Tailored service",
   send: "Send feedback",
+  sending: "Sending...",
+  sendError: "Could not send feedback. Try again.",
   open: "Give pilot feedback",
   dismiss: "Not now",
   privacyNote: "Sent by email. It contains no guest data.",
@@ -127,6 +133,8 @@ const de: FeedbackCopy = {
   modelPerBooking: "Pro Buchung",
   modelTailored: "Massgeschneiderter Service",
   send: "Feedback senden",
+  sending: "Wird gesendet...",
+  sendError: "Feedback konnte nicht gesendet werden. Bitte erneut versuchen.",
   open: "Piloten-Feedback geben",
   dismiss: "Jetzt nicht",
   privacyNote: "Wird per E-Mail gesendet. Enthaelt keine Gaestedaten.",
@@ -157,6 +165,8 @@ const ca: FeedbackCopy = {
   modelPerBooking: "Per reserva",
   modelTailored: "Servei a mesura",
   send: "Enviar feedback",
+  sending: "Enviant...",
+  sendError: "No s'ha pogut enviar el feedback. Torna-ho a intentar.",
   open: "Donar feedback del pilot",
   dismiss: "Ara no",
   privacyNote: "S'enviarà per correu. No inclou dades d'hostes.",
@@ -187,6 +197,8 @@ const fr: FeedbackCopy = {
   modelPerBooking: "Par réservation",
   modelTailored: "Service sur mesure",
   send: "Envoyer le retour",
+  sending: "Envoi...",
+  sendError: "Impossible d'envoyer le retour. Réessayez.",
   open: "Donner un retour sur le pilote",
   dismiss: "Pas maintenant",
   privacyNote: "Envoyé par e-mail. Ne contient aucune donnée client.",
@@ -217,6 +229,8 @@ const it: FeedbackCopy = {
   modelPerBooking: "Per prenotazione",
   modelTailored: "Servizio su misura",
   send: "Invia feedback",
+  sending: "Invio...",
+  sendError: "Non è stato possibile inviare il feedback. Riprova.",
   open: "Dai un feedback sul pilota",
   dismiss: "Non ora",
   privacyNote: "Inviato via email. Non contiene dati degli ospiti.",
@@ -247,6 +261,8 @@ const pt: FeedbackCopy = {
   modelPerBooking: "Por reserva",
   modelTailored: "Serviço à medida",
   send: "Enviar feedback",
+  sending: "A enviar...",
+  sendError: "Não foi possível enviar o feedback. Tenta novamente.",
   open: "Dar feedback do piloto",
   dismiss: "Agora não",
   privacyNote: "Enviado por email. Não inclui dados de hóspedes.",

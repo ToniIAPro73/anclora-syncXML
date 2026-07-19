@@ -5,7 +5,7 @@ import Link from "next/link";
 import { ChevronDown, Menu } from "lucide-react";
 import { useLandingI18n } from "@/lib/i18n/landing";
 import type { LandingCopy } from "@/lib/i18n/landing";
-import { PILOT_HREF } from "./landingData";
+import { LOGIN_HREF, PILOT_HREF } from "./landingData";
 import { NAV_GROUPS, type NavGroup } from "./navigation";
 import { LanguageToggle } from "./LanguageToggle";
 
@@ -94,6 +94,9 @@ export function LandingHeader() {
 
         <div className="hidden items-center gap-3 lg:flex">
           <LanguageToggle />
+          <Link href={LOGIN_HREF} className="l-btn l-btn-ghost">
+            {copy.navMenu.items.login}
+          </Link>
           <Link
             href={PILOT_HREF}
             className="l-btn l-btn-primary"
@@ -133,9 +136,12 @@ export function LandingHeader() {
                 ))}
               </nav>
               <hr className="l-divider my-2" />
+              <Link href={LOGIN_HREF} className="l-btn l-btn-ghost w-full">
+                {copy.navMenu.items.login}
+              </Link>
               <Link
                 href={PILOT_HREF}
-                className="l-btn l-btn-primary w-full"
+                className="l-btn l-btn-primary mt-2 w-full"
                 data-track="click_solicitar_piloto_controlado"
               >
                 {copy.common.pilotCta}
