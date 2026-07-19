@@ -55,12 +55,10 @@ export function PilotRequestForm() {
           reservas &&
           problema &&
           alternativa &&
-          acceptsSyntheticOrAnonymizedData &&
           acceptsPilotConditions,
       ),
     [
       acceptsPilotConditions,
-      acceptsSyntheticOrAnonymizedData,
       alojamiento,
       alternativa,
       problema,
