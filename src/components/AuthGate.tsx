@@ -25,6 +25,9 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
         if (!active) return;
         setAuthenticated(Boolean(data.authenticated));
         setTemporaryPassword(Boolean(data.user?.temporaryPassword));
+        if (data.authenticated) {
+          window.dispatchEvent(new CustomEvent("syncxml:auth-changed"));
+        }
       })
       .catch(() => {
         if (active) setAuthenticated(false);
