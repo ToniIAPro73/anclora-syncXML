@@ -26,7 +26,7 @@ const requestSchema = z.object({
   currentWorkflow: z.string().trim().min(1).max(1200).optional(),
   mainPain: z.string().trim().min(1).max(1200).optional(),
   wantsToValidate: z.string().trim().max(1200).optional(),
-  acceptsSyntheticOrAnonymizedData: z.literal(true).optional(),
+  acceptsSyntheticOrAnonymizedData: z.boolean().optional(),
   acceptsPilotConditions: z.literal(true).optional(),
   locale: z.string().trim().max(12).optional(),
   source: z.literal("syncxml_landing").optional(),
@@ -46,9 +46,6 @@ const requestSchema = z.object({
 }).superRefine((value, ctx) => {
   const name = value.name || [value.nombre, value.apellidos].filter(Boolean).join(" ").trim();
   if (!name) ctx.addIssue({ code: "custom", message: "name required", path: ["name"] });
-  if (!(value.acceptsSyntheticOrAnonymizedData ?? value.muestraSintetica)) {
-    ctx.addIssue({ code: "custom", message: "synthetic data acceptance required", path: ["acceptsSyntheticOrAnonymizedData"] });
-  }
   if (!(value.acceptsPilotConditions ?? value.privacy)) {
     ctx.addIssue({ code: "custom", message: "pilot conditions acceptance required", path: ["acceptsPilotConditions"] });
   }
@@ -117,6 +114,7 @@ function buildPilotRequestEmail(normalized: {
   currentWorkflow: string;
   mainPain: string;
   wantsToValidate: string;
+  acceptsSyntheticOrAnonymizedData: boolean;
 }, data: z.infer<typeof requestSchema>, appUrl: string) {
   const baseUrl = appUrl.replace(/\/$/, "");
   const logoUrl = `${baseUrl}/brand/logo-anclora-syncxml-email.png`;
@@ -139,7 +137,7 @@ function buildPilotRequestEmail(normalized: {
     `Flujo actual: ${normalized.currentWorkflow}`,
     `Problema: ${normalized.mainPain}`,
     `Quiere validar: ${normalized.wantsToValidate}`,
-    "Acepta muestra sintetica/anonimizada: Si",
+    `Dispone de muestra sintetica/anonimizada: ${normalized.acceptsSyntheticOrAnonymizedData ? "Si" : "No"}`,
     "Acepta condiciones piloto: Si",
     "",
     "DISPOSICION DE PAGO",
@@ -204,7 +202,7 @@ function buildPilotRequestEmail(normalized: {
                         detailRow("Flujo actual", normalized.currentWorkflow),
                         detailRow("Problema", normalized.mainPain),
                         detailRow("Quiere validar", normalized.wantsToValidate),
-                        detailRow("Muestra sintetica/anonimizada", "Si"),
+                        detailRow("Dispone de muestra sintetica/anonimizada", normalized.acceptsSyntheticOrAnonymizedData ? "Si" : "No"),
                         detailRow("Condiciones piloto", "Si"),
                       ].join(""))}
                       ${section("Disposicion de pago", [
@@ -322,6 +320,7 @@ export async function POST(request: Request) {
 
   const data = parsed.data;
   const idempotencyKey = crypto.randomUUID();
+  const acceptsSyntheticOrAnonymizedData = Boolean(data.acceptsSyntheticOrAnonymizedData ?? data.muestraSintetica);
   const normalized = {
     // Anclora Intake Contract v1
     schema_version: "anclora-intake-v1" as const,
@@ -343,7 +342,7 @@ export async function POST(request: Request) {
     currentWorkflow: data.currentWorkflow || data.alternativa || data.excelUse || "No especificado",
     mainPain: data.mainPain || data.problema || "No especificado",
     wantsToValidate: data.wantsToValidate || data.tiempo || data.mensaje || "No especificado",
-    acceptsSyntheticOrAnonymizedData: true,
+    acceptsSyntheticOrAnonymizedData,
     acceptsPilotConditions: true,
     usesRealGuestData: false,
     needsSesAutomaticSubmission: false,
@@ -354,6 +353,7 @@ export async function POST(request: Request) {
       preferredModel: data.model,
       budget: data.presupuesto,
       message: data.mensaje,
+      needsSyntheticSampleAttachments: !acceptsSyntheticOrAnonymizedData,
       adminEmailSentBySyncxml: false,
       idempotency_key: idempotencyKey,
     },
