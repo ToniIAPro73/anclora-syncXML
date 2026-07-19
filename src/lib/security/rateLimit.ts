@@ -14,11 +14,21 @@ export type RateLimitResult = {
   resetAt: number;
 };
 
-export function createRateLimiter({ limit, windowMs }: RateLimitOptions) {
+export type RateLimiter = {
+  check(key: string, now?: number): RateLimitResult;
+  reset(): void;
+};
+
+export type RateLimitStore = {
+  consume(key: string, now: number, options: RateLimitOptions): RateLimitResult;
+  reset(): void;
+};
+
+export function createMemoryRateLimitStore(): RateLimitStore {
   const buckets = new Map<string, RateLimitBucket>();
 
   return {
-    check(key: string, now = Date.now()): RateLimitResult {
+    consume(key: string, now: number, { limit, windowMs }: RateLimitOptions): RateLimitResult {
       const bucket = buckets.get(key);
       if (!bucket || bucket.resetAt <= now) {
         const resetAt = now + windowMs;
@@ -39,6 +49,19 @@ export function createRateLimiter({ limit, windowMs }: RateLimitOptions) {
   };
 }
 
+export function createRateLimiter({ limit, windowMs }: RateLimitOptions) {
+  const store = createMemoryRateLimitStore();
+
+  return {
+    check(key: string, now = Date.now()): RateLimitResult {
+      return store.consume(key, now, { limit, windowMs });
+    },
+    reset() {
+      store.reset();
+    },
+  };
+}
+
 const globalLimiters = globalThis as unknown as {
   syncXmlAuthLimiter?: ReturnType<typeof createRateLimiter>;
   syncXmlPasswordRecoveryLimiter?: ReturnType<typeof createRateLimiter>;
@@ -49,6 +72,9 @@ globalLimiters.syncXmlAuthLimiter ??= createRateLimiter({ limit: 5, windowMs: 60
 globalLimiters.syncXmlPasswordRecoveryLimiter ??= createRateLimiter({ limit: 3, windowMs: 24 * 60 * 60_000 });
 globalLimiters.syncXmlSensitiveLimiter ??= createRateLimiter({ limit: 60, windowMs: 60_000 });
 
+// Best-effort local protection only: this in-memory store is per process and
+// per serverless instance. Swap RateLimitStore for Redis/Upstash later when
+// distributed limits become operationally necessary.
 export const authRateLimiter = globalLimiters.syncXmlAuthLimiter;
 export const passwordRecoveryLimiter = globalLimiters.syncXmlPasswordRecoveryLimiter;
 export const sensitiveRateLimiter = globalLimiters.syncXmlSensitiveLimiter;
