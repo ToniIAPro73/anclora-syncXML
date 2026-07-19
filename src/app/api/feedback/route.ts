@@ -3,6 +3,7 @@ import { Resend } from "resend";
 import { z } from "zod";
 import { getSessionUser } from "@/lib/auth";
 import { pseudonymizeSession } from "@/lib/audit";
+import { getInternalReplyTo } from "@/lib/email/delivery";
 import { getRateLimitKey, sensitiveRateLimiter } from "@/lib/security/rateLimit";
 
 const DEFAULT_FEEDBACK_TO = "antonio@anclora.com";
@@ -82,7 +83,7 @@ export async function POST(request: Request) {
     const { error } = await resend.emails.send({
       from: resendFrom,
       to: recipients,
-      replyTo: user.email,
+      replyTo: getInternalReplyTo(),
       subject: email.subject,
       text: email.text,
       html: email.html,

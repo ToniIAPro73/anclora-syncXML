@@ -1,5 +1,6 @@
 import { after, NextResponse } from "next/server";
 import { z } from "zod";
+import { getInternalReplyTo } from "@/lib/email/delivery";
 import { getRateLimitKey, sensitiveRateLimiter } from "@/lib/security/rateLimit";
 import { Resend } from "resend";
 
@@ -287,7 +288,7 @@ async function sendPilotRequestEmail(input: {
   const { error } = await resend.emails.send({
     from: input.resendFrom,
     to: input.resendTo,
-    replyTo: input.normalized.email,
+    replyTo: getInternalReplyTo(),
     subject: email.subject,
     text: email.text,
     html: email.html,
