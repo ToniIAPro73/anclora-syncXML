@@ -13,6 +13,27 @@
 - **Contraseña Temporal**: Nexus solicita el aprovisionamiento enviando un token seguro a SyncXML. SyncXML genera una contraseña temporal que se devuelve y envía por correo en texto claro por una única vez.
 - **Cambio Obligatorio**: Al realizar el primer inicio de sesión, el \`AuthGate\` obliga a rotar la contraseña temporal. No se permite navegación a otros endpoints de la API ni vistas hasta que este cambio se efectúa.
 
+## Rate limiting
+- **Alcance actual**: El limitador en memoria es best-effort, local al proceso y a
+  una sola instancia serverless.
+- **Impacto**: Reduce abuso accidental o ráfagas simples, pero no garantiza límites
+  globales cuando hay varias instancias.
+- **Plan**: La interfaz `RateLimitStore` permite sustituir el backend por Redis,
+  Upstash u otro almacén distribuido sin reescribir endpoints.
+
+## Dependencias vulnerables residuales
+- **`xlsx`**: `npm audit` mantiene avisos high de prototype pollution y ReDoS sin
+  versión pública corregida en npm. La superficie actual queda limitada por
+  `MAX_UPLOAD_SIZE = 5MB`, validación de extensión/MIME, parsing en servidor,
+  rechazo de archivos corruptos y política de piloto con datos sintéticos o
+  anonimizados.
+- **`next` / PostCSS interno**: Next 16.2.10 sigue empaquetando `postcss@8.4.31`
+  y `npm audit` propone `next@9.3.3` con `--force`, lo que sería un downgrade
+  mayor e incompatible con el stack actual. No aplicar ese fix forzado.
+- **Plan `xlsx`**: Evaluar migración incremental a un parser mantenido para el
+  subconjunto usado por SyncXML (`read` buffer + `sheet_to_json`), con fixtures
+  existentes antes de retirar SheetJS.
+
 ## Legal y Normativo
 - **Estado Actual**: RGPD y Data Processing Agreement (DPA) pendientes de cierre formal para el producto.
 - **Compromisos**: No se prometen beneficios de "cumplimiento legal garantizado", no se asume responsabilidad por la validación del Ministerio en esta fase. No se activa el envío automático productivo.

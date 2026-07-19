@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { z } from "zod";
+import { reservationPayloadSchema } from "@/lib/api/parsedExcelPayload";
 import { requireAuth } from "@/lib/auth";
 import { createReservation, listReservations } from "@/lib/db/reservations";
 import { generateHospitalityXml } from "@/lib/xml/generateHospitalityXml";
@@ -28,7 +28,7 @@ export async function POST(request: Request) {
     const unauthorized = await requireAuth();
     if (unauthorized) return unauthorized;
     const body = await request.json();
-    const payload = z.object({ parsed: z.any(), generated: z.any().optional() }).safeParse(body);
+    const payload = reservationPayloadSchema.safeParse(body);
     if (!payload.success) return NextResponse.json({ error: "Payload inválido" }, { status: 400 });
     const parsed = smartValidateParsedExcel(payload.data.parsed);
     const generated = generateHospitalityXml(parsed, await readReferenceTemplate());

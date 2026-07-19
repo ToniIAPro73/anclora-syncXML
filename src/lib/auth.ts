@@ -34,13 +34,19 @@ function readSignedSession(value?: string): SessionUser | null {
   }
 }
 
+function canUseLegacySecretCookie() {
+  return process.env.NODE_ENV !== "production" && process.env.SYNCXML_ALLOW_LEGACY_SECRET_COOKIE === "true";
+}
+
 export async function getSessionUser(): Promise<SessionUser | null> {
   validateRuntimeConfig();
   if (authDisabled() || isExplicitLocalDemoMode()) return { email: "demo@anclora.local", role: "admin" };
   const value = (await cookies()).get(COOKIE_NAME)?.value;
   const signed = readSignedSession(value);
   if (signed) return signed;
-  if (value && value === getSessionSecret()) return { email: process.env.SYNCXML_ADMIN_EMAIL || "antonio@anclora.com", role: "admin" };
+  if (canUseLegacySecretCookie() && value && value === getSessionSecret()) {
+    return { email: process.env.SYNCXML_ADMIN_EMAIL || "antonio@anclora.com", role: "admin" };
+  }
   return null;
 }
 
@@ -57,7 +63,8 @@ export async function requireAuth() {
 export async function setSessionCookie(response: NextResponse, user?: SessionUser) {
   const sessionSecret = getSessionSecret();
   if (!sessionSecret) return response;
-  response.cookies.set(COOKIE_NAME, user ? signSession(user) : sessionSecret, {
+  const sessionUser = user ?? { email: process.env.SYNCXML_ADMIN_EMAIL || "antonio@anclora.com", role: "admin" as const };
+  response.cookies.set(COOKIE_NAME, signSession(sessionUser), {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
