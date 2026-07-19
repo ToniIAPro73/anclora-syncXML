@@ -194,7 +194,15 @@ SYNCXML_SES_ALLOW_PRODUCTION_SEND=false
 
 # Resend (si se activa email)
 RESEND_API_KEY=<key>
+RESEND_FROM="Anclora SyncXML <piloto@syncxml.anclora.com>"
+RESEND_REPLY_TO=antonio@anclora.com
+SYNCXML_FEEDBACK_TO=antonio@anclora.com
 ```
+
+Antes de probar con destinatarios Gmail/Yahoo, el dominio de `RESEND_FROM`
+debe estar verificado en Resend y tener SPF, DKIM y DMARC publicados. Si el
+remitente usa `example.com`, `resend.dev` o un dominio sin DMARC, los correos
+pueden llegar a spam aunque Resend los marque como entregados.
 
 #### 2. Admin access en Production
 
