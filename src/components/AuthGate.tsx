@@ -90,6 +90,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
       }
       setTemporaryPassword(false);
       setSuccessMsg("Contraseña actualizada con éxito.");
+      window.dispatchEvent(new CustomEvent("syncxml:auth-changed"));
     } catch {
       setError(t.actionFailed);
     } finally {
