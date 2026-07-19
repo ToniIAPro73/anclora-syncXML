@@ -7,7 +7,7 @@ const KEYS: (keyof FeedbackCopy)[] = [
   "closeTitle", "closeIntro", "qSolved", "qValue", "qDoubts", "qTrust", "qPay",
   "qModel", "qRecommend", "payYes", "payMaybe", "payNo", "modelOneOff",
   "modelMonthly", "modelSetup", "modelPerBooking", "modelTailored", "send",
-  "open", "dismiss", "privacyNote",
+  "sending", "sendError", "open", "dismiss", "privacyNote",
 ];
 
 describe("pilot feedback copy", () => {

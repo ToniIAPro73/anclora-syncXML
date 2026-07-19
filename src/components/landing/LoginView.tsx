@@ -3,11 +3,11 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight, ShieldCheck } from "lucide-react";
+import { ArrowRight, ShieldCheck } from "lucide-react";
 import { AncloraAuthCard } from "@/components/auth/AncloraAuthCard";
 import { useLandingI18n } from "@/lib/i18n/landing";
 import { track } from "./analytics";
-import { APP_HREF, PILOT_HREF } from "./landingData";
+import { APP_HREF } from "./landingData";
 
 type Phase = "checking" | "form" | "authenticated";
 
@@ -115,17 +115,8 @@ export function LoginView() {
   }, [copy.login.actionError, copy.login.recoverSuccess, email]);
 
   return (
-    <main className="auth-screen-bg flex min-h-[100svh] flex-col items-center justify-center px-4 py-4">
+    <main className="auth-screen-bg flex min-h-[100svh] flex-col items-center justify-center px-4 py-3">
       <div className="w-full max-w-[460px]">
-        <Link
-          href="/"
-          className="mb-4 inline-flex items-center gap-2 rounded-full px-1 text-sm font-bold text-muted hover:text-premium"
-          aria-label={copy.login.backAria}
-        >
-          <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-          {copy.form.back}
-        </Link>
-
         <AncloraAuthCard
           mode={phase === "authenticated" ? "authenticated" : "login"}
           title={copy.login.title}
@@ -226,22 +217,6 @@ export function LoginView() {
               </div>
             </form>
           )}
-
-          <div className="auth-card-pilot-box">
-            <p className="text-sm font-bold text-premium">
-              {copy.login.notPilot}
-            </p>
-            <Link
-              href={PILOT_HREF}
-              className="btn-secondary auth-card-action mt-3"
-              data-track="click_solicitar_piloto_controlado"
-            >
-              {copy.common.pilotCta}
-            </Link>
-            <p className="auth-card-note mt-3">
-              {copy.login.pilotNote}
-            </p>
-          </div>
         </AncloraAuthCard>
       </div>
     </main>

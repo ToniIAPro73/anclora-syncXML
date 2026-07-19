@@ -5,21 +5,20 @@ import { MessageSquare, Send, X } from "lucide-react";
 import { usePreferences } from "./AppPreferencesProvider";
 import { getFeedbackCopy } from "@/lib/feedback/feedbackCopy";
 import { track } from "@/components/landing/analytics";
-import { PILOT_EMAIL } from "@/components/landing/landingData";
 
 /**
  * In-app pilot feedback (FASE 9.2 during use / 9.3 at close).
  *
- * Discreet and non-blocking. Never asks for guest data; on submit it composes a
- * mailto so feedback is handled manually (no backend, no PII storage). Analytics
- * events go through the consent-gated track() shim.
+ * Discreet and non-blocking. Never asks for guest data; feedback is sent
+ * through the internal email endpoint. Analytics events go through the
+ * consent-gated track() shim.
  */
 export function PilotFeedback({ variant }: { variant: "during" | "close" }) {
   const { language } = usePreferences();
   const c = getFeedbackCopy(language);
 
   if (variant === "during") return <DuringFeedback copy={c} />;
-  return <CloseFeedback copy={c} />;
+  return <CloseFeedback copy={c} language={language} />;
 }
 
 type Copy = ReturnType<typeof getFeedbackCopy>;
@@ -53,7 +52,7 @@ function DuringFeedback({ copy: c }: { copy: Copy }) {
   );
 }
 
-function CloseFeedback({ copy: c }: { copy: Copy }) {
+function CloseFeedback({ copy: c, language }: { copy: Copy; language: string }) {
   const [open, setOpen] = useState(false);
   const [solved, setSolved] = useState("");
   const [value, setValue] = useState("");
@@ -62,27 +61,37 @@ function CloseFeedback({ copy: c }: { copy: Copy }) {
   const [pay, setPay] = useState("");
   const [model, setModel] = useState("");
   const [recommend, setRecommend] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  function buildMailto() {
-    const lines = [
-      c.closeTitle,
-      "",
-      `${c.qSolved} ${solved}`,
-      `${c.qValue} ${value}`,
-      `${c.qDoubts} ${doubts}`,
-      `${c.qTrust} ${trust}`,
-      `${c.qPay} ${pay}`,
-      `${c.qModel} ${model}`,
-      `${c.qRecommend} ${recommend}`,
-    ];
-    return `mailto:${PILOT_EMAIL}?subject=${encodeURIComponent(c.closeTitle)}&body=${encodeURIComponent(lines.join("\n"))}`;
-  }
-
-  function submit(event: React.FormEvent<HTMLFormElement>) {
+  async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    track("feedback_close_submit");
-    window.location.href = buildMailto();
-    setOpen(false);
+    setBusy(true);
+    setError(null);
+    try {
+      const response = await fetch("/api/feedback", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          language,
+          solved,
+          value,
+          doubts,
+          trust,
+          pay,
+          model,
+          recommend,
+        }),
+      });
+      if (!response.ok) throw new Error("feedback_failed");
+      track("feedback_close_submit");
+      setSent(true);
+    } catch {
+      setError(c.sendError);
+    } finally {
+      setBusy(false);
+    }
   }
 
   if (!open) {
@@ -109,6 +118,11 @@ function CloseFeedback({ copy: c }: { copy: Copy }) {
           <X className="h-5 w-5" />
         </button>
       </div>
+      {sent ? (
+        <p className="mt-4 rounded-lg border border-[color-mix(in_srgb,var(--success)_35%,var(--border))] bg-[color-mix(in_srgb,var(--success)_10%,transparent)] p-3 text-sm font-bold text-secondary" role="status">
+          {c.thanks}
+        </p>
+      ) : null}
       <form className="mt-4 grid gap-4" onSubmit={submit}>
         <Field label={c.qSolved}><textarea className="input" rows={2} value={solved} onChange={(e) => setSolved(e.target.value)} /></Field>
         <Field label={c.qValue}><textarea className="input" rows={2} value={value} onChange={(e) => setValue(e.target.value)} /></Field>
@@ -139,8 +153,9 @@ function CloseFeedback({ copy: c }: { copy: Copy }) {
           </div>
         </Field>
 
-        <button type="submit" className="btn-primary justify-center">
-          <Send className="h-4 w-4" />{c.send}
+        {error ? <p className="text-sm font-bold text-[var(--error)]" role="alert">{error}</p> : null}
+        <button type="submit" className="btn-primary justify-center" disabled={busy || sent}>
+          <Send className="h-4 w-4" />{busy ? c.sending : c.send}
         </button>
         <p className="text-xs text-muted">{c.privacyNote}</p>
       </form>
