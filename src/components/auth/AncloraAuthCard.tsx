@@ -1,7 +1,7 @@
 import { AppLogo } from "@/components/AppLogo";
 
 type AncloraAuthCardProps = {
-  mode: "login" | "gate" | "authenticated" | "config-error";
+  mode: "login" | "gate" | "admin" | "authenticated" | "config-error";
   title?: string;
   badge?: string;
   description?: string;

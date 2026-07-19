@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { authRateLimiter } from "@/lib/security/rateLimit";
 
 const OLD_ENV = { ...process.env };
 
@@ -82,6 +83,7 @@ function configureProductionAuth() {
 
 beforeEach(() => {
   vi.resetModules();
+  authRateLimiter.reset();
   pilotUserState.user = null;
   pilotUserState.createCount = 0;
   pilotUserState.updateCount = 0;
@@ -149,6 +151,50 @@ describe("pilot auth routes", () => {
     expect(response.status).toBe(200);
     expect(body.ok).toBe(true);
     expect(body.temporaryPassword).toBe(true);
+  });
+
+  it("logs in an admin through the admin-only endpoint", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("SESSION_SECRET", "stable-session-secret");
+    vi.stubEnv("SYNCXML_ADMIN_EMAIL", "antonio@anclora.com");
+    vi.stubEnv("SYNCXML_ADMIN_PASSWORD", "admin-password");
+
+    const { POST } = await import("@/app/api/auth/admin-login/route");
+    const response = await POST(jsonRequest({
+      email: "antonio@anclora.com",
+      password: "admin-password",
+    }));
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.ok).toBe(true);
+    expect(body.role).toBe("admin");
+  });
+
+  it("does not accept pilot credentials on the admin-only endpoint", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("SESSION_SECRET", "stable-session-secret");
+    vi.stubEnv("SYNCXML_ADMIN_EMAIL", "antonio@anclora.com");
+    vi.stubEnv("SYNCXML_ADMIN_PASSWORD", "admin-password");
+    pilotUserState.user = {
+      id: "pilot-1",
+      email: "pilot@example.com",
+      passwordHash: "hash:valid-password",
+      temporaryPassword: false,
+      role: "pilot_user",
+      status: "active",
+      expiresAt: new Date(Date.now() + 86_400_000),
+    };
+
+    const { POST } = await import("@/app/api/auth/admin-login/route");
+    const response = await POST(jsonRequest({
+      email: "pilot@example.com",
+      password: "valid-password",
+    }));
+    const body = await response.json();
+
+    expect(response.status).toBe(401);
+    expect(body.code).toBe("SYNCXML_INVALID_ADMIN_CREDENTIALS");
   });
 
   it("denies an expired PilotUser with a clear response", async () => {
