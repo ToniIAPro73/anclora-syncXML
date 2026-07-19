@@ -252,6 +252,8 @@ describe("pilot auth routes", () => {
     expect(response.status).toBe(200);
     expect(body.ok).toBe(true);
     expect(body.loginReady).toBe(true);
+    expect(body.pilotUserId).toBe("pilot-1");
+    expect(body.userId).toBe("pilot-1");
     expect(body.email).toBe("pilot@example.com");
     expect(body.temporaryPassword).toBe("Temp-Generated-Password");
     expect(pilotUserState.createCount).toBe(1);
@@ -279,6 +281,8 @@ describe("pilot auth routes", () => {
     expect(response.status).toBe(200);
     expect(body.ok).toBe(true);
     expect(body.created).toBe(false);
+    expect(body.pilotUserId).toBe("pilot-1");
+    expect(body.userId).toBe("pilot-1");
     expect(body.temporaryPassword).toBeNull();
     expect(pilotUserState.createCount).toBe(0);
     expect(pilotUserState.updateCount).toBe(0);
