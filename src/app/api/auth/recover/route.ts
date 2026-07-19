@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { Resend } from "resend";
 import { z } from "zod";
 import { prisma, hasDatabase } from "@/lib/db/prisma";
+import { getInternalReplyTo } from "@/lib/email/delivery";
 import { generateTemporaryPassword, hashPassword } from "@/lib/password";
 import { pseudonymizeSession } from "@/lib/audit";
 import { authRateLimiter, getRateLimitKey, passwordRecoveryLimiter } from "@/lib/security/rateLimit";
@@ -121,7 +122,7 @@ export async function POST(request: Request) {
     await resend.emails.send({
       from: resendFrom,
       to: email,
-      replyTo: process.env.RESEND_REPLY_TO || process.env.ADMIN_EMAILS || undefined,
+      replyTo: getInternalReplyTo(),
       subject: emailPayload.subject,
       text: emailPayload.text,
       html: emailPayload.html,

@@ -112,9 +112,21 @@ Variables necesarias:
 
 ```env
 RESEND_API_KEY="re_..."
-RESEND_FROM_EMAIL="Anclora SyncXML <piloto@tu-dominio-verificado.com>"
-SYNCXML_PILOT_REQUEST_TO="buzon-destino@tu-dominio.com"
+RESEND_FROM_EMAIL="Anclora SyncXML <piloto@syncxml.anclora.com>"
+SYNCXML_PILOT_REQUEST_TO="antonio@anclora.com"
+SYNCXML_FEEDBACK_TO="antonio@anclora.com"
 ```
 
 El dominio del `RESEND_FROM_EMAIL` debe estar verificado en Resend. El email
 introducido por el solicitante se usa como `replyTo` para responder manualmente.
+
+Para evitar que Gmail clasifique los correos como spam:
+
+- usar siempre un remitente de un dominio verificado en Resend;
+- publicar los registros SPF y DKIM indicados por Resend;
+- publicar un registro DMARC del dominio remitente;
+- evitar `example.com`, `resend.dev` o dominios no alineados con los enlaces del email;
+- preferir un subdominio dedicado, por ejemplo `syncxml.anclora.com`, con DNS propio.
+- mantener `Reply-To` en una bandeja interna del dominio (`RESEND_REPLY_TO`);
+  el email del solicitante debe ir en el cuerpo del correo, no como `Reply-To`
+  externo, para reducir señales de spoofing en filtros estrictos.

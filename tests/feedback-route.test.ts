@@ -32,6 +32,7 @@ beforeEach(() => {
   resendState.send.mockClear();
   vi.stubEnv("RESEND_API_KEY", "resend-key");
   vi.stubEnv("RESEND_FROM", "Anclora SyncXML <piloto@anclora.test>");
+  vi.stubEnv("RESEND_REPLY_TO", "antonio@anclora.com");
   vi.stubEnv("SYNCXML_FEEDBACK_TO", "antonio@anclora.com");
 });
 
@@ -56,7 +57,7 @@ describe("pilot feedback route", () => {
     expect(resendState.send).toHaveBeenCalledWith(expect.objectContaining({
       from: "Anclora SyncXML <piloto@anclora.test>",
       to: ["antonio@anclora.com"],
-      replyTo: "pilot@example.com",
+      replyTo: "antonio@anclora.com",
       subject: "Feedback del piloto SyncXML",
     }));
   });
