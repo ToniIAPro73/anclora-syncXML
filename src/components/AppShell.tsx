@@ -26,6 +26,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const isPublicLegalPage = pathname === "/privacy" || pathname === "/terms" || pathname === "/legal" || pathname === "/cookies";
   const isLandingPage = pathname === "/";
   const isLoginPage = pathname === "/login";
+  const isAdminLoginPage = pathname === "/admin/login";
   const isPilotPage = pathname === "/piloto";
 
   function startNewReservation() {
@@ -52,7 +53,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     setUser(null);
     setUserMenuOpen(false);
     window.dispatchEvent(new CustomEvent("syncxml:auth-changed"));
-    router.push("/login");
+    router.push(user?.role === "admin" ? "/admin/login" : "/login");
   }
 
   useEffect(() => {
@@ -79,7 +80,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   // Public, self-rendering pages must not be wrapped in the authenticated
   // application shell.
-  if (isLandingPage || isLoginPage || isPilotPage) {
+  if (isLandingPage || isLoginPage || isAdminLoginPage || isPilotPage) {
     return <>{children}</>;
   }
 
