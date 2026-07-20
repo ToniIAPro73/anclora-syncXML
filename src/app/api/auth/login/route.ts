@@ -45,6 +45,7 @@ export async function POST(request: Request) {
     if (user && user.status === "active" && !expired && verifyPassword(password, user.passwordHash)) {
       await prisma.pilotUser.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } }).catch(() => null);
       return setSessionCookie(NextResponse.json({ ok: true, role: user.role, email: user.email, temporaryPassword: user.temporaryPassword }), {
+        id: user.id,
         email: user.email,
         role: user.role,
         temporaryPassword: user.temporaryPassword,
@@ -58,6 +59,7 @@ export async function POST(request: Request) {
   ) {
     const adminEmail = process.env.SYNCXML_ADMIN_EMAIL || "antonio@anclora.com";
     return setSessionCookie(NextResponse.json({ ok: true, role: "admin", email: adminEmail }), {
+      id: "admin",
       email: adminEmail,
       role: "admin",
     });

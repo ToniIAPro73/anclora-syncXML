@@ -49,7 +49,7 @@ export async function POST(request: Request) {
   }
   const buffer = Buffer.from(await file.arrayBuffer());
   try {
-    const parsed = parseExcelBuffer(buffer, fileValidation.safeName);
+    const parsed = await parseExcelBuffer(buffer, fileValidation.safeName);
     const result = await resolveParsedMunicipiosFromDb(parsed, prismaMunicipioRepository);
     recordAuditEvent({
       eventType: result.validation.errors.length ? "validation_error_detected" : "file_import_validated",

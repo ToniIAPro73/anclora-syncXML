@@ -23,6 +23,7 @@ export async function POST(request: Request) {
   const normalizedEmail = typeof email === "string" ? email.trim().toLowerCase() : "";
   if (normalizedEmail === adminEmail && password === adminPassword) {
     return setSessionCookie(NextResponse.json({ ok: true, role: "admin", email: adminEmail }), {
+      id: "admin",
       email: adminEmail,
       role: "admin",
     });
