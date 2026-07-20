@@ -1,26 +1,30 @@
 import { readFileSync } from "node:fs";
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
+import type { GeneratedXmlResult, ParsedExcel } from "@/lib/domain";
 import { parseExcelBuffer } from "@/lib/excel/parseExcel";
 import { generateHospitalityXml } from "@/lib/xml/generateHospitalityXml";
 import { validateGuest } from "@/lib/validation";
 
 describe("generateHospitalityXml", () => {
   const workbookPath = "test-data/fixtures/registro_huespedes_synthetic.xlsx";
-  const parsed = (() => {
-    const imported = parseExcelBuffer(readFileSync(workbookPath));
+  const template = readFileSync("docs/xml-plantilla.xml", "utf8");
+  let parsed: ParsedExcel;
+  let generated: GeneratedXmlResult;
+
+  beforeAll(async () => {
+    const imported = await parseExcelBuffer(readFileSync(workbookPath));
     const guests = imported.guests.map((guest) => validateGuest({
       ...guest,
       municipalityCode: "07040",
       documentSupport: "123456789",
     }));
-    return {
+    parsed = {
       ...imported,
       guests,
       validation: { status: "VALID" as const, errors: [], warnings: [] },
     };
-  })();
-  const template = readFileSync("docs/xml-plantilla.xml", "utf8");
-  const generated = generateHospitalityXml(parsed, template);
+    generated = generateHospitalityXml(parsed, template);
+  });
 
   it("generates a new XML per reservation without template person placeholders", () => {
     expect(generated.xml).toContain("5992657522");
