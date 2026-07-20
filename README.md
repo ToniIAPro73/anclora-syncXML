@@ -1,108 +1,109 @@
-# Anclora SyncXML
+<p align="center">
+  <img src="public/brand/logo-anclora-syncxml-email.png" alt="Anclora SyncXML" width="112" />
+</p>
 
-![Project status](https://img.shields.io/badge/status-pre--MVP%20%2F%20controlled%20validation-orange)
-![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
-![Tests](https://img.shields.io/badge/tests-vitest-blue)
-![Privacy](https://img.shields.io/badge/privacy-local--first%20by%20default-brightgreen)
+<h1 align="center">Anclora SyncXML</h1>
 
-Anclora SyncXML is an open-source privacy-first tool for preparing, validating,
-reviewing and exporting XML from reservation and guest data imported from
-Excel/XLSX files.
+<p align="center">
+  Privacy-first tooling for reviewing reservation spreadsheets and preparing SES.HOSPEDAJES XML in a controlled pilot.
+</p>
 
-The project is currently **pre-MVP / controlled validation**. It should not be
-presented as legal advice, as an official SES.HOSPEDAJES integration, or as a
-guarantee of regulatory compliance.
+<p align="center">
+  <a href="#status">Status</a> ·
+  <a href="#what-it-does">Product</a> ·
+  <a href="#controls">Controls</a> ·
+  <a href="#manuals">Manuals</a> ·
+  <a href="#quick-start">Quick start</a> ·
+  <a href="#quality-gates">Quality</a>
+</p>
 
-## Open Source status
+<p align="center">
+  <img alt="Project status" src="https://img.shields.io/badge/status-controlled%20pilot-orange" />
+  <img alt="License" src="https://img.shields.io/badge/license-MIT-yellow" />
+  <img alt="Next.js" src="https://img.shields.io/badge/Next.js-16-black" />
+  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-6-blue" />
+  <img alt="Tests" src="https://img.shields.io/badge/tests-Vitest%20171%20passing-brightgreen" />
+  <img alt="Privacy" src="https://img.shields.io/badge/privacy-minimisation%20first-brightgreen" />
+</p>
 
-Anclora SyncXML is released as an open-source project under the MIT License.
+---
 
-The repository is public to enable inspection, contribution and external review,
-especially around privacy-first handling of sensitive hospitality workflows.
+## Status
 
-## Why this project matters
+Anclora SyncXML is an open-source project under the MIT License. The repository is public so the product, privacy model and operational controls can be inspected and improved.
 
-Small lodging operators often depend on manual workflows, spreadsheets,
-fragmented tools or proprietary cloud-first platforms to prepare guest and
-reservation data.
+The product is currently in **pre-MVP / controlled validation**. It must be described carefully:
 
-Anclora SyncXML explores a privacy-first, auditable and inspectable alternative
-for preparing, validating and exporting structured XML workflows from
-reservation data.
+- Not legal advice.
+- Not a guarantee of regulatory compliance.
+- Not an automatic production SES.HOSPEDAJES submission system.
+- Not a place to store real guest data without approved security, retention and access controls.
 
-## Who this is for
+## What It Does
 
-- Independent property owners.
-- Small accommodation operators.
-- Developers building hospitality, XML, privacy or compliance-adjacent tooling.
-- Contributors interested in local-first data handling and safer handling of
-  sensitive guest data.
+SyncXML helps operators turn reservation spreadsheets into a reviewable XML workflow while keeping sensitive data exposure low.
 
-## Current scope
+| Capability | Current behavior |
+| --- | --- |
+| Spreadsheet import | Reads `.xlsx` booking files with defensive parsing through ExcelJS. |
+| Smart validation | Detects missing or risky booking, traveller, address, document and payment fields. |
+| Guided review | Lets the operator correct blocking issues before XML generation. |
+| XML preparation | Generates visual and technical XML views before download. |
+| SES assistance | Supports local validation and controlled pre-production actions when configured. |
+| Reservation history | Optional persistence with user-scoped reservation access. |
+| Pilot access | Email/password access for approved users, temporary-password change and admin provisioning. |
+| Feedback loop | In-app pilot feedback without asking for guest data. |
 
-- Controlled XLSX import.
-- Reservation, property, guest and payment validation.
-- Masked preview of sensitive data by default.
-- Duplicate detection and manual review workflow.
-- Reviewable XML generation and download.
-- Local-first operation without persistent storage by default.
-- Optional Prisma-backed persistence when explicitly configured.
-- Spanish public landing and multi-language app experience.
-- Controlled pilot access flow with cautious onboarding copy.
+## Controls
 
-## Not in scope
+The application is built around operational guardrails rather than broad claims.
 
-- Legal advice.
-- Guarantee of compliance.
-- Automatic official production submission unless explicitly implemented and
-  audited.
-- Storage of real guest data unless security, retention and privacy controls are
-  configured and reviewed.
+| Control | Purpose |
+| --- | --- |
+| Controlled access | `/app` and `/dashboard` require an approved session unless local demo mode is enabled. |
+| Role checks | SES submission actions are restricted by role and environment configuration. |
+| Fail-closed auth | Production does not allow the local auth bypass flag. |
+| Owner isolation | Persisted reservations are scoped to the authenticated user. |
+| PII minimisation | Guest data is masked by default and document images are not stored. |
+| Upload restrictions | File type, size and payload shape are validated before processing. |
+| Prudent SES scope | Production SES remains blocked unless explicitly configured, tested and approved. |
+| Public copy discipline | Product copy avoids absolute compliance or legal guarantees. |
 
-## Architecture at a glance
+## Product Surface
 
-- Next.js App Router for UI and API routes.
-- Prisma for optional persistence and pilot-user support.
-- Vitest for tests.
-- `xlsx` for defensive spreadsheet parsing.
-- `fast-xml-parser` for XML parsing and generation with defensive restrictions.
+| Area | Route or artifact |
+| --- | --- |
+| Public landing | `/` |
+| Pilot request | `/piloto` |
+| Pilot login | `/login` |
+| Admin login | `/admin/login` |
+| Application workflow | `/app` |
+| Reservation dashboard | `/dashboard` |
+| Test pre-check-in | `/precheckin/[token]` |
+| Published manuals | `public/manuals/` |
 
-## Privacy-first defaults
+## Architecture
 
-By default, imported data, previews, validations and generated XML stay in the
-current operation context and are not persisted permanently.
+| Layer | Stack |
+| --- | --- |
+| Web application | Next.js App Router, React 19, TypeScript |
+| API routes | Next.js server routes with Zod validation |
+| Persistence | Prisma, optional database-backed storage |
+| Spreadsheet parsing | ExcelJS |
+| XML parsing/generation | `fast-xml-parser` plus local SES validation helpers |
+| Email | Resend-backed delivery helpers when configured |
+| Tests | Vitest, React Testing Library and focused route/unit coverage |
+| Manuals | Markdown sources rendered to HTML/PDF through Chromium |
 
-Persistent storage must be enabled explicitly:
-
-```bash
-SYNCXML_ENABLE_PERSISTENT_STORAGE="true"
-```
-
-If persistence is enabled, the deployment must add encryption, retention,
-access-control and deletion safeguards before handling real guest data.
-
-## Access model
-
-The current access model is intentionally limited and should be described
-carefully:
-
-- `/app` and `/dashboard` are protected.
-- Local demo mode is available with `SYNCXML_LOCAL_DEMO=true`.
-- In controlled environments, access can be backed by Prisma `PilotUser`
-  records.
-- A shared admin/password fallback also exists for controlled pilot scenarios.
-- Pilot approval and invitation remain partially manual workflows.
-
-More detail is documented in [docs/ACCESS_MODEL.md](docs/ACCESS_MODEL.md).
-
-## Installation
+## Quick Start
 
 ### Requirements
 
 - Node.js 22 recommended.
 - npm 10+ recommended.
+- Chrome or Chromium only when regenerating PDF manuals.
 
-### Local setup
+### Local development
 
 ```bash
 cp .env.example .env
@@ -116,71 +117,89 @@ For a local demo without real data:
 SYNCXML_LOCAL_DEMO=true npm run dev
 ```
 
-For controlled access flows in local or staging, configure `.env` carefully and
-use synthetic or anonymized data only.
+For controlled access flows in local or staging, configure `.env` carefully and use synthetic or anonymized data unless a real-data pilot has been approved.
 
-## Environment notes
+## Environment
 
-Common variables you may need during development:
+Common variables during development:
 
-- `SESSION_SECRET`
-- `SYNCXML_ADMIN_PASSWORD`
-- `DATABASE_URL`
-- `DIRECT_URL`
-- `SYNCXML_ENABLE_PERSISTENT_STORAGE=false`
-- `SYNCXML_LOCAL_DEMO=true` for local demo mode
+| Variable | Use |
+| --- | --- |
+| `SESSION_SECRET` | Session signing secret. |
+| `SYNCXML_ADMIN_PASSWORD` | Controlled admin access fallback. |
+| `DATABASE_URL` / `DIRECT_URL` | Prisma database connection. |
+| `SYNCXML_ENABLE_PERSISTENT_STORAGE` | Enables optional reservation persistence. |
+| `SYNCXML_LOCAL_DEMO` | Allows local demo mode outside production. |
+| `RESEND_API_KEY` | Enables email delivery where needed. |
 
-Email and pilot-request related variables are documented in
-[.env.example](.env.example) and [docs/env-syncxml-pilot.md](docs/env-syncxml-pilot.md).
+More detail:
 
-## Quality checks
+- [.env.example](.env.example)
+- [docs/env-syncxml-pilot.md](docs/env-syncxml-pilot.md)
+- [docs/ENVIRONMENT_VARIABLES.md](docs/ENVIRONMENT_VARIABLES.md)
+
+## Manuals
+
+The latest published user manuals live in one canonical folder: [public/manuals](public/manuals).
+
+| Language | PDF | HTML |
+| --- | --- | --- |
+| Spanish | [PDF](public/manuals/anclora-syncxml-manual-usuario-es.pdf) | [HTML](public/manuals/anclora-syncxml-manual-usuario-es.html) |
+| English | [PDF](public/manuals/anclora-syncxml-user-manual-en.pdf) | [HTML](public/manuals/anclora-syncxml-user-manual-en.html) |
+| German | [PDF](public/manuals/anclora-syncxml-benutzerhandbuch-de.pdf) | [HTML](public/manuals/anclora-syncxml-benutzerhandbuch-de.html) |
+
+Editable sources are in [docs/manual](docs/manual). Regenerate published manuals with:
 
 ```bash
+node scripts/generate-syncxml-manual-pdf.mjs --lang=all
+```
+
+## Quality Gates
+
+Run the full local gate before handing off a branch:
+
+```bash
+npm run check:public-docs
 npm run lint
 npm run typecheck
 npm run test
 npm run build
+npm audit --omit=dev --audit-level=high
 ```
 
-## Security expectations
+## Security Expectations
 
-- Do not log names, IDs, phone numbers, emails, addresses, payments or full XML
-  payloads.
-- Do not commit real guest data, exported XML files or spreadsheets containing
-  PII.
-- Use synthetic or anonymized data for tests, screenshots and bug reports.
-- Reject malformed uploads, unexpected MIME types and dangerous XML structures.
+- Do not commit real guest data, exported XML files or spreadsheets containing PII.
+- Do not log names, IDs, phone numbers, emails, addresses, payments or full XML payloads.
+- Use synthetic or anonymized data for tests, screenshots, demos and bug reports.
+- Do not copy production secrets between environments.
+- Use pre-production evidence before considering any SES production workflow.
 
-## Roadmap
+Responsible disclosure and security handling: [SECURITY.md](SECURITY.md).
 
-See [ROADMAP.md](ROADMAP.md).
+## Documentation Map
+
+| Topic | Document |
+| --- | --- |
+| Documentation index | [docs/README.md](docs/README.md) |
+| Access model | [docs/ACCESS_MODEL.md](docs/ACCESS_MODEL.md) |
+| Privacy model | [docs/PRIVACY_MODEL.md](docs/PRIVACY_MODEL.md) |
+| SES access control | [docs/SES_ACCESS_CONTROL.md](docs/SES_ACCESS_CONTROL.md) |
+| Pilot flow | [docs/pilot/SYNCXML_CONTROLLED_PILOT_FLOW.md](docs/pilot/SYNCXML_CONTROLLED_PILOT_FLOW.md) |
+| Environment setup | [docs/ENVIRONMENT_SETUP_SYNCXML_PILOT.md](docs/ENVIRONMENT_SETUP_SYNCXML_PILOT.md) |
+| Roadmap | [ROADMAP.md](ROADMAP.md) |
+| Governance | [GOVERNANCE.md](GOVERNANCE.md) |
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md).
+Contributions are welcome when they preserve the privacy-first and controlled-pilot boundaries.
 
-## Security
+Start with:
 
-See [SECURITY.md](SECURITY.md).
-
-## Support
-
-See [SUPPORT.md](SUPPORT.md).
-
-## Governance
-
-See [GOVERNANCE.md](GOVERNANCE.md).
-
-## Additional documentation
-
-- [docs/README.md](docs/README.md)
-- [docs/ACCESS_MODEL.md](docs/ACCESS_MODEL.md)
+- [CONTRIBUTING.md](CONTRIBUTING.md)
 - [docs/community/INITIAL_ISSUES.md](docs/community/INITIAL_ISSUES.md)
-- [docs/PRIVACY_MODEL.md](docs/PRIVACY_MODEL.md)
-- [docs/manual/manual-usuario.en.md](docs/manual/manual-usuario.en.md)
-- [docs/manual/manual-usuario.md](docs/manual/manual-usuario.md)
+- [docs/devops/AGENT_GIT_WORKFLOW_CONTRACT.md](docs/devops/AGENT_GIT_WORKFLOW_CONTRACT.md)
 
 ## License
 
 MIT. See [LICENSE](LICENSE).
-

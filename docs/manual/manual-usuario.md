@@ -6,14 +6,14 @@
 
 <div class="cover-title">Manual de Usuario</div>
 
-<div class="cover-subtitle">Guia practica para importar reservas, validar datos de huespedes, generar XML y preparar pruebas SES</div>
+<div class="cover-subtitle">Guia premium para operar el piloto controlado, validar reservas, preparar XML SES.HOSPEDAJES y mantener controles de privacidad</div>
 
 <div class="cover-meta">
-  <div class="cover-version">Version 1.0</div>
-  <div class="cover-date">24 mayo 2026</div>
+  <div class="cover-version">Version 1.1</div>
+  <div class="cover-date">20 julio 2026</div>
 </div>
 
-<div class="cover-disclaimer">SyncXML prepara, valida y exporta datos estructurados para el flujo SES.HOSPEDAJES. No sustituye la revision humana ni el criterio legal del responsable del tratamiento.</div>
+<div class="cover-disclaimer">SyncXML prepara, valida y exporta datos estructurados para el flujo SES.HOSPEDAJES. No sustituye la revision humana, el portal oficial, la evidencia de preproduccion ni el criterio legal del responsable del tratamiento.</div>
 
 </div>
 
@@ -21,271 +21,320 @@
 
 ## Indice
 
-| No. | Seccion | Pagina |
-| --- | --- | ---: |
-| 01 | Que es Anclora SyncXML | 3 |
-| 02 | Antes de empezar | 5 |
-| 03 | Flujo documental | 6 |
-| 04 | Revision y validacion inteligente | 9 |
-| 05 | Generacion, revision y descarga XML | 12 |
-| 06 | Servicios SES y pre-check-in de prueba | 15 |
-| 07 | Dashboard e historial operativo | 18 |
-| 08 | Privacidad, seguridad y buenas practicas | 21 |
-| 09 | Preguntas frecuentes | 23 |
-| 10 | Glosario rapido | 25 |
+| No. | Seccion | Control principal |
+| --- | --- | --- |
+| 01 | Alcance del producto | Piloto controlado y claims prudentes |
+| 02 | Acceso y sesiones | Login aprobado, contrasena temporal y cierre |
+| 03 | Preparacion antes de importar | Datos minimos y entorno privado |
+| 04 | Importacion documental | Confirmaciones y limite de archivo |
+| 05 | Revision guiada | Errores, avisos y correcciones |
+| 06 | XML y descarga | Bloqueos antes de exportar |
+| 07 | SES y pre-check-in | Preproduccion y permisos por rol |
+| 08 | Dashboard operativo | Historial aislado por usuario |
+| 09 | Feedback del piloto | Senales sin datos de huespedes |
+| 10 | Seguridad y privacidad | Controles diarios |
+| 11 | Incidencias frecuentes | Respuesta operativa |
+| 12 | Glosario | Terminos clave |
 
 <div class="page-break"></div>
 
-## 1. Que es Anclora SyncXML
+## 1. Alcance del producto
 
 ![Pantalla inicial de importacion](screenshots/syncxml-es-import.png)
 
-**Anclora SyncXML** es una aplicacion premium para transformar el Excel de una reserva en un XML revisable, validado y preparado para el flujo operativo de SES.HOSPEDAJES.
+**Anclora SyncXML** transforma un Excel de reserva en datos revisables y en un XML preparado para el flujo SES.HOSPEDAJES. La aplicacion esta orientada a validacion controlada, reduccion de errores operativos y trabajo con datos sensibles bajo minimizacion.
 
-La aplicacion esta pensada para trabajar con datos sensibles de huespedes con un enfoque de minimizacion: primero se revisa, despues se corrige y solo al final se genera o descarga el XML.
+La version actual se usa en **piloto controlado**. El acceso se concede tras revision manual y no implica aprobacion automatica, garantia legal ni envio productivo a SES.
 
-### Para que sirve
+### Lo que permite hacer
 
 | Necesidad | Como ayuda SyncXML |
 | --- | --- |
-| Importar reservas | Lee el Excel y detecta reserva, establecimiento, pago y viajeros. |
+| Importar reservas | Lee `.xlsx` y detecta reserva, alojamiento, pago y viajeros. |
 | Validar datos | Marca errores y avisos antes de generar XML. |
-| Corregir campos | Permite completar datos SES obligatorios desde una revision guiada. |
-| Generar XML | Crea un XML por reserva con nombre normalizado y fecha. |
-| Revisar antes de enviar | Muestra una vista visual y el XML tecnico. |
-| Preparar SES | Incluye validacion local, simulacion y controles de preproduccion. |
-| Probar pre-check-in | Genera enlaces temporales de prueba para completar datos de viajeros. |
+| Corregir campos | Permite completar campos SES obligatorios desde revision guiada. |
+| Preparar XML | Genera una vista visual y una vista tecnica revisable. |
+| Probar SES | Incluye validacion local y acciones asistidas de preproduccion. |
+| Revisar historial | Guarda reservas aisladas por usuario cuando la persistencia esta activa. |
+| Recoger feedback | Permite enviar comentarios del piloto sin pedir datos de huespedes. |
 
-### Que no hace
+### Limites importantes
 
 - No sustituye el portal ni los servicios oficiales de SES.
-- No debe usarse como registro legal completo si SES es la fuente oficial.
+- No ofrece asesoramiento legal ni garantiza cumplimiento absoluto.
+- No debe usarse con produccion SES sin pruebas, credenciales y aprobacion operativa.
 - No almacena imagenes de DNI o pasaporte.
-- No envia a produccion sin configuracion y evidencia de pruebas previas.
+- No autoaprueba solicitudes de piloto.
 
 ---
 
-## 2. Antes de empezar
+## 2. Acceso y sesiones
 
-Antes de usar SyncXML conviene tener claro el alcance de la operacion.
+El acceso a la aplicacion esta reservado a usuarios aprobados del piloto o administradores autorizados.
+
+### Flujo de acceso de usuario piloto
+
+1. Abre `/login` o pulsa **Iniciar sesion** desde la landing.
+2. Introduce email autorizado y contrasena.
+3. Si la cuenta usa contrasena temporal, define una nueva contrasena antes de entrar.
+4. Comprueba en la cabecera que aparece tu email de sesion.
+5. Usa **Cerrar aplicacion** para salir; la aplicacion limpia la sesion local y vuelve al login.
+
+### Acceso de administrador
+
+| Area | Uso |
+| --- | --- |
+| `/admin/login` | Login oculto para perfiles admin. |
+| Provisionado interno | Alta o rotacion de credenciales de usuarios piloto. |
+| SES | Las acciones de envio quedan restringidas por rol y configuracion. |
+
+### Controles de sesion
+
+- No compartas credenciales del piloto.
+- Cambia la contrasena temporal en el primer acceso.
+- Cierra sesion al terminar una revision con PII.
+- Si el usuario conectado no aparece en cabecera tras login, recarga la aplicacion y vuelve a iniciar sesion.
+
+---
+
+## 3. Preparacion antes de importar
+
+Antes de subir un archivo, confirma que el caso encaja con el piloto.
 
 ### Necesitas
 
 - Excel de la reserva en formato `.xlsx`.
-- Autorizacion para tratar los datos personales incluidos en el archivo.
-- Datos de establecimiento y codigo si van a comunicarse a SES.
-- Datos de viajeros completos: documento, nacimiento, nacionalidad, direccion, contacto y relacion.
-- Criterio interno sobre quien revisa y aprueba el XML antes de usarlo oficialmente.
+- Autorizacion para tratar los datos personales incluidos.
+- Datos de establecimiento y codigo cuando vayan a comunicarse a SES.
+- Datos de viajeros: documento, nacimiento, nacionalidad, direccion, contacto y relacion.
+- Criterio interno sobre quien revisa y aprueba el XML.
 
-### Recomendaciones
+### Controles previos
 
-| Punto | Recomendacion |
+| Control | Accion esperada |
 | --- | --- |
-| Entorno | Trabaja en una pantalla privada y evita compartir datos personales innecesarios. |
-| Archivo | Sube solo el Excel necesario para la operacion. |
-| Revision | No descargues ni consolides si hay errores criticos. |
-| SES | Usa primero preproduccion y guarda evidencia de aceptacion/rechazo. |
-| Pre-check-in | En pruebas, usa enlaces temporales y evita datos reales si no hay autorizacion. |
+| Entorno privado | Usa pantalla no compartida y evita exponer PII. |
+| Archivo minimo | Sube solo el Excel necesario para la operacion. |
+| Datos reales | En piloto, prioriza datos sinteticos o anonimizados salvo autorizacion expresa. |
+| Muestra opcional | Si no tienes muestra propia, puedes solicitar el piloto sin adjuntarla; no equivale a aceptar datos sinteticos por defecto. |
+| Trazabilidad | Define quien revisa y que evidencia se conserva. |
 
 ---
 
-## 3. Flujo documental
+## 4. Importacion documental
 
 ![Flujo de importacion en espanol](screenshots/syncxml-es-import.png)
 
-El flujo principal esta dividido en cuatro fases visibles:
+La importacion inicia el flujo operativo y aplica controles antes de leer el archivo.
 
-| Fase | Objetivo |
-| --- | --- |
-| Importar Excel | Seleccionar el archivo y aceptar las confirmaciones informadas. |
-| Revisar datos | Comprobar viajeros, reserva, contrato y validaciones. |
-| Generar XML | Crear el XML y revisarlo visualmente. |
-| Consolidar | Guardar la operacion en el modo configurado y permitir descarga posterior. |
-
-La banda de **trazabilidad de la operacion** muestra el estado de importacion, validacion, vista previa, mapeo, duplicados, XML y consolidacion sin exponer datos personales completos.
-
-### Importar un Excel
+### Pasos
 
 1. Revisa las confirmaciones informadas.
 2. Marca **Seleccionar todas las confirmaciones** o cada casilla individual.
 3. Selecciona el archivo `.xlsx`.
 4. Pulsa **Importar**.
 
-Si el archivo no es valido, esta vacio, supera el tamano maximo o no se puede leer, la aplicacion muestra un mensaje de error antes de continuar.
+### Controles automaticos
+
+| Control | Resultado |
+| --- | --- |
+| Extension permitida | Solo se aceptan formatos soportados. |
+| Tamano maximo | Los archivos excesivos se rechazan antes del procesamiento. |
+| Payload validado | La respuesta parseada se valida antes de continuar. |
+| Municipios INE | Cuando hay base de datos disponible, se resuelven codigos municipales. |
+| Duplicados | Se muestran registros sospechosos para decision manual. |
+
+Si el archivo no es valido, esta vacio o no se puede leer, la aplicacion muestra un error sin continuar al XML.
 
 ---
 
-## 4. Revision y validacion inteligente
+## 5. Revision guiada
 
 ![Revision de datos importados](screenshots/syncxml-es-review.png)
 
-La fase de revision permite entender que ha detectado la aplicacion antes de generar ningun XML.
+La revision guiada permite corregir los datos antes de generar XML.
 
 ### Elementos principales
 
 | Elemento | Uso |
 | --- | --- |
-| Tabla de huespedes | Revisa nombre, documento, nacionalidad, contacto y estado de validacion. |
-| Mostrar datos completos | Permite ver datos sin enmascarar solo si estas en un entorno privado. |
-| Validar datos | Ejecuta la validacion inteligente. |
-| Informe CSV | Descarga un informe de incidencias y estado por reserva y viajero. |
-| Revision guiada | Completa campos SES obligatorios o corrige avisos. |
-| Duplicados | Decide si omitir, mantener o revisar manualmente registros sospechosos. |
+| Tabla de huespedes | Revisa nombre, documento, nacionalidad, contacto y estado. |
+| Mostrar datos completos | Revela datos sin enmascarar solo en entorno privado. |
+| Validar datos | Ejecuta reglas inteligentes y SES implementadas. |
+| Informe CSV | Exporta incidencias por reserva y viajero. |
+| Revision guiada | Completa campos obligatorios o corrige avisos. |
+| Duplicados | Permite omitir, mantener o revisar registros sospechosos. |
 
-### Colores de validacion
+### Estados de validacion
 
-| Estado | Significado |
-| --- | --- |
-| Valido | Campo correcto o suficiente para el flujo actual. |
-| Aviso | Conviene revisar, pero no siempre bloquea el XML. |
-| Error | Bloquea la generacion, descarga o consolidacion hasta corregirse. |
+| Estado | Significado | Puede continuar? |
+| --- | --- | --- |
+| Valido | Campo correcto o suficiente para el flujo actual. | Si |
+| Aviso | Debe revisarse; no siempre bloquea. | Depende del caso |
+| Error | Bloquea XML, descarga o consolidacion. | No |
 
-### Campos que suelen requerir revision
+### Campos que suelen requerir atencion
 
 - Codigo de municipio INE para direcciones en Espana.
 - Soporte de documento para NIF/NIE.
-- Sexo y parentesco.
+- Sexo y relacion conforme a catalogos MIR.
 - Telefono o email de contacto.
 - Segundo apellido cuando aplique.
 - Codigo postal y direccion.
 
 ---
 
-## 5. Generacion, revision y descarga XML
+## 6. XML y descarga
 
 ![Vista visual del XML generado](screenshots/syncxml-es-xml.png)
 
-Cuando los errores criticos estan corregidos, pulsa **Generar XML**. La aplicacion crea una vista visual y una vista tecnica.
+Cuando los errores criticos esten corregidos, pulsa **Generar XML**. La aplicacion crea una vista visual y una vista tecnica.
 
-### Vista visual
+### Revision antes de descargar
 
-La vista visual organiza el XML en bloques:
-
-| Bloque | Contenido |
+| Bloque | Que comprobar |
 | --- | --- |
 | Solicitud | Codigo de establecimiento, nombre y direccion. |
 | Contrato | Referencia, entrada, salida, personas y pago. |
-| Pago | Tipo de pago, IBAN enmascarado e internet. |
+| Pago | Tipo de pago, IBAN enmascarado e indicador de internet. |
 | Personas | Viajeros incluidos, documento enmascarado y contacto. |
+| Incidencias XML | Errores de estructura, namespace o campos requeridos. |
 
-### Vista XML
-
-La vista XML muestra el contenido tecnico que se descargara. Debe revisarse antes de usarlo oficialmente.
-
-### Descarga del XML
+### Descarga
 
 El nombre del archivo descargado usa el formato:
 
 `syncxml-numeroReserva-DDMMRRHH24MISS.xml`
 
-La descarga queda bloqueada si existen incidencias criticas en el XML.
+La descarga queda bloqueada si existen incidencias criticas. Si solo hay avisos, revisalos y deja evidencia interna de la decision.
 
 ---
 
-## 6. Servicios SES y pre-check-in de prueba
+## 7. SES y pre-check-in
 
 ![Panel SES y pre-check-in de prueba](screenshots/syncxml-es-precheckin-panel.png)
 
-SyncXML incluye un panel de servicios SES para trabajar de forma asistida:
+SyncXML incluye acciones SES asistidas. Su disponibilidad depende de credenciales, entorno y rol.
 
-| Accion | Descripcion |
+| Accion | Control |
 | --- | --- |
-| Validar XML SES | Ejecuta validacion local contra reglas SES implementadas. |
+| Validar XML SES | Validacion local contra reglas implementadas. |
 | Preparar simulacion | Prepara una peticion sin enviar datos al Ministerio. |
-| Enviar a preproduccion | Solo disponible si hay credenciales configuradas. |
-| Consultar lote/comunicacion | Requiere credenciales de preproduccion. |
-| Consultar catalogo | Permite revisar catalogos oficiales cuando SES este configurado. |
+| Enviar a preproduccion | Solo con credenciales configuradas y usuario permitido. |
+| Consultar lote/comunicacion | Requiere credenciales y codigo de seguimiento. |
+| Consultar catalogo | Revisa catalogos oficiales cuando SES esta configurado. |
+| Produccion | Permanece bloqueada por defecto hasta aprobacion y evidencia. |
 
-La produccion permanece bloqueada hasta completar pruebas controladas.
+Los usuarios piloto no deben enviar a SES. Las rutas de envio aplican control de rol y fallan de forma segura si la configuracion no permite la accion.
 
 ### Pre-check-in de prueba
 
 ![Formulario publico de pre-check-in](screenshots/syncxml-es-precheckin-form.png)
 
-El panel de pre-check-in de prueba genera un enlace temporal para completar datos de viajeros antes de la revision.
+El panel de pre-check-in genera enlaces temporales para completar datos de viajeros antes de la revision.
 
-En este modo:
+Controles del modo actual:
 
-- El enlace es temporal.
-- No se almacenan imagenes de documentos.
-- No se crea un registro legal completo.
-- Se guarda solo metadato operativo: token, referencia, estado, hash y fechas.
-- SES sigue siendo la fuente oficial cuando se realice la comunicacion real.
+- Enlace temporal con expiracion.
+- Token almacenado como hash.
+- Sin imagenes de documentos.
+- Sin registro legal completo.
+- Estado operativo: pendiente, enviado, expirado o revocado.
+- Revision humana antes de usar la informacion oficialmente.
 
 ---
 
-## 7. Dashboard e historial operativo
+## 8. Dashboard operativo
 
 ![Dashboard con reserva consolidada](screenshots/syncxml-es-dashboard-detail.png)
 
-El dashboard permite buscar reservas, revisar estado y volver a descargar XML cuando el modo de almacenamiento configurado lo permite.
+El dashboard permite buscar reservas, revisar estado y descargar XML cuando el modo de almacenamiento configurado lo permite.
 
-### Tarjetas principales
+### Controles de historial
 
-| Tarjeta | Informacion |
+| Control | Descripcion |
 | --- | --- |
-| Lista de reservas | Referencia, alojamiento y estado. |
-| Detalle | Entrada, salida, personas y viajeros detectados. |
-| Acciones | Descargar XML o eliminar la reserva. |
-| Clasificacion del producto | Recordatorio del alcance y limites de uso. |
-
-### Fechas
+| Aislamiento por usuario | Cada usuario ve solo sus reservas persistidas. |
+| Busqueda | Filtra por referencia o alojamiento. |
+| Detalle | Muestra fechas, personas y viajeros detectados. |
+| Descarga XML | Usa la ruta protegida de la reserva seleccionada. |
+| Eliminacion | Borra la reserva accesible para el usuario actual. |
+| Sesion pendiente | Permite retomar una operacion local en curso. |
 
 Las fechas se muestran como `DD/MM/RRRR`. Si existe hora, se muestran como `DD/MM/RRRR HH:MM:SS`.
 
 ---
 
-## 8. Privacidad, seguridad y buenas practicas
+## 9. Feedback del piloto
 
-SyncXML trabaja con informacion personal. Usa estas reglas operativas:
+La aplicacion incluye feedback durante el uso y al cerrar la experiencia.
 
-| Regla | Motivo |
+### Que se debe enviar
+
+| Tipo de feedback | Ejemplo util |
 | --- | --- |
-| Minimiza datos | Sube solo lo necesario para la comunicacion. |
-| Revisa antes de exportar | Evita errores antes de uso oficial. |
-| No guardes imagenes | DNI/pasaporte no deben almacenarse en SyncXML. |
-| Usa preproduccion | Prueba SES antes de cualquier operacion real. |
-| Borra operaciones temporales | Usa el boton de borrado cuando termines una revision. |
-| Controla accesos | Solo usuarios autorizados deben abrir reservas con PII. |
+| Friccion operativa | "La correccion de municipio fue lenta." |
+| Calidad de validacion | "El aviso de relacion no era claro." |
+| Resultado del piloto | "Pude generar XML revisable con datos sinteticos." |
+| Siguiente necesidad | "Necesito plantilla para mi PMS." |
+
+### Que no se debe enviar
+
+- Nombres, documentos, telefonos o emails de huespedes.
+- XML con datos reales.
+- Capturas con PII visible.
+- Secretos, credenciales o tokens.
+
+El feedback se envia al canal configurado del equipo Anclora y no sustituye soporte legal ni tecnico formal.
+
+---
+
+## 10. Seguridad y privacidad
+
+SyncXML trabaja con informacion personal. Usa estos controles diarios:
+
+| Control | Motivo |
+| --- | --- |
+| Minimizar datos | Reducir exposicion y superficie de riesgo. |
+| Enmascarar por defecto | Evitar que documentos y contacto queden visibles sin necesidad. |
+| Revisar antes de exportar | Evitar errores antes de uso oficial. |
+| No almacenar imagenes | DNI/pasaporte no forman parte del almacenamiento actual. |
+| Usar preproduccion | Probar SES antes de cualquier operacion real. |
+| Borrar operaciones temporales | Eliminar reservas de prueba cuando terminen. |
+| Controlar accesos | Solo usuarios aprobados deben abrir reservas con PII. |
+| Evitar logs sensibles | No copiar PII en incidencias, chats o tickets. |
 
 > SyncXML no ofrece asesoramiento legal. El responsable del tratamiento debe aprobar privacidad, DPA, retencion y procedimiento de uso.
 
 ---
 
-## 9. Preguntas frecuentes
+## 11. Incidencias frecuentes
 
-### Puedo generar XML con errores?
-
-No. Los errores criticos bloquean la generacion, descarga o consolidacion hasta que se corrijan.
-
-### Que ocurre si falta el codigo de municipio?
-
-Para direcciones en Espana, SES exige codigo INE de municipio. La revision guiada permite completarlo.
-
-### Puedo enviar a SES desde la aplicacion?
-
-En preproduccion, cuando existan credenciales y configuracion. Produccion permanece bloqueada por defecto.
-
-### El pre-check-in ya es productivo?
-
-No. Esta implementado en modo pruebas para validar el flujo antes de usar datos reales o activar persistencia.
-
-### Se guardan documentos escaneados?
-
-No. La politica actual bloquea imagenes de DNI y pasaporte.
+| Incidencia | Accion recomendada |
+| --- | --- |
+| No puedo iniciar sesion | Verifica email aprobado, contrasena y si la cuenta esta activa. |
+| Me pide cambiar contrasena | Es una contrasena temporal; define una nueva antes de continuar. |
+| El Excel no importa | Revisa extension, tamano, estructura y que no este vacio. |
+| Falta codigo de municipio | Completa el codigo INE desde revision guiada. |
+| Hay errores criticos | Corrige antes de generar o descargar XML. |
+| SES rechaza una prueba | Conserva respuesta, lote/comunicacion y revisa el bloque de errores. |
+| No veo una reserva | Comprueba que entraste con el mismo usuario que la consolido. |
+| Necesito usar datos reales | Requiere autorizacion, entorno privado y aprobacion operativa previa. |
 
 ---
 
-## 10. Glosario rapido
+## 12. Glosario
 
 | Termino | Significado |
 | --- | --- |
 | SES | Sistema oficial usado para comunicaciones de hospedajes. |
-| XML | Archivo estructurado que contiene la reserva y viajeros. |
+| XML | Archivo estructurado que contiene reserva y viajeros. |
 | Preproduccion | Entorno de pruebas antes de produccion. |
-| Hash | Huella tecnica que permite identificar un envio sin almacenar todo el contenido. |
+| RBAC | Control de acceso basado en roles. |
+| Owner | Usuario propietario de una reserva persistida. |
+| Hash | Huella tecnica que identifica un dato sin guardar su valor original. |
 | DPA | Contrato de encargado de tratamiento de datos. |
 | PII | Informacion personal identificable. |
 | INE | Instituto Nacional de Estadistica; fuente de codigos municipales. |
 
-<div class="footer-brand">Anclora SyncXML · Manual de Usuario · Version 1.0</div>
+<div class="footer-brand">Anclora SyncXML · Manual de Usuario · Version 1.1 · 20 julio 2026</div>
