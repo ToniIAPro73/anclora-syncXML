@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8" />
+<base href="file:///home/toni/projects/anclora-syncXML/docs/manual/" />
+<title>Anclora SyncXML - Benutzerhandbuch</title>
+<style>
+@page { size: A4; margin: 20mm 16mm 21mm; }
+@page cover { size: A4; margin: 0; }
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  color: #101828;
+  background: #ffffff;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 10.2pt;
+  line-height: 1.46;
+}
+a { color: inherit; }
+code {
+  padding: 0.6mm 1.2mm;
+  border-radius: 1mm;
+  color: #16324a;
+  background: #f2eadb;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 8.8pt;
+}
+.cover-page {
+  page: cover;
+  width: 210mm;
+  height: 297mm;
+  padding: 27mm 29mm 25mm;
+  color: #f7f3ea;
+  background:
+    radial-gradient(ellipse 90% 58% at 50% 33%, rgba(209, 174, 92, 0.18) 0%, transparent 62%),
+    repeating-linear-gradient(112deg, rgba(214, 181, 97, 0.06) 0, rgba(214, 181, 97, 0.06) 1px, transparent 1px, transparent 13px),
+    linear-gradient(148deg, #050810 0%, #0b1322 42%, #101a2b 100%);
+  position: relative;
+  overflow: hidden;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.cover-page::before {
+  content: "";
+  position: absolute;
+  inset: 14mm;
+  border: 1px solid rgba(214, 181, 97, 0.62);
+  border-radius: 2mm;
+}
+.cover-page::after {
+  content: "";
+  position: absolute;
+  left: -26mm;
+  bottom: -30mm;
+  width: 115mm;
+  height: 115mm;
+  border: 1px solid rgba(214, 181, 97, 0.18);
+  border-radius: 50%;
+}
+.cover-logo, .cover-brand, .cover-title, .cover-subtitle, .cover-meta, .cover-disclaimer { position: relative; z-index: 2; }
+.cover-logo img {
+  width: 43mm;
+  height: auto;
+  margin-bottom: 12mm;
+  filter: drop-shadow(0 5mm 14mm rgba(214, 181, 97, 0.22)) drop-shadow(0 7mm 18mm rgba(0, 0, 0, 0.55));
+}
+.cover-brand {
+  color: #d6b561;
+  font-size: 12.2pt;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+.cover-brand::after {
+  content: "";
+  display: block;
+  width: 44mm;
+  height: 1px;
+  margin: 4.6mm auto 0;
+  background: linear-gradient(90deg, transparent, rgba(214, 181, 97, 0.76), transparent);
+}
+.cover-title {
+  margin: 7mm auto 0;
+  max-width: 150mm;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 43pt;
+  line-height: 1;
+  font-weight: 600;
+  text-shadow: 0 3mm 10mm rgba(0, 0, 0, 0.4);
+}
+.cover-subtitle {
+  margin: 8mm auto 0;
+  max-width: 126mm;
+  color: rgba(227, 232, 240, 0.86);
+  font-size: 14pt;
+  line-height: 1.32;
+}
+.cover-meta {
+  display: flex;
+  justify-content: center;
+  gap: 7mm;
+  margin-top: 15mm;
+  color: #111827;
+  font-size: 9.3pt;
+  font-weight: 800;
+}
+.cover-meta div {
+  min-width: 43mm;
+  padding: 3mm 6mm;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #e2c779, #bb9340);
+  box-shadow: 0 2mm 8mm rgba(0, 0, 0, 0.32);
+}
+.cover-disclaimer {
+  position: absolute;
+  left: 27mm;
+  right: 27mm;
+  bottom: 25mm;
+  color: rgba(202, 211, 224, 0.78);
+  font-size: 8.2pt;
+  line-height: 1.4;
+}
+.page-break { page-break-after: always; }
+.manual-section {
+  page-break-before: always;
+}
+.manual-section:first-of-type {
+  page-break-before: auto;
+}
+h2 {
+  margin: 0 0 7mm;
+  padding-bottom: 3.8mm;
+  color: #101828;
+  border-bottom: 1px solid #c7a451;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 24pt;
+  line-height: 1.08;
+  font-weight: 600;
+}
+h3 {
+  margin: 7mm 0 3mm;
+  color: #26364b;
+  font-size: 13.2pt;
+  line-height: 1.2;
+}
+p { margin: 0 0 3.5mm; }
+strong { color: #101828; font-weight: 800; }
+ul, ol { margin: 1mm 0 4mm 6mm; padding-left: 4mm; }
+li { margin: 1.35mm 0; }
+table {
+  width: 100%;
+  margin: 4mm 0 6mm;
+  border-collapse: collapse;
+  page-break-inside: avoid;
+  font-size: 9pt;
+}
+th {
+  color: #101828;
+  background: #f2eadb;
+  border-top: 1px solid #c7a451;
+  border-bottom: 1px solid #c7a451;
+  font-weight: 800;
+}
+td, th {
+  padding: 2.5mm 2.8mm;
+  border-bottom: 1px solid #dfe5eb;
+  vertical-align: top;
+}
+td:first-child, th:first-child { border-left: 1px solid #e5eaf0; }
+td:last-child, th:last-child { border-right: 1px solid #e5eaf0; }
+blockquote {
+  margin: 5mm 0;
+  padding: 4mm 5mm;
+  color: #253244;
+  background: #f7f3ea;
+  border-left: 2mm solid #c7a451;
+  page-break-inside: avoid;
+}
+figure {
+  margin: 5mm 0 7mm;
+  page-break-inside: avoid;
+}
+figure img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 2mm;
+  border: 1.5px solid rgba(199, 164, 81, 0.68);
+  box-shadow: 0 3mm 13mm rgba(0, 0, 0, 0.18), 0 1mm 4mm rgba(0, 0, 0, 0.10);
+}
+figcaption {
+  margin-top: 1.8mm;
+  padding: 0 1mm;
+  color: #667085;
+  font-size: 8pt;
+  line-height: 1.35;
+}
+.footer-brand {
+  margin-top: 12mm;
+  padding-top: 5mm;
+  border-top: 1px solid #c7a451;
+  color: #667085;
+  text-align: center;
+}
+</style>
+</head>
+<body>
+<div class="cover-page">
+
+<div class="cover-logo"><img src="screenshots/logo-anclora-syncxml.png" alt="Anclora SyncXML" /></div>
+
+<div class="cover-brand">Anclora SyncXML</div>
+
+<div class="cover-title">Benutzerhandbuch</div>
+
+<div class="cover-subtitle">Premium-Leitfaden fuer kontrollierten Pilotbetrieb, Buchungsvalidierung, SES.HOSPEDAJES-XML und Datenschutzkontrollen</div>
+
+<div class="cover-meta">
+  <div class="cover-version">Version 1.1</div>
+  <div class="cover-date">20. Juli 2026</div>
+</div>
+
+<div class="cover-disclaimer">SyncXML bereitet strukturierte Daten fuer den SES.HOSPEDAJES-Ablauf vor, validiert und exportiert sie. Es ersetzt weder menschliche Pruefung, offizielles Portal, Vorproduktionsnachweise noch die rechtliche Bewertung des Verantwortlichen.</div>
+
+</div><section class="manual-section"><h2>Inhaltsverzeichnis</h2><table><thead><tr><th>Nr.</th><th>Abschnitt</th><th>Hauptkontrolle</th></tr></thead><tbody><tr><td>01</td><td>Produktumfang</td><td>Kontrollierter Pilot und vorsichtige Aussagen</td></tr><tr><td>02</td><td>Zugriff und Sitzungen</td><td>Freigegebener Login, temporaeres Passwort und Logout</td></tr><tr><td>03</td><td>Vor dem Import</td><td>Mindestdaten und private Umgebung</td></tr><tr><td>04</td><td>Dokumentenimport</td><td>Bestaetigungen und Dateigrenze</td></tr><tr><td>05</td><td>Gefuehrte Pruefung</td><td>Fehler, Hinweise und Korrekturen</td></tr><tr><td>06</td><td>XML und Download</td><td>Sperren vor Export</td></tr><tr><td>07</td><td>SES und Pre-Check-in</td><td>Vorproduktion und Rollenrechte</td></tr><tr><td>08</td><td>Operatives Dashboard</td><td>Benutzerbezogener Verlauf</td></tr><tr><td>09</td><td>Pilot-Feedback</td><td>Hinweise ohne Gaestedaten</td></tr><tr><td>10</td><td>Sicherheit und Datenschutz</td><td>Taegliche Kontrollen</td></tr><tr><td>11</td><td>Haeufige Vorfaelle</td><td>Operative Reaktion</td></tr><tr><td>12</td><td>Glossar</td><td>Schluesselbegriffe</td></tr></tbody></table><div class="page-break"></div></section><section class="manual-section"><h2>1. Produktumfang</h2><figure><img src="screenshots/syncxml-de-import.png" alt="Importbildschirm" /><figcaption>Importbildschirm</figcaption></figure><p><strong>Anclora SyncXML</strong> wandelt eine Buchungs-Excel in pruefbare Daten und XML fuer den SES.HOSPEDAJES-Ablauf um. Die Anwendung ist fuer kontrollierte Validierung, weniger operative Fehler und Arbeit mit sensiblen Daten nach dem Minimierungsprinzip ausgelegt.</p><p>Die aktuelle Version wird in einem <strong>kontrollierten Pilot</strong> genutzt. Zugriff erfolgt nach manueller Pruefung und bedeutet keine automatische Freigabe, keine rechtliche Garantie und keine produktive SES-Uebermittlung.</p><h3>Was unterstuetzt wird</h3><table><thead><tr><th>Bedarf</th><th>Wie SyncXML hilft</th></tr></thead><tbody><tr><td>Buchungen importieren</td><td>Liest <code>.xlsx</code> und erkennt Buchung, Unterkunft, Zahlung und Reisende.</td></tr><tr><td>Daten validieren</td><td>Markiert Fehler und Hinweise vor XML-Erzeugung.</td></tr><tr><td>Felder korrigieren</td><td>Ergaenzt SES-Pflichtfelder in der gefuehrten Pruefung.</td></tr><tr><td>XML vorbereiten</td><td>Erstellt visuelle und technische Ansicht zur Pruefung.</td></tr><tr><td>SES testen</td><td>Bietet lokale Validierung und assistierte Vorproduktionsaktionen.</td></tr><tr><td>Verlauf pruefen</td><td>Speichert benutzerbezogene Buchungen, wenn Persistenz aktiv ist.</td></tr><tr><td>Feedback sammeln</td><td>Sendet Pilot-Feedback ohne Abfrage von Gaestedaten.</td></tr></tbody></table><h3>Wichtige Grenzen</h3><ul><li>Es ersetzt nicht das offizielle SES-Portal oder offizielle Dienste.</li><li>Es bietet keine Rechtsberatung und keine absolute Compliance-Garantie.</li><li>Es darf nicht mit SES-Produktion genutzt werden ohne Tests, Zugangsdaten und operative Freigabe.</li><li>Es speichert keine Bilder von Ausweisen oder Reisepaessen.</li><li>Es genehmigt Pilotanfragen nicht automatisch.</li></ul></section><section class="manual-section"><h2>2. Zugriff und Sitzungen</h2><p>Der Zugriff ist freigegebenen Pilotnutzern oder autorisierten Administratoren vorbehalten.</p><h3>Zugriff fuer Pilotnutzer</h3><ol><li>Oeffnen Sie <code>/login</code> oder klicken Sie auf <strong>Anmelden</strong> auf der Landingpage.</li><li>Geben Sie freigegebene E-Mail und Passwort ein.</li><li>Bei temporaerem Passwort legen Sie vor dem Eintritt ein neues Passwort fest.</li><li>Pruefen Sie, dass Ihre Sitzungs-E-Mail im Header erscheint.</li><li>Nutzen Sie <strong>Anwendung schliessen</strong>; die App bereinigt lokalen Sitzungsstatus und kehrt zum Login zurueck.</li></ol><h3>Administratorzugriff</h3><table><thead><tr><th>Bereich</th><th>Nutzung</th></tr></thead><tbody><tr><td><code>/admin/login</code></td><td>Versteckter Login fuer Admin-Profile.</td></tr><tr><td>Internes Provisioning</td><td>Pilotzugangsdaten anlegen oder rotieren.</td></tr><tr><td>SES</td><td>Uebermittlungsaktionen sind nach Rolle und Konfiguration beschraenkt.</td></tr></tbody></table><h3>Sitzungskontrollen</h3><ul><li>Pilot-Zugangsdaten nicht teilen.</li><li>Temporaeres Passwort beim ersten Zugriff aendern.</li><li>Nach PII-Pruefung abmelden.</li><li>Wenn der verbundene Nutzer nach Login nicht im Header erscheint, Anwendung neu laden und erneut anmelden.</li></ul></section><section class="manual-section"><h2>3. Vor dem Import</h2><p>Vor dem Upload pruefen Sie, ob der Fall zum Pilot passt.</p><h3>Sie benoetigen</h3><ul><li>Buchungs-Excel im Format <code>.xlsx</code>.</li><li>Berechtigung zur Verarbeitung der enthaltenen personenbezogenen Daten.</li><li>Unterkunftsdaten und Einrichtungscode, wenn an SES kommuniziert werden soll.</li><li>Reisedaten: Dokument, Geburtsdatum, Nationalitaet, Adresse, Kontakt und Beziehung.</li><li>Interne Vorgaben, wer XML prueft und freigibt.</li></ul><h3>Kontrollen vor dem Import</h3><table><thead><tr><th>Kontrolle</th><th>Erwartete Aktion</th></tr></thead><tbody><tr><td>Private Umgebung</td><td>Nicht geteilten Bildschirm nutzen und PII nicht unnoetig zeigen.</td></tr><tr><td>Mindestdatei</td><td>Nur die fuer den Vorgang erforderliche Excel hochladen.</td></tr><tr><td>Echte Daten</td><td>Im Pilot synthetische oder anonymisierte Daten bevorzugen, ausser ausdruecklich freigegeben.</td></tr><tr><td>Optionale Probe</td><td>Pilot kann ohne eigene Probe beantragt werden; das bedeutet keine automatische Zustimmung zu synthetischen Daten.</td></tr><tr><td>Nachvollziehbarkeit</td><td>Festlegen, wer prueft und welche Nachweise behalten werden.</td></tr></tbody></table></section><section class="manual-section"><h2>4. Dokumentenimport</h2><figure><img src="screenshots/syncxml-de-import.png" alt="Importablauf auf Deutsch" /><figcaption>Importablauf auf Deutsch</figcaption></figure><p>Der Import startet den operativen Ablauf und wendet Kontrollen vor dem Lesen der Datei an.</p><h3>Schritte</h3><ol><li>Informierte Bestaetigungen lesen.</li><li><strong>Alle Bestaetigungen auswaehlen</strong> oder einzelne Checkboxen aktivieren.</li><li><code>.xlsx</code>-Datei auswaehlen.</li><li><strong>Importieren</strong> klicken.</li></ol><h3>Automatische Kontrollen</h3><table><thead><tr><th>Kontrolle</th><th>Ergebnis</th></tr></thead><tbody><tr><td>Erlaubte Erweiterung</td><td>Nur unterstuetzte Formate werden akzeptiert.</td></tr><tr><td>Maximale Groesse</td><td>Zu grosse Dateien werden vor Verarbeitung abgelehnt.</td></tr><tr><td>Validierte Nutzlast</td><td>Das geparste Ergebnis wird vor Fortsetzung validiert.</td></tr><tr><td>INE-Gemeinden</td><td>Bei verfuegbarer Datenbank werden Gemeindecodes aufgeloest.</td></tr><tr><td>Duplikate</td><td>Verdaechtige Datensaetze erscheinen zur manuellen Entscheidung.</td></tr></tbody></table><p>Ist die Datei ungueltig, leer oder nicht lesbar, zeigt die Anwendung einen Fehler und geht nicht zu XML weiter.</p></section><section class="manual-section"><h2>5. Gefuehrte Pruefung</h2><figure><img src="screenshots/syncxml-de-review.png" alt="Pruefung importierter Daten" /><figcaption>Pruefung importierter Daten</figcaption></figure><p>Die gefuehrte Pruefung ermoeglicht Korrekturen vor XML-Erzeugung.</p><h3>Hauptelemente</h3><table><thead><tr><th>Element</th><th>Nutzung</th></tr></thead><tbody><tr><td>Gaestetabelle</td><td>Name, Dokument, Nationalitaet, Kontakt und Status pruefen.</td></tr><tr><td>Vollstaendige Daten anzeigen</td><td>Zeigt unmaskierte Daten nur in privater Umgebung.</td></tr><tr><td>Daten validieren</td><td>Fuehrt intelligente und implementierte SES-Regeln aus.</td></tr><tr><td>CSV-Bericht</td><td>Exportiert Vorfaelle nach Buchung und Reisendem.</td></tr><tr><td>Gefuehrte Pruefung</td><td>Ergaenzt Pflichtfelder oder korrigiert Hinweise.</td></tr><tr><td>Duplikate</td><td>Erlaubt Ueberspringen, Behalten oder Pruefen verdaechtiger Saetze.</td></tr></tbody></table><h3>Validierungsstatus</h3><table><thead><tr><th>Status</th><th>Bedeutung</th><th>Fortfahren?</th></tr></thead><tbody><tr><td>Gueltig</td><td>Feld ist korrekt oder fuer aktuellen Ablauf ausreichend.</td><td>Ja</td></tr><tr><td>Hinweis</td><td>Sollte geprueft werden; blockiert nicht immer.</td><td>Fallweise</td></tr><tr><td>Fehler</td><td>Blockiert XML, Download oder Konsolidierung.</td><td>Nein</td></tr></tbody></table><h3>Felder mit haeufigem Pruefbedarf</h3><ul><li>INE-Gemeindecode fuer spanische Adressen.</li><li>Dokumenttraeger fuer NIF/NIE.</li><li>Geschlecht und Beziehung gemaess MIR-Katalogen.</li><li>Telefon oder E-Mail.</li><li>Zweiter Nachname, falls erforderlich.</li><li>Postleitzahl und Adresse.</li></ul></section><section class="manual-section"><h2>6. XML und Download</h2><figure><img src="screenshots/syncxml-de-xml.png" alt="Visuelle Ansicht des erzeugten XML" /><figcaption>Visuelle Ansicht des erzeugten XML</figcaption></figure><p>Wenn kritische Fehler korrigiert sind, klicken Sie auf <strong>XML erzeugen</strong>. Die Anwendung erstellt eine visuelle und eine technische Ansicht.</p><h3>Pruefung vor Download</h3><table><thead><tr><th>Block</th><th>Was pruefen</th></tr></thead><tbody><tr><td>Anfrage</td><td>Einrichtungscode, Name und Adresse.</td></tr><tr><td>Vertrag</td><td>Referenz, Anreise, Abreise, Personen und Zahlung.</td></tr><tr><td>Zahlung</td><td>Zahlungsart, maskierte IBAN und Internetangabe.</td></tr><tr><td>Personen</td><td>Enthaltene Reisende, maskiertes Dokument und Kontakt.</td></tr><tr><td>XML-Vorfaelle</td><td>Struktur-, Namespace- oder Pflichtfeldfehler.</td></tr></tbody></table><h3>Download</h3><p>Der Dateiname nutzt folgendes Format:</p><p><code>syncxml-buchungsnummer-DDMMJJHH24MISS.xml</code></p><p>Der Download ist gesperrt, solange kritische Vorfaelle bestehen. Bleiben nur Hinweise, pruefen Sie diese und behalten interne Entscheidungsnachweise.</p></section><section class="manual-section"><h2>7. SES und Pre-Check-in</h2><figure><img src="screenshots/syncxml-de-precheckin-panel.png" alt="SES- und Test-Pre-Check-in-Panel" /><figcaption>SES- und Test-Pre-Check-in-Panel</figcaption></figure><p>SyncXML enthaelt assistierte SES-Aktionen. Verfuegbarkeit haengt von Zugangsdaten, Umgebung und Rolle ab.</p><table><thead><tr><th>Aktion</th><th>Kontrolle</th></tr></thead><tbody><tr><td>SES-XML validieren</td><td>Lokale Validierung gegen implementierte Regeln.</td></tr><tr><td>Simulation vorbereiten</td><td>Bereitet Anfrage vor, ohne Daten an das Ministerium zu senden.</td></tr><tr><td>An Vorproduktion senden</td><td>Nur mit konfigurierten Zugangsdaten und erlaubtem Nutzer.</td></tr><tr><td>Los/Mitteilung abfragen</td><td>Erfordert Zugangsdaten und Tracking-Code.</td></tr><tr><td>Katalog abfragen</td><td>Prueft offizielle Kataloge, wenn SES konfiguriert ist.</td></tr><tr><td>Produktion</td><td>Standardmaessig blockiert bis Freigabe und Nachweise vorliegen.</td></tr></tbody></table><p>Pilotnutzer duerfen nicht an SES senden. Uebermittlungsrouten wenden Rollenkontrolle an und schlagen sicher fehl, wenn die Konfiguration die Aktion nicht erlaubt.</p><h3>Test-Pre-Check-in</h3><figure><img src="screenshots/syncxml-de-precheckin-form.png" alt="Oeffentliches Pre-Check-in-Formular" /><figcaption>Oeffentliches Pre-Check-in-Formular</figcaption></figure><p>Das Pre-Check-in-Panel erstellt temporaere Links, damit Reisende Daten vor der Pruefung ergaenzen.</p><p>Aktuelle Kontrollen:</p><ul><li>Temporaerer Link mit Ablauf.</li><li>Token wird als Hash gespeichert.</li><li>Keine Dokumentbilder.</li><li>Kein vollstaendiges gesetzliches Register.</li><li>Operativer Status: ausstehend, eingereicht, abgelaufen oder widerrufen.</li><li>Menschliche Pruefung vor offizieller Nutzung.</li></ul></section><section class="manual-section"><h2>8. Operatives Dashboard</h2><figure><img src="screenshots/syncxml-de-dashboard-detail.png" alt="Dashboard mit konsolidierter Buchung" /><figcaption>Dashboard mit konsolidierter Buchung</figcaption></figure><p>Das Dashboard erlaubt Suche, Statuspruefung und XML-Download, wenn der konfigurierte Speichermodus dies erlaubt.</p><h3>Verlaufskontrollen</h3><table><thead><tr><th>Kontrolle</th><th>Beschreibung</th></tr></thead><tbody><tr><td>Benutzerisolation</td><td>Jeder Nutzer sieht nur eigene persistierte Buchungen.</td></tr><tr><td>Suche</td><td>Filtert nach Referenz oder Unterkunft.</td></tr><tr><td>Detail</td><td>Zeigt Daten, Personen und erkannte Reisende.</td></tr><tr><td>XML-Download</td><td>Nutzt die geschuetzte Route der gewaehlten Buchung.</td></tr><tr><td>Loeschung</td><td>Loescht die fuer den aktuellen Nutzer zugaengliche Buchung.</td></tr><tr><td>Offene Sitzung</td><td>Erlaubt Fortsetzen eines lokalen Vorgangs.</td></tr></tbody></table><p>Daten werden als <code>TT/MM/JJJJ</code> angezeigt. Wenn eine Uhrzeit vorhanden ist, als <code>TT/MM/JJJJ HH:MM:SS</code>.</p></section><section class="manual-section"><h2>9. Pilot-Feedback</h2><p>Die Anwendung enthaelt Feedback waehrend der Nutzung und beim Schliessen.</p><h3>Was gesendet werden sollte</h3><table><thead><tr><th>Feedbacktyp</th><th>Nuetzliches Beispiel</th></tr></thead><tbody><tr><td>Operative Reibung</td><td>&quot;Die Gemeindekorrektur war langsam.&quot;</td></tr><tr><td>Qualitaet der Validierung</td><td>&quot;Der Beziehungshinweis war nicht klar.&quot;</td></tr><tr><td>Pilotergebnis</td><td>&quot;Ich konnte pruefbares XML mit synthetischen Daten erzeugen.&quot;</td></tr><tr><td>Naechster Bedarf</td><td>&quot;Ich brauche eine Vorlage fuer mein PMS.&quot;</td></tr></tbody></table><h3>Was nicht gesendet werden darf</h3><ul><li>Namen, Dokumente, Telefone oder E-Mails von Gaesten.</li><li>XML mit echten Daten.</li><li>Screenshots mit sichtbarer PII.</li><li>Geheimnisse, Zugangsdaten oder Tokens.</li></ul><p>Feedback geht an den konfigurierten Anclora-Teamkanal und ersetzt keinen formalen rechtlichen oder technischen Support.</p></section><section class="manual-section"><h2>10. Sicherheit und Datenschutz</h2><p>SyncXML verarbeitet personenbezogene Informationen. Nutzen Sie diese taeglichen Kontrollen:</p><table><thead><tr><th>Kontrolle</th><th>Grund</th></tr></thead><tbody><tr><td>Daten minimieren</td><td>Exposition und Risikoflaeche reduzieren.</td></tr><tr><td>Standardmaessig maskieren</td><td>Unnoetige Sichtbarkeit von Dokumenten und Kontakt vermeiden.</td></tr><tr><td>Vor Export pruefen</td><td>Fehler vor offizieller Nutzung verhindern.</td></tr><tr><td>Keine Bilder speichern</td><td>Ausweis-/Passbilder liegen ausserhalb aktueller Speicherung.</td></tr><tr><td>Vorproduktion nutzen</td><td>SES vor echten Vorgaengen testen.</td></tr><tr><td>Temporaere Vorgaenge bereinigen</td><td>Testbuchungen nach Abschluss loeschen.</td></tr><tr><td>Zugriff kontrollieren</td><td>Nur freigegebene Nutzer sollen Buchungen mit PII oeffnen.</td></tr><tr><td>Sensible Logs vermeiden</td><td>PII nicht in Vorfaelle, Chats oder Tickets kopieren.</td></tr></tbody></table><blockquote>SyncXML bietet keine Rechtsberatung. Der Verantwortliche muss Datenschutz, DPA, Aufbewahrung und Betriebsverfahren freigeben.</blockquote></section><section class="manual-section"><h2>11. Haeufige Vorfaelle</h2><table><thead><tr><th>Vorfall</th><th>Empfohlene Aktion</th></tr></thead><tbody><tr><td>Anmeldung nicht moeglich</td><td>Freigegebene E-Mail, Passwort und Kontostatus pruefen.</td></tr><tr><td>Passwortaenderung verlangt</td><td>Es ist ein temporaeres Passwort; vor Fortsetzung neues festlegen.</td></tr><tr><td>Excel importiert nicht</td><td>Erweiterung, Groesse, Struktur und Inhalt pruefen.</td></tr><tr><td>Gemeindecode fehlt</td><td>INE-Code in der gefuehrten Pruefung ergaenzen.</td></tr><tr><td>Kritische Fehler bleiben</td><td>Vor XML-Erzeugung oder Download korrigieren.</td></tr><tr><td>SES lehnt Test ab</td><td>Antwort, Los/Mitteilung und Fehlerblock aufbewahren.</td></tr><tr><td>Buchung nicht sichtbar</td><td>Mit demselben Nutzer anmelden, der sie konsolidiert hat.</td></tr><tr><td>Echte Daten erforderlich</td><td>Erfordert Berechtigung, private Umgebung und vorherige operative Freigabe.</td></tr></tbody></table></section><section class="manual-section"><h2>12. Glossar</h2><table><thead><tr><th>Begriff</th><th>Bedeutung</th></tr></thead><tbody><tr><td>SES</td><td>Offizielles System fuer Beherbergungsmitteilungen.</td></tr><tr><td>XML</td><td>Strukturierte Datei mit Buchung und Reisenden.</td></tr><tr><td>Vorproduktion</td><td>Testumgebung vor Produktion.</td></tr><tr><td>RBAC</td><td>Rollenbasierte Zugriffskontrolle.</td></tr><tr><td>Owner</td><td>Nutzer, dem eine persistierte Buchung gehoert.</td></tr><tr><td>Hash</td><td>Technischer Fingerabdruck zur Identifikation ohne Originalwert.</td></tr><tr><td>DPA</td><td>Vertrag zur Auftragsverarbeitung.</td></tr><tr><td>PII</td><td>Personenbezogene identifizierbare Informationen.</td></tr><tr><td>INE</td><td>Spanisches Statistikamt; Quelle fuer Gemeindecodes.</td></tr></tbody></table><div class="footer-brand">Anclora SyncXML · Benutzerhandbuch · Version 1.1 · 20. Juli 2026</div></section>
+</body>
+</html>

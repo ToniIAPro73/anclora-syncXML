@@ -7,18 +7,21 @@ const LANGS = {
   es: {
     input: "manual-usuario.md",
     output: "anclora-syncxml-manual-usuario-es.pdf",
+    htmlOutput: "anclora-syncxml-manual-usuario-es.html",
     title: "Anclora SyncXML - Manual de Usuario",
     lang: "es",
   },
   en: {
     input: "manual-usuario.en.md",
     output: "anclora-syncxml-user-manual-en.pdf",
+    htmlOutput: "anclora-syncxml-user-manual-en.html",
     title: "Anclora SyncXML - User Manual",
     lang: "en",
   },
   de: {
     input: "manual-usuario.de.md",
     output: "anclora-syncxml-benutzerhandbuch-de.pdf",
+    htmlOutput: "anclora-syncxml-benutzerhandbuch-de.html",
     title: "Anclora SyncXML - Benutzerhandbuch",
     lang: "de",
   },
@@ -31,7 +34,6 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, "..");
 const manualDir = path.join(root, "docs", "manual");
 const outputDir = path.join(root, "public", "manuals");
-const tmpDir = path.join(root, "tmp", "manual-pdf");
 const chrome = [
   "/usr/bin/google-chrome",
   "/usr/bin/google-chrome-stable",
@@ -41,14 +43,13 @@ const chrome = [
 
 if (!chrome) throw new Error("No Chrome/Chromium binary found for PDF rendering.");
 mkdirSync(outputDir, { recursive: true });
-mkdirSync(tmpDir, { recursive: true });
 
 for (const lang of requested) {
   const config = LANGS[lang];
   if (!config) throw new Error(`Unsupported language: ${lang}`);
 
   const markdownPath = path.join(manualDir, config.input);
-  const htmlPath = path.join(tmpDir, `syncxml-manual-${lang}.html`);
+  const htmlPath = path.join(outputDir, config.htmlOutput);
   const pdfPath = path.join(outputDir, config.output);
 
   const markdown = readFileSync(markdownPath, "utf8");
@@ -63,6 +64,7 @@ for (const lang of requested) {
     `file://${htmlPath}`,
   ], { stdio: "pipe" });
   console.log(`Generated ${path.relative(root, pdfPath)}`);
+  console.log(`Generated ${path.relative(root, htmlPath)}`);
 }
 
 function buildHtml(markdown, config) {

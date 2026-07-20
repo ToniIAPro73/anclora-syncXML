@@ -47,3 +47,9 @@ knowledge-vault/repo-snapshots/
 mineru-output/
 parsed-documents/
 uploads/
+
+# Local runtime state
+data/state_store.db/
+
+# Generated manual work files
+tmp/manual-pdf/
