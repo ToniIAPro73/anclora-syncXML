@@ -21,20 +21,20 @@
 
 ## Indice
 
-| No. | Seccion | Control principal |
-| --- | --- | --- |
-| 01 | Alcance del producto | Piloto controlado y claims prudentes |
-| 02 | Acceso y sesiones | Login aprobado, contrasena temporal y cierre |
-| 03 | Preparacion antes de importar | Datos minimos y entorno privado |
-| 04 | Importacion documental | Confirmaciones y limite de archivo |
-| 05 | Revision guiada | Errores, avisos y correcciones |
-| 06 | XML y descarga | Bloqueos antes de exportar |
-| 07 | SES y pre-check-in | Preproduccion y permisos por rol |
-| 08 | Dashboard operativo | Historial aislado por usuario |
-| 09 | Feedback del piloto | Senales sin datos de huespedes |
-| 10 | Seguridad y privacidad | Controles diarios |
-| 11 | Incidencias frecuentes | Respuesta operativa |
-| 12 | Glosario | Terminos clave |
+<nav class="toc-grid">
+  <div class="toc-item"><span class="toc-num">01</span><span><span class="toc-title">Alcance del producto</span><span class="toc-note">Piloto controlado y claims prudentes</span></span></div>
+  <div class="toc-item"><span class="toc-num">02</span><span><span class="toc-title">Acceso y sesiones</span><span class="toc-note">Login aprobado, contrasena temporal y cierre</span></span></div>
+  <div class="toc-item"><span class="toc-num">03</span><span><span class="toc-title">Preparacion antes de importar</span><span class="toc-note">Datos minimos y entorno privado</span></span></div>
+  <div class="toc-item"><span class="toc-num">04</span><span><span class="toc-title">Importacion documental</span><span class="toc-note">Confirmaciones y limite de archivo</span></span></div>
+  <div class="toc-item"><span class="toc-num">05</span><span><span class="toc-title">Revision guiada</span><span class="toc-note">Errores, avisos y correcciones</span></span></div>
+  <div class="toc-item"><span class="toc-num">06</span><span><span class="toc-title">XML y descarga</span><span class="toc-note">Bloqueos antes de exportar</span></span></div>
+  <div class="toc-item"><span class="toc-num">07</span><span><span class="toc-title">SES y pre-check-in</span><span class="toc-note">Preproduccion y permisos por rol</span></span></div>
+  <div class="toc-item"><span class="toc-num">08</span><span><span class="toc-title">Dashboard operativo</span><span class="toc-note">Historial aislado por usuario</span></span></div>
+  <div class="toc-item"><span class="toc-num">09</span><span><span class="toc-title">Feedback del piloto</span><span class="toc-note">Senales sin datos de huespedes</span></span></div>
+  <div class="toc-item"><span class="toc-num">10</span><span><span class="toc-title">Seguridad y privacidad</span><span class="toc-note">Controles diarios</span></span></div>
+  <div class="toc-item"><span class="toc-num">11</span><span><span class="toc-title">Incidencias frecuentes</span><span class="toc-note">Respuesta operativa</span></span></div>
+  <div class="toc-item"><span class="toc-num">12</span><span><span class="toc-title">Glosario</span><span class="toc-note">Terminos clave</span></span></div>
+</nav>
 
 <div class="page-break"></div>
 
