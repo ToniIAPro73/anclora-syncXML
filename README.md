@@ -5,105 +5,117 @@
 <h1 align="center">Anclora SyncXML</h1>
 
 <p align="center">
-  Privacy-first tooling for reviewing reservation spreadsheets and preparing SES.HOSPEDAJES XML in a controlled pilot.
+  Herramienta con privacidad por diseño para revisar hojas de reserva y preparar XML
+  SES.HOSPEDAJES dentro de un piloto controlado.
 </p>
 
 <p align="center">
-  <a href="#status">Status</a> ·
-  <a href="#what-it-does">Product</a> ·
-  <a href="#controls">Controls</a> ·
-  <a href="#manuals">Manuals</a> ·
-  <a href="#quick-start">Quick start</a> ·
-  <a href="#quality-gates">Quality</a>
+  <strong>Español</strong> ·
+  <a href="README.en.md">English</a> ·
+  <a href="README.de.md">Deutsch</a>
 </p>
 
 <p align="center">
-  <img alt="Project status" src="https://img.shields.io/badge/status-controlled%20pilot-orange" />
-  <img alt="License" src="https://img.shields.io/badge/license-MIT-yellow" />
+  <a href="#estado">Estado</a> ·
+  <a href="#qué-hace">Producto</a> ·
+  <a href="#controles">Controles</a> ·
+  <a href="#manuales">Manuales</a> ·
+  <a href="#inicio-rápido">Inicio rápido</a> ·
+  <a href="#controles-de-calidad">Calidad</a>
+</p>
+
+<p align="center">
+  <img alt="Estado del proyecto" src="https://img.shields.io/badge/estado-piloto%20controlado-orange" />
+  <img alt="Licencia" src="https://img.shields.io/badge/licencia-MIT-yellow" />
   <img alt="Next.js" src="https://img.shields.io/badge/Next.js-16-black" />
   <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-6-blue" />
   <img alt="Tests" src="https://img.shields.io/badge/tests-Vitest%20171%20passing-brightgreen" />
-  <img alt="Privacy" src="https://img.shields.io/badge/privacy-minimisation%20first-brightgreen" />
+  <img alt="Privacidad" src="https://img.shields.io/badge/privacidad-minimizaci%C3%B3n%20primero-brightgreen" />
 </p>
 
 ---
 
-## Status
+## Estado
 
-Anclora SyncXML is an open-source project under the MIT License. The repository is public so the product, privacy model and operational controls can be inspected and improved.
+Anclora SyncXML es un proyecto open source bajo licencia MIT. El repositorio es
+público para que el producto, el modelo de privacidad y los controles operativos
+puedan revisarse y mejorarse.
 
-The product is currently in **pre-MVP / controlled validation**. It must be described carefully:
+El producto está actualmente en fase **pre-MVP / validación controlada**. Debe
+describirse con precisión:
 
-- Not legal advice.
-- Not a guarantee of regulatory compliance.
-- Not an automatic production SES.HOSPEDAJES submission system.
-- Not a place to store real guest data without approved security, retention and access controls.
+- No es asesoría legal.
+- No garantiza cumplimiento normativo.
+- No es un sistema automático de envío SES.HOSPEDAJES en producción.
+- No debe almacenar datos reales de huéspedes sin controles aprobados de
+  seguridad, retención y acceso.
 
-## What It Does
+## Qué Hace
 
-SyncXML helps operators turn reservation spreadsheets into a reviewable XML workflow while keeping sensitive data exposure low.
+SyncXML ayuda a operadores a convertir hojas de reserva en un flujo XML revisable,
+manteniendo baja la exposición de datos sensibles.
 
-| Capability | Current behavior |
+| Capacidad | Comportamiento actual |
 | --- | --- |
-| Spreadsheet import | Reads `.xlsx` booking files with defensive parsing through ExcelJS. |
-| Smart validation | Detects missing or risky booking, traveller, address, document and payment fields. |
-| Guided review | Lets the operator correct blocking issues before XML generation. |
-| XML preparation | Generates visual and technical XML views before download. |
-| SES assistance | Supports local validation and controlled pre-production actions when configured. |
-| Reservation history | Optional persistence with user-scoped reservation access. |
-| Pilot access | Email/password access for approved users, temporary-password change and admin provisioning. |
-| Feedback loop | In-app pilot feedback without asking for guest data. |
+| Importación de hojas | Lee archivos `.xlsx` con análisis defensivo mediante ExcelJS. |
+| Validación inteligente | Detecta campos ausentes o de riesgo en reservas, viajeros, direcciones, documentos y pagos. |
+| Revisión guiada | Permite corregir bloqueos antes de generar XML. |
+| Preparación XML | Genera vistas visuales y técnicas del XML antes de descargarlo. |
+| Asistencia SES | Soporta validación local y acciones controladas de preproducción cuando está configurado. |
+| Historial de reservas | Persistencia opcional con acceso a reservas limitado por usuario. |
+| Acceso piloto | Email/contraseña para usuarios aprobados, cambio de contraseña temporal y alta admin. |
+| Ciclo de feedback | Feedback de piloto dentro de la app sin pedir datos de huéspedes. |
 
-## Controls
+## Controles
 
-The application is built around operational guardrails rather than broad claims.
+La aplicación se construye sobre barreras operativas, no sobre promesas amplias.
 
-| Control | Purpose |
+| Control | Propósito |
 | --- | --- |
-| Controlled access | `/app` and `/dashboard` require an approved session unless local demo mode is enabled. |
-| Role checks | SES submission actions are restricted by role and environment configuration. |
-| Fail-closed auth | Production does not allow the local auth bypass flag. |
-| Owner isolation | Persisted reservations are scoped to the authenticated user. |
-| PII minimisation | Guest data is masked by default and document images are not stored. |
-| Upload restrictions | File type, size and payload shape are validated before processing. |
-| Prudent SES scope | Production SES remains blocked unless explicitly configured, tested and approved. |
-| Public copy discipline | Product copy avoids absolute compliance or legal guarantees. |
+| Acceso controlado | `/app` y `/dashboard` requieren sesión aprobada salvo modo demo local. |
+| Roles | Las acciones de envío SES se restringen por rol y configuración de entorno. |
+| Auth fail-closed | Producción no permite el flag de bypass local de autenticación. |
+| Aislamiento por propietario | Las reservas persistidas quedan asociadas al usuario autenticado. |
+| Minimización PII | Los datos de huésped se enmascaran por defecto y no se guardan imágenes de documentos. |
+| Restricciones de subida | Tipo, tamaño y forma del payload se validan antes de procesar. |
+| Alcance SES prudente | SES en producción queda bloqueado salvo configuración, pruebas y aprobación explícitas. |
+| Disciplina de copy público | El texto evita garantías legales, absolutas o de cumplimiento. |
 
-## Product Surface
+## Superficie Del Producto
 
-| Area | Route or artifact |
+| Área | Ruta o artefacto |
 | --- | --- |
-| Public landing | `/` |
-| Pilot request | `/piloto` |
-| Pilot login | `/login` |
-| Admin login | `/admin/login` |
-| Application workflow | `/app` |
-| Reservation dashboard | `/dashboard` |
-| Test pre-check-in | `/precheckin/[token]` |
-| Published manuals | `public/manuals/` |
+| Landing pública | `/` |
+| Solicitud de piloto | `/piloto` |
+| Login piloto | `/login` |
+| Login admin | `/admin/login` |
+| Flujo de aplicación | `/app` |
+| Panel de reservas | `/dashboard` |
+| Pre-check-in de prueba | `/precheckin/[token]` |
+| Manuales publicados | `public/manuals/` |
 
-## Architecture
+## Arquitectura
 
-| Layer | Stack |
+| Capa | Stack |
 | --- | --- |
-| Web application | Next.js App Router, React 19, TypeScript |
-| API routes | Next.js server routes with Zod validation |
-| Persistence | Prisma, optional database-backed storage |
-| Spreadsheet parsing | ExcelJS |
-| XML parsing/generation | `fast-xml-parser` plus local SES validation helpers |
-| Email | Resend-backed delivery helpers when configured |
-| Tests | Vitest, React Testing Library and focused route/unit coverage |
-| Manuals | Markdown sources rendered to HTML/PDF through Chromium |
+| Aplicación web | Next.js App Router, React 19, TypeScript |
+| Rutas API | Rutas server de Next.js con validación Zod |
+| Persistencia | Prisma, almacenamiento opcional con base de datos |
+| Lectura de hojas | ExcelJS |
+| XML | `fast-xml-parser` y helpers locales de validación SES |
+| Email | Helpers de envío con Resend cuando está configurado |
+| Tests | Vitest, React Testing Library y cobertura enfocada de rutas/unidades |
+| Manuales | Fuentes Markdown renderizadas a HTML/PDF con Chromium |
 
-## Quick Start
+## Inicio Rápido
 
-### Requirements
+### Requisitos
 
-- Node.js 22 recommended.
-- npm 10+ recommended.
-- Chrome or Chromium only when regenerating PDF manuals.
+- Node.js 22 recomendado.
+- npm 10+ recomendado.
+- Chrome o Chromium solo para regenerar manuales PDF.
 
-### Local development
+### Desarrollo local
 
 ```bash
 cp .env.example .env
@@ -111,52 +123,56 @@ npm install
 npm run dev
 ```
 
-For a local demo without real data:
+Para una demo local sin datos reales:
 
 ```bash
 SYNCXML_LOCAL_DEMO=true npm run dev
 ```
 
-For controlled access flows in local or staging, configure `.env` carefully and use synthetic or anonymized data unless a real-data pilot has been approved.
+Para flujos de acceso controlado en local o staging, configura `.env` con cuidado y
+usa datos sintéticos o anonimizados salvo que exista aprobación para un piloto con
+datos reales.
 
-## Environment
+## Entorno
 
-Common variables during development:
+Variables comunes en desarrollo:
 
-| Variable | Use |
+| Variable | Uso |
 | --- | --- |
-| `SESSION_SECRET` | Session signing secret. |
-| `SYNCXML_ADMIN_PASSWORD` | Controlled admin access fallback. |
-| `DATABASE_URL` / `DIRECT_URL` | Prisma database connection. |
-| `SYNCXML_ENABLE_PERSISTENT_STORAGE` | Enables optional reservation persistence. |
-| `SYNCXML_LOCAL_DEMO` | Allows local demo mode outside production. |
-| `RESEND_API_KEY` | Enables email delivery where needed. |
+| `SESSION_SECRET` | Secreto de firma de sesión. |
+| `SYNCXML_ADMIN_PASSWORD` | Fallback de acceso admin controlado. |
+| `DATABASE_URL` / `DIRECT_URL` | Conexión de base de datos Prisma. |
+| `SYNCXML_ENABLE_PERSISTENT_STORAGE` | Activa persistencia opcional de reservas. |
+| `SYNCXML_LOCAL_DEMO` | Permite modo demo local fuera de producción. |
+| `RESEND_API_KEY` | Activa envío de email cuando hace falta. |
 
-More detail:
+Más detalle:
 
 - [.env.example](.env.example)
 - [docs/env-syncxml-pilot.md](docs/env-syncxml-pilot.md)
 - [docs/ENVIRONMENT_VARIABLES.md](docs/ENVIRONMENT_VARIABLES.md)
 
-## Manuals
+## Manuales
 
-The latest published user manuals live in one canonical folder: [public/manuals](public/manuals).
+Los manuales de usuario publicados viven en una carpeta canónica:
+[public/manuals](public/manuals).
 
-| Language | PDF | HTML |
+| Idioma | PDF | HTML |
 | --- | --- | --- |
-| Spanish | [PDF](public/manuals/anclora-syncxml-manual-usuario-es.pdf) | [HTML](public/manuals/anclora-syncxml-manual-usuario-es.html) |
-| English | [PDF](public/manuals/anclora-syncxml-user-manual-en.pdf) | [HTML](public/manuals/anclora-syncxml-user-manual-en.html) |
-| German | [PDF](public/manuals/anclora-syncxml-benutzerhandbuch-de.pdf) | [HTML](public/manuals/anclora-syncxml-benutzerhandbuch-de.html) |
+| Español | [PDF](public/manuals/anclora-syncxml-manual-usuario-es.pdf) | [HTML](public/manuals/anclora-syncxml-manual-usuario-es.html) |
+| Inglés | [PDF](public/manuals/anclora-syncxml-user-manual-en.pdf) | [HTML](public/manuals/anclora-syncxml-user-manual-en.html) |
+| Alemán | [PDF](public/manuals/anclora-syncxml-benutzerhandbuch-de.pdf) | [HTML](public/manuals/anclora-syncxml-benutzerhandbuch-de.html) |
 
-Editable sources are in [docs/manual](docs/manual). Regenerate published manuals with:
+Las fuentes editables están en [docs/manual](docs/manual). Regenera los manuales
+publicados con:
 
 ```bash
 node scripts/generate-syncxml-manual-pdf.mjs --lang=all
 ```
 
-## Quality Gates
+## Controles De Calidad
 
-Run the full local gate before handing off a branch:
+Ejecuta la puerta local completa antes de entregar una rama:
 
 ```bash
 npm run check:public-docs
@@ -167,39 +183,40 @@ npm run build
 npm audit --omit=dev --audit-level=high
 ```
 
-## Security Expectations
+## Expectativas De Seguridad
 
-- Do not commit real guest data, exported XML files or spreadsheets containing PII.
-- Do not log names, IDs, phone numbers, emails, addresses, payments or full XML payloads.
-- Use synthetic or anonymized data for tests, screenshots, demos and bug reports.
-- Do not copy production secrets between environments.
-- Use pre-production evidence before considering any SES production workflow.
+- No subas datos reales de huéspedes, XML exportados ni hojas con PII.
+- No registres nombres, DNI/pasaporte, teléfonos, emails, direcciones, pagos ni XML completo.
+- Usa datos sintéticos o anonimizados para tests, capturas, demos e informes de bug.
+- No copies secretos de producción entre entornos.
+- Usa evidencia de preproducción antes de considerar cualquier flujo SES en producción.
 
-Responsible disclosure and security handling: [SECURITY.md](SECURITY.md).
+Divulgación responsable y gestión de seguridad: [SECURITY.md](SECURITY.md).
 
-## Documentation Map
+## Mapa De Documentación
 
-| Topic | Document |
+| Tema | Documento |
 | --- | --- |
-| Documentation index | [docs/README.md](docs/README.md) |
-| Access model | [docs/ACCESS_MODEL.md](docs/ACCESS_MODEL.md) |
-| Privacy model | [docs/PRIVACY_MODEL.md](docs/PRIVACY_MODEL.md) |
-| SES access control | [docs/SES_ACCESS_CONTROL.md](docs/SES_ACCESS_CONTROL.md) |
-| Pilot flow | [docs/pilot/SYNCXML_CONTROLLED_PILOT_FLOW.md](docs/pilot/SYNCXML_CONTROLLED_PILOT_FLOW.md) |
-| Environment setup | [docs/ENVIRONMENT_SETUP_SYNCXML_PILOT.md](docs/ENVIRONMENT_SETUP_SYNCXML_PILOT.md) |
+| Índice de documentación | [docs/README.md](docs/README.md) |
+| Modelo de acceso | [docs/ACCESS_MODEL.md](docs/ACCESS_MODEL.md) |
+| Modelo de privacidad | [docs/PRIVACY_MODEL.md](docs/PRIVACY_MODEL.md) |
+| Control de acceso SES | [docs/SES_ACCESS_CONTROL.md](docs/SES_ACCESS_CONTROL.md) |
+| Flujo piloto | [docs/pilot/SYNCXML_CONTROLLED_PILOT_FLOW.md](docs/pilot/SYNCXML_CONTROLLED_PILOT_FLOW.md) |
+| Configuración de entorno | [docs/ENVIRONMENT_SETUP_SYNCXML_PILOT.md](docs/ENVIRONMENT_SETUP_SYNCXML_PILOT.md) |
 | Roadmap | [ROADMAP.md](ROADMAP.md) |
-| Governance | [GOVERNANCE.md](GOVERNANCE.md) |
+| Gobierno | [GOVERNANCE.md](GOVERNANCE.md) |
 
-## Contributing
+## Contribuir
 
-Contributions are welcome when they preserve the privacy-first and controlled-pilot boundaries.
+Las contribuciones son bienvenidas cuando preservan los límites de privacidad por
+diseño y piloto controlado.
 
-Start with:
+Empieza por:
 
 - [CONTRIBUTING.md](CONTRIBUTING.md)
 - [docs/community/INITIAL_ISSUES.md](docs/community/INITIAL_ISSUES.md)
 - [docs/devops/AGENT_GIT_WORKFLOW_CONTRACT.md](docs/devops/AGENT_GIT_WORKFLOW_CONTRACT.md)
 
-## License
+## Licencia
 
-MIT. See [LICENSE](LICENSE).
+MIT. Ver [LICENSE](LICENSE).
