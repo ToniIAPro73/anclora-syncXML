@@ -1,8 +1,8 @@
 # Memory — anclora-syncxml
 
-> Generated: 2026-07-20 09:06:45  
-> Total memories: **44**  
-> Breakdown: instruction: 1, fact: 3, decision: 5, context: 1, event: 21, learning: 2, observation: 4, artifact: 1, error: 6
+> Generated: 2026-07-20 09:11:06  
+> Total memories: **45**  
+> Breakdown: instruction: 1, fact: 3, decision: 5, context: 1, event: 22, learning: 2, observation: 4, artifact: 1, error: 6
 
 ---
 
@@ -179,6 +179,12 @@ Added SyncXML admin/user login access from landing header, email+password login 
 Cierre final: plan prioritario seguridad/auditoria SyncXML commiteado y pusheado. Rama: fix/codex-security-audit-priority-plan. Commit final: 1175f5d. Checks verdes: check:public-docs, lint, typecheck, test, build, npm audit --omit=dev --audit-level=high y npm audit. Pendiente: integrar la rama segun flujo Git; .codex/hooks.json queda local sin commitear.
 
 *Confidence: 0.95 | Status: active | Created: 2026-07-20T00:20:22*
+
+### Cierre adicional: README.md se actualizo con prese...
+
+Cierre adicional: README.md se actualizo con presentacion premium GitHub, logo ligero, badges, navegacion, controles de piloto, arquitectura vigente, enlaces a manuales canonicos y comandos de calidad. Rama: chore/codex-manuals-repo-cleanup-review. Commit: 004fe13. Checks verdes: check:public-docs, lint, typecheck, test, build, npm audit omit dev high.
+
+*Confidence: 0.95 | Status: active | Created: 2026-07-20T07:10:55 | Tags: `readme`, `repo-cleanup`, `syncxml`*
 
 ### Cierre: se completo hardening de auth piloto, vali...
 
