@@ -12,6 +12,7 @@ Update the SyncXML user manuals after the latest application changes and make th
 - Leave old files in `tmp/manual-pdf/` untouched, but make clear they are temporary/non-canonical.
 - Update ES, EN and DE manuals with current controlled-pilot, authentication, RBAC, reservation isolation, SES, feedback, pre-check-in and privacy/security controls.
 - Add lightweight repository cleanup guardrails for local runtime artifacts.
+- Refresh `README.md` so the public repository entry point has a premium, professional structure aligned with the current controlled-pilot product.
 
 ## Acceptance Criteria
 
@@ -21,6 +22,7 @@ Update the SyncXML user manuals after the latest application changes and make th
 - `public/manuals/` contains the latest PDF and HTML versions for ES, EN and DE.
 - The generator writes latest HTML previews to `public/manuals/`.
 - Local Memanto/runtime database artifacts are ignored without deleting existing files.
+- `README.md` clearly explains product value, scope, controls, architecture, manuals, setup and contribution paths without overstating legal or SES production readiness.
 - Standard checks are run and reported.
 
 ## Out of Scope

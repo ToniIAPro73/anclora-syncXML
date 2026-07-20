@@ -1,8 +1,8 @@
 # Memory — anclora-syncxml
 
-> Generated: 2026-07-20 02:19:50
-> Total memories: **40**
-> Breakdown: instruction: 1, fact: 3, decision: 4, context: 1, event: 18, learning: 2, observation: 4, artifact: 1, error: 6
+> Generated: 2026-07-20 09:06:45  
+> Total memories: **44**  
+> Breakdown: instruction: 1, fact: 3, decision: 5, context: 1, event: 21, learning: 2, observation: 4, artifact: 1, error: 6
 
 ---
 
@@ -70,6 +70,12 @@ Decision tecnica: para este WSL sin systemd ni sudo util, el autoarranque persis
 
 *Confidence: 0.95 | Status: active | Created: 2026-06-08T13:08:22*
 
+### Decision: .codex/hooks.json is local Codex/Memanto...
+
+Decision: .codex/hooks.json is local Codex/Memanto startup configuration, not product code; added .codex/ to .gitignore instead of committing it.
+
+*Confidence: 0.95 | Status: active | Created: 2026-07-20T00:22:39*
+
 ---
 
 ## Goals
@@ -120,6 +126,12 @@ Anclora SyncXML se orienta a generar XML SES.HOSPEDAJES con foco en privacidad l
 
 *Important conversations, milestones, and temporal occurrences.*
 
+### Cierre: se actualizaron manuales premium ES/EN/DE ...
+
+Cierre: se actualizaron manuales premium ES/EN/DE SyncXML a version 1.1, se consolido public/manuals como carpeta canonica con PDF+HTML, se documento limpieza repo sin borrar archivos y se ignoro data/state_store.db. Rama: chore/codex-manuals-repo-cleanup-review. Commit: f0006ae. Checks: check:public-docs, lint, typecheck, test, build, npm audit omit dev high, PDF text/render smoke.
+
+*Confidence: 0.95 | Status: active | Created: 2026-07-20T07:06:32 | Tags: `manuals`, `repo-cleanup`, `syncxml`*
+
 ### Committed SyncXML deliverability fix 9f18df0 and p...
 
 Committed SyncXML deliverability fix 9f18df0 and promoted through staging 6cecbde, production b20049e, and main 7b38626; working tree left on development.
@@ -150,11 +162,23 @@ Cierre: se completo la ejecucion del plan prioritario de seguridad/auditoria Syn
 
 *Confidence: 0.95 | Status: active | Created: 2026-07-20T00:19:40*
 
+### Cierre promocion completa SyncXML: rama fix/codex-...
+
+Cierre promocion completa SyncXML: rama fix/codex-security-audit-priority-plan integrada en development y promovida a staging, production y main. Heads remotos: development 5f7f747, staging 241d46b, production 31590a4, main b7237f1. Contenido sin diff entre permanentes. Rama temporal local y remota eliminada. Workspace dejado en development.
+
+*Confidence: 0.95 | Status: active | Created: 2026-07-20T00:30:44*
+
 ### Added SyncXML admin/user login access from landing...
 
 Added SyncXML admin/user login access from landing header, email+password login in /app AuthGate, and authenticated header user dropdown with Cerrar aplicación/logout.
 
 *Confidence: 0.95 | Status: active | Created: 2026-07-19T19:19:06*
+
+### Cierre final: plan prioritario seguridad/auditoria...
+
+Cierre final: plan prioritario seguridad/auditoria SyncXML commiteado y pusheado. Rama: fix/codex-security-audit-priority-plan. Commit final: 1175f5d. Checks verdes: check:public-docs, lint, typecheck, test, build, npm audit --omit=dev --audit-level=high y npm audit. Pendiente: integrar la rama segun flujo Git; .codex/hooks.json queda local sin commitear.
+
+*Confidence: 0.95 | Status: active | Created: 2026-07-20T00:20:22*
 
 ### Cierre: se completo hardening de auth piloto, vali...
 

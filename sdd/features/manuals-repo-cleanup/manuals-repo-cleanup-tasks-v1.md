@@ -8,4 +8,5 @@
 - [x] Add canonical manual folder documentation.
 - [x] Add ignore rules for local runtime state.
 - [x] Regenerate manuals.
+- [x] Refresh premium GitHub README.
 - [x] Run verification checks.
