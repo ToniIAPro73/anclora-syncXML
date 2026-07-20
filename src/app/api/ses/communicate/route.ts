@@ -1,7 +1,9 @@
 import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { requireAuth } from "@/lib/auth";
+import { logRouteError, publicErrorResponse } from "@/lib/api/errors";
+import { requireAdmin } from "@/lib/auth";
+import { requireSesProductionSendOptIn } from "@/lib/ses/access";
 import { getRateLimitKey, sensitiveRateLimiter } from "@/lib/security/rateLimit";
 import { validateSesHospedajesXml } from "@/lib/ses/schema";
 import { sendParteHospedajeXml } from "@/lib/ses/client";
@@ -34,7 +36,7 @@ export async function POST(request: Request) {
   try {
     const rateLimit = sensitiveRateLimiter.check(`ses-communicate:${getRateLimitKey(request)}`);
     if (!rateLimit.allowed) return NextResponse.json({ error: "Demasiadas solicitudes" }, { status: 429 });
-    const unauthorized = await requireAuth();
+    const unauthorized = await requireAdmin();
     if (unauthorized) return unauthorized;
 
     const body = await request.json().catch(() => ({}));
@@ -42,6 +44,8 @@ export async function POST(request: Request) {
     if (!parsed.success) return NextResponse.json({ error: "Payload inválido" }, { status: 400 });
 
     const { xml, environment = "pre", dryRun = true, reference, fileName, communicationType } = parsed.data;
+    const productionDenied = requireSesProductionSendOptIn({ environment, dryRun });
+    if (productionDenied) return productionDenied;
 
     // Validate XML type vs communicationType coherence
     const isParteHospedaje = xml.includes("altaParteHospedaje");
@@ -108,15 +112,16 @@ export async function POST(request: Request) {
       }
       httpResult = result as typeof httpResult;
     } catch (networkError) {
+      logRouteError("ses-communicate-network", networkError);
       await updateSesSubmissionStatus(submission.id, "FAILED", {
         sesResponseCode: "NETWORK_ERROR",
-        sesResponseDescription: networkError instanceof Error ? networkError.message : "Error de red",
+        sesResponseDescription: "SES network error",
       });
       return NextResponse.json({
         ok: false,
         submissionId: submission.id,
         status: "FAILED",
-        message: networkError instanceof Error ? networkError.message : "Error de red conectando con SES.HOSPEDAJES",
+        message: "No se pudo conectar con SES.HOSPEDAJES",
       }, { status: 503 });
     }
 
@@ -182,8 +187,7 @@ export async function POST(request: Request) {
       _rawResponse: undefined,
     });
   } catch (error) {
-    return NextResponse.json({
-      error: error instanceof Error ? error.message : "Error SES",
-    }, { status: 503 });
+    logRouteError("ses-communicate", error);
+    return publicErrorResponse(503, "SYNCXML_SES_COMMUNICATE_FAILED", "No se pudo procesar la comunicacion SES");
   }
 }

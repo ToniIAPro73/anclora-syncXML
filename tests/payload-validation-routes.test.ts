@@ -13,6 +13,8 @@ const routeCalls = vi.hoisted(() => ({
 
 vi.mock("@/lib/auth", () => ({
   requireAuth: vi.fn(async () => null),
+  getSessionUser: vi.fn(async () => ({ id: "pilot-1", email: "pilot@example.com", role: "pilot_user" })),
+  getSessionOwnerId: vi.fn((user: { id?: string }) => user.id),
 }));
 
 vi.mock("@/lib/validation", () => ({

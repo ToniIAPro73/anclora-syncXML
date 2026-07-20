@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { logRouteError } from "@/lib/api/errors";
 import { hasDatabase } from "@/lib/db/prisma";
 import { syncIneMunicipios } from "@/lib/ine/municipios";
 
@@ -21,10 +22,11 @@ export async function GET(request: Request) {
     const summary = await syncIneMunicipios();
     return NextResponse.json(summary, { status: summary.ok ? 200 : 207 });
   } catch (error) {
+    logRouteError("cron-sync-municipios", error);
     return NextResponse.json({
       ok: false,
       message: "No se pudo sincronizar municipios INE",
-      errors: [{ reason: error instanceof Error ? error.message : "Error desconocido" }],
+      errors: [{ reason: "sync_failed" }],
     }, { status: 500 });
   }
 }
