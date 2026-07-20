@@ -21,20 +21,20 @@
 
 ## Table of contents
 
-| No. | Section | Main control |
-| --- | --- | --- |
-| 01 | Product scope | Controlled pilot and prudent claims |
-| 02 | Access and sessions | Approved login, temporary password and logout |
-| 03 | Before importing | Minimum data and private environment |
-| 04 | Document import | Confirmations and file limit |
-| 05 | Guided review | Errors, warnings and corrections |
-| 06 | XML and download | Blocking controls before export |
-| 07 | SES and pre-check-in | Pre-production and role permissions |
-| 08 | Operational dashboard | User-scoped history |
-| 09 | Pilot feedback | Signals without guest data |
-| 10 | Security and privacy | Daily controls |
-| 11 | Common incidents | Operational response |
-| 12 | Glossary | Key terms |
+<nav class="toc-grid">
+  <div class="toc-item"><span class="toc-num">01</span><span><span class="toc-title">Product scope</span><span class="toc-note">Controlled pilot and prudent claims</span></span></div>
+  <div class="toc-item"><span class="toc-num">02</span><span><span class="toc-title">Access and sessions</span><span class="toc-note">Approved login, temporary password and logout</span></span></div>
+  <div class="toc-item"><span class="toc-num">03</span><span><span class="toc-title">Before importing</span><span class="toc-note">Minimum data and private environment</span></span></div>
+  <div class="toc-item"><span class="toc-num">04</span><span><span class="toc-title">Document import</span><span class="toc-note">Confirmations and file limit</span></span></div>
+  <div class="toc-item"><span class="toc-num">05</span><span><span class="toc-title">Guided review</span><span class="toc-note">Errors, warnings and corrections</span></span></div>
+  <div class="toc-item"><span class="toc-num">06</span><span><span class="toc-title">XML and download</span><span class="toc-note">Blocking controls before export</span></span></div>
+  <div class="toc-item"><span class="toc-num">07</span><span><span class="toc-title">SES and pre-check-in</span><span class="toc-note">Pre-production and role permissions</span></span></div>
+  <div class="toc-item"><span class="toc-num">08</span><span><span class="toc-title">Operational dashboard</span><span class="toc-note">User-scoped history</span></span></div>
+  <div class="toc-item"><span class="toc-num">09</span><span><span class="toc-title">Pilot feedback</span><span class="toc-note">Signals without guest data</span></span></div>
+  <div class="toc-item"><span class="toc-num">10</span><span><span class="toc-title">Security and privacy</span><span class="toc-note">Daily controls</span></span></div>
+  <div class="toc-item"><span class="toc-num">11</span><span><span class="toc-title">Common incidents</span><span class="toc-note">Operational response</span></span></div>
+  <div class="toc-item"><span class="toc-num">12</span><span><span class="toc-title">Glossary</span><span class="toc-note">Key terms</span></span></div>
+</nav>
 
 <div class="page-break"></div>
 

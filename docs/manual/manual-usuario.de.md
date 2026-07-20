@@ -21,20 +21,20 @@
 
 ## Inhaltsverzeichnis
 
-| Nr. | Abschnitt | Hauptkontrolle |
-| --- | --- | --- |
-| 01 | Produktumfang | Kontrollierter Pilot und vorsichtige Aussagen |
-| 02 | Zugriff und Sitzungen | Freigegebener Login, temporaeres Passwort und Logout |
-| 03 | Vor dem Import | Mindestdaten und private Umgebung |
-| 04 | Dokumentenimport | Bestaetigungen und Dateigrenze |
-| 05 | Gefuehrte Pruefung | Fehler, Hinweise und Korrekturen |
-| 06 | XML und Download | Sperren vor Export |
-| 07 | SES und Pre-Check-in | Vorproduktion und Rollenrechte |
-| 08 | Operatives Dashboard | Benutzerbezogener Verlauf |
-| 09 | Pilot-Feedback | Hinweise ohne Gaestedaten |
-| 10 | Sicherheit und Datenschutz | Taegliche Kontrollen |
-| 11 | Haeufige Vorfaelle | Operative Reaktion |
-| 12 | Glossar | Schluesselbegriffe |
+<nav class="toc-grid">
+  <div class="toc-item"><span class="toc-num">01</span><span><span class="toc-title">Produktumfang</span><span class="toc-note">Kontrollierter Pilot und vorsichtige Aussagen</span></span></div>
+  <div class="toc-item"><span class="toc-num">02</span><span><span class="toc-title">Zugriff und Sitzungen</span><span class="toc-note">Freigegebener Login, temporaeres Passwort und Logout</span></span></div>
+  <div class="toc-item"><span class="toc-num">03</span><span><span class="toc-title">Vor dem Import</span><span class="toc-note">Mindestdaten und private Umgebung</span></span></div>
+  <div class="toc-item"><span class="toc-num">04</span><span><span class="toc-title">Dokumentenimport</span><span class="toc-note">Bestaetigungen und Dateigrenze</span></span></div>
+  <div class="toc-item"><span class="toc-num">05</span><span><span class="toc-title">Gefuehrte Pruefung</span><span class="toc-note">Fehler, Hinweise und Korrekturen</span></span></div>
+  <div class="toc-item"><span class="toc-num">06</span><span><span class="toc-title">XML und Download</span><span class="toc-note">Sperren vor Export</span></span></div>
+  <div class="toc-item"><span class="toc-num">07</span><span><span class="toc-title">SES und Pre-Check-in</span><span class="toc-note">Vorproduktion und Rollenrechte</span></span></div>
+  <div class="toc-item"><span class="toc-num">08</span><span><span class="toc-title">Operatives Dashboard</span><span class="toc-note">Benutzerbezogener Verlauf</span></span></div>
+  <div class="toc-item"><span class="toc-num">09</span><span><span class="toc-title">Pilot-Feedback</span><span class="toc-note">Hinweise ohne Gaestedaten</span></span></div>
+  <div class="toc-item"><span class="toc-num">10</span><span><span class="toc-title">Sicherheit und Datenschutz</span><span class="toc-note">Taegliche Kontrollen</span></span></div>
+  <div class="toc-item"><span class="toc-num">11</span><span><span class="toc-title">Haeufige Vorfaelle</span><span class="toc-note">Operative Reaktion</span></span></div>
+  <div class="toc-item"><span class="toc-num">12</span><span><span class="toc-title">Glossar</span><span class="toc-note">Schluesselbegriffe</span></span></div>
+</nav>
 
 <div class="page-break"></div>
 

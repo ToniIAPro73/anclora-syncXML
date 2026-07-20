@@ -130,6 +130,18 @@ function markdownToHtml(markdown) {
       continue;
     }
 
+    if (trimmed === '<nav class="toc-grid">') {
+      const block = [];
+      while (i < lines.length) {
+        block.push(lines[i]);
+        if (lines[i].trim() === "</nav>") break;
+        i += 1;
+      }
+      i += 1;
+      html += block.join("\n");
+      continue;
+    }
+
     const image = trimmed.match(/^!\[(.*?)\]\((.*?)\)$/);
     if (image) {
       const alt = image[1];
@@ -215,6 +227,7 @@ function isBlockStart(line) {
     || line.startsWith("|")
     || line === "---"
     || line === '<div class="page-break"></div>'
+    || line === '<nav class="toc-grid">'
     || line.startsWith('<div class="footer-brand">');
 }
 
@@ -420,6 +433,45 @@ blockquote {
   background: #f7f3ea;
   border-left: 2mm solid #c7a451;
   page-break-inside: avoid;
+}
+.toc-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 3.5mm;
+  margin: 2mm 0 8mm;
+}
+.toc-item {
+  display: grid;
+  grid-template-columns: 12mm 1fr;
+  gap: 3mm;
+  min-height: 21mm;
+  padding: 4mm;
+  border: 1px solid #d7dfeb;
+  border-left: 1.6mm solid #c7a451;
+  border-radius: 2mm;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  page-break-inside: avoid;
+}
+.toc-num {
+  color: #9f7b2e;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 18pt;
+  line-height: 1;
+  font-weight: 700;
+}
+.toc-title {
+  display: block;
+  color: #101828;
+  font-size: 10.4pt;
+  line-height: 1.2;
+  font-weight: 800;
+}
+.toc-note {
+  display: block;
+  margin-top: 1.2mm;
+  color: #667085;
+  font-size: 8.4pt;
+  line-height: 1.35;
 }
 figure {
   margin: 5mm 0 7mm;
