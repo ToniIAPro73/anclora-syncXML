@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { GeneratedXmlResult, ParsedExcel } from "../domain";
 import { hasDatabase, prisma } from "./prisma";
-import { persistentStorageEnabled } from "../security/env";
+import { isExplicitLocalDemoMode, persistentStorageEnabled } from "../security/env";
 import { encryptString } from "../privacy/encryption";
 
 type StoredReservation = {
@@ -12,6 +12,7 @@ type StoredReservation = {
   createdAt: string;
   generatedAt?: string;
   deletedAt?: string;
+  ownerId: string;
   payload: ParsedExcel;
   xml: string;
 };
@@ -19,7 +20,24 @@ type StoredReservation = {
 const memoryStore = globalThis as unknown as { syncXmlReservations?: StoredReservation[] };
 memoryStore.syncXmlReservations ??= [];
 
-function createMemoryReservation(input: { parsed: ParsedExcel; generated: GeneratedXmlResult; persistenceMode?: "memory" | "database-fallback" }) {
+export class ReservationPersistenceUnavailableError extends Error {
+  constructor() {
+    super("Reservation persistence is unavailable");
+    this.name = "ReservationPersistenceUnavailableError";
+  }
+}
+
+function canUseMemoryReservationStore() {
+  return process.env.NODE_ENV !== "production" || isExplicitLocalDemoMode();
+}
+
+function assertReservationPersistenceAvailable() {
+  if (hasDatabase() && persistentStorageEnabled()) return;
+  if (canUseMemoryReservationStore()) return;
+  throw new ReservationPersistenceUnavailableError();
+}
+
+function createMemoryReservation(input: { parsed: ParsedExcel; generated: GeneratedXmlResult; ownerId: string; persistenceMode?: "memory" | "database-fallback" }) {
   const item: StoredReservation & { persistenceMode?: string } = {
     id: randomUUID(),
     reference: input.parsed.reservation.reference,
@@ -29,6 +47,7 @@ function createMemoryReservation(input: { parsed: ParsedExcel; generated: Genera
     generatedAt: new Date().toISOString(),
     payload: input.parsed,
     xml: input.generated.xml,
+    ownerId: input.ownerId,
     persistenceMode: input.persistenceMode ?? "memory",
   };
   memoryStore.syncXmlReservations?.push(item);
@@ -38,8 +57,10 @@ function createMemoryReservation(input: { parsed: ParsedExcel; generated: Genera
 export async function createReservation(input: {
   parsed: ParsedExcel;
   generated: GeneratedXmlResult;
+  ownerId: string;
   sourceExcel?: { name: string; type: string; buffer: Buffer };
 }) {
+  assertReservationPersistenceAvailable();
   if (!hasDatabase() || !persistentStorageEnabled()) {
     return createMemoryReservation({ ...input, persistenceMode: "memory" });
   }
@@ -61,6 +82,7 @@ export async function createReservation(input: {
       const reservation = await tx.reservation.create({
         data: {
           propertyId: property.id,
+          ownerId: input.ownerId,
           reference: input.parsed.reservation.reference,
           checkIn: input.parsed.reservation.checkInDate ? new Date(input.parsed.reservation.checkInDate) : undefined,
           checkOut: input.parsed.reservation.checkOutDate ? new Date(input.parsed.reservation.checkOutDate) : undefined,
@@ -131,23 +153,25 @@ export async function createReservation(input: {
   }
 }
 
-export async function listReservations(query?: string) {
+export async function listReservations(input: { ownerId: string; query?: string }) {
+  assertReservationPersistenceAvailable();
   if (!hasDatabase() || !persistentStorageEnabled()) {
-    const q = query?.toLowerCase();
-    return (memoryStore.syncXmlReservations ?? []).filter((item) => !item.deletedAt && (!q || JSON.stringify(item).toLowerCase().includes(q)));
+    const q = input.query?.toLowerCase();
+    return (memoryStore.syncXmlReservations ?? []).filter((item) => item.ownerId === input.ownerId && !item.deletedAt && (!q || JSON.stringify(item).toLowerCase().includes(q)));
   }
   return prisma.reservation.findMany({
     where: {
+      ownerId: input.ownerId,
       deletedAt: null,
-      ...(query
+      ...(input.query
         ? {
             OR: [
-              { reference: { contains: query, mode: "insensitive" } },
-              { property: { name: { contains: query, mode: "insensitive" } } },
-              { guests: { some: { firstName: { contains: query, mode: "insensitive" } } } },
-              { guests: { some: { surname1: { contains: query, mode: "insensitive" } } } },
-              { guests: { some: { documentNumber: { contains: query, mode: "insensitive" } } } },
-              { guests: { some: { email: { contains: query, mode: "insensitive" } } } },
+              { reference: { contains: input.query, mode: "insensitive" } },
+              { property: { name: { contains: input.query, mode: "insensitive" } } },
+              { guests: { some: { firstName: { contains: input.query, mode: "insensitive" } } } },
+              { guests: { some: { surname1: { contains: input.query, mode: "insensitive" } } } },
+              { guests: { some: { documentNumber: { contains: input.query, mode: "insensitive" } } } },
+              { guests: { some: { email: { contains: input.query, mode: "insensitive" } } } },
             ],
           }
         : {}),
@@ -158,19 +182,23 @@ export async function listReservations(query?: string) {
   });
 }
 
-export async function getReservation(id: string) {
-  if (!hasDatabase() || !persistentStorageEnabled()) return (memoryStore.syncXmlReservations ?? []).find((item) => item.id === id && !item.deletedAt);
-  return prisma.reservation.findFirst({ where: { id, deletedAt: null }, include: { property: true, guests: true, files: true, auditEvents: true } });
+export async function getReservation(id: string, ownerId: string) {
+  assertReservationPersistenceAvailable();
+  if (!hasDatabase() || !persistentStorageEnabled()) return (memoryStore.syncXmlReservations ?? []).find((item) => item.id === id && item.ownerId === ownerId && !item.deletedAt);
+  return prisma.reservation.findFirst({ where: { id, ownerId, deletedAt: null }, include: { property: true, guests: true, files: true, auditEvents: true } });
 }
 
-export async function deleteReservation(id: string) {
+export async function deleteReservation(id: string, ownerId: string) {
+  assertReservationPersistenceAvailable();
   if (!hasDatabase() || !persistentStorageEnabled()) {
-    const item = (memoryStore.syncXmlReservations ?? []).find((reservation) => reservation.id === id);
+    const item = (memoryStore.syncXmlReservations ?? []).find((reservation) => reservation.id === id && reservation.ownerId === ownerId);
     if (item) item.deletedAt = new Date().toISOString();
     return item;
   }
+  const existing = await prisma.reservation.findFirst({ where: { id, ownerId, deletedAt: null }, select: { id: true } });
+  if (!existing) return null;
   return prisma.reservation.update({
-    where: { id },
+    where: { id: existing.id },
     data: {
       status: "DELETED",
       deletedAt: new Date(),

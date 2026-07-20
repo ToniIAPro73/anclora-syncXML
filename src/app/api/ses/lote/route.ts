@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { requireAuth } from "@/lib/auth";
+import { logRouteError, publicErrorResponse } from "@/lib/api/errors";
+import { requireAdmin } from "@/lib/auth";
+import { requireSesProductionSendOptIn } from "@/lib/ses/access";
 import { getRateLimitKey, sensitiveRateLimiter } from "@/lib/security/rateLimit";
 import { querySesLote } from "@/lib/ses/client";
 import { parseConsultaLoteResponse, sanitizeSoapForStorage, extractFirstCommunicationCode, collectSesErrors } from "@/lib/ses/parser";
@@ -10,7 +12,7 @@ export async function POST(request: Request) {
   try {
     const rateLimit = sensitiveRateLimiter.check(`ses-lote:${getRateLimitKey(request)}`);
     if (!rateLimit.allowed) return NextResponse.json({ error: "Demasiadas solicitudes" }, { status: 429 });
-    const unauthorized = await requireAuth();
+    const unauthorized = await requireAdmin();
     if (unauthorized) return unauthorized;
 
     const body = await request.json().catch(() => ({}));
@@ -23,6 +25,8 @@ export async function POST(request: Request) {
     if (!parsed.success) return NextResponse.json({ error: "Payload inválido" }, { status: 400 });
 
     const { loteCodes, environment, dryRun = true, submissionId } = parsed.data;
+    const productionDenied = requireSesProductionSendOptIn({ environment, dryRun });
+    if (productionDenied) return productionDenied;
 
     const result = await querySesLote(loteCodes, { environment, dryRun });
     if (!("status" in result)) {
@@ -77,6 +81,7 @@ export async function POST(request: Request) {
       message,
     });
   } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : "Error SES" }, { status: 503 });
+    logRouteError("ses-lote", error);
+    return publicErrorResponse(503, "SYNCXML_SES_LOTE_FAILED", "No se pudo consultar el lote SES");
   }
 }

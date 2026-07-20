@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { requireAuth } from "@/lib/auth";
+import { logRouteError, publicErrorResponse } from "@/lib/api/errors";
+import { requireAdmin } from "@/lib/auth";
 import { getRateLimitKey, sensitiveRateLimiter } from "@/lib/security/rateLimit";
 import { listSesSubmissions, getSesSubmission } from "@/lib/ses/submissionRepository";
 
@@ -7,7 +8,7 @@ export async function GET(request: Request) {
   try {
     const rateLimit = sensitiveRateLimiter.check(`ses-submissions:${getRateLimitKey(request)}`);
     if (!rateLimit.allowed) return NextResponse.json({ error: "Demasiadas solicitudes" }, { status: 429 });
-    const unauthorized = await requireAuth();
+    const unauthorized = await requireAdmin();
     if (unauthorized) return unauthorized;
 
     const { searchParams } = new URL(request.url);
@@ -27,7 +28,8 @@ export async function GET(request: Request) {
       total: submissions.length,
     });
   } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : "Error" }, { status: 500 });
+    logRouteError("ses-submissions", error);
+    return publicErrorResponse(500, "SYNCXML_SES_SUBMISSIONS_FAILED", "No se pudieron cargar los envios SES");
   }
 }
 

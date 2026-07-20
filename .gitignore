@@ -25,6 +25,9 @@ coverage
 # Temporary agent handoff notes
 docs/SESION_*.md
 
+# Local Codex/Memanto hooks
+.codex/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

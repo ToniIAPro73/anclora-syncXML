@@ -1,8 +1,21 @@
-import * as XLSX from "xlsx";
+import ExcelJS from "exceljs";
 import type { ParsedExcel } from "../domain";
 import { cleanText, extractPostalCode, extractResidenceMunicipality, extractResidencePostalCode, normalizeDocumentType, normalizeNationality, normalizePaymentType, normalizePhone, normalizeTime, parseDate } from "../normalizers";
 import { validateGuest, validateParsedExcel } from "../validation";
 import { detectDuplicates } from "../duplicates";
+
+export const EXCEL_PARSE_LIMITS = {
+  maxSheets: 8,
+  maxRowsPerSheet: 500,
+  maxColumnsPerRow: 80,
+} as const;
+
+export class ExcelParseLimitError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "ExcelParseLimitError";
+  }
+}
 
 const HEADER_NAMES = [
   "Nombre",
@@ -27,8 +40,69 @@ function isGuestRow(row: string[], header: string[]) {
   return Boolean(get(row, header, "Nombre") && get(row, header, "1. Apellido") && (get(row, header, "Número de documento") || get(row, header, "Fecha de nacimiento")));
 }
 
-export function parseExcelBuffer(buffer: Buffer, fileName?: string): ParsedExcel {
-  const workbook = XLSX.read(buffer, { type: "buffer", cellDates: true });
+function cellToValue(cell: ExcelJS.Cell) {
+  const value = cell.value;
+  if (value instanceof Date) return value;
+  if (value && typeof value === "object") {
+    if ("result" in value) return value.result;
+    if ("text" in value) return value.text;
+    if ("richText" in value && Array.isArray(value.richText)) {
+      return value.richText.map((item) => item.text).join("");
+    }
+  }
+  return cell.text || value || "";
+}
+
+function rowToValues(row: ExcelJS.Row) {
+  const values: unknown[] = [];
+  for (let col = 1; col <= row.cellCount; col += 1) {
+    values.push(cellToValue(row.getCell(col)));
+  }
+  return values.map(cleanText);
+}
+
+function parseCsvRows(buffer: Buffer) {
+  return buffer
+    .toString("utf8")
+    .replace(/^\uFEFF/, "")
+    .split(/\r?\n/)
+    .map((line) => line.split(/[,;]/).map(cleanText));
+}
+
+async function readWorkbookRows(buffer: Buffer, fileName?: string) {
+  if (fileName?.toLowerCase().endsWith(".csv")) {
+    return [{ name: fileName, rows: parseCsvRows(buffer) }];
+  }
+
+  const workbook = new ExcelJS.Workbook();
+  await workbook.xlsx.load(buffer as unknown as ArrayBuffer, {
+    ignoreNodes: ["dataValidations", "conditionalFormatting", "hyperlinks", "drawing"],
+  });
+  if (workbook.worksheets.length > EXCEL_PARSE_LIMITS.maxSheets) {
+    throw new ExcelParseLimitError(`Workbook has more than ${EXCEL_PARSE_LIMITS.maxSheets} sheets`);
+  }
+  return workbook.worksheets.map((worksheet) => {
+    if (worksheet.rowCount > EXCEL_PARSE_LIMITS.maxRowsPerSheet) {
+      throw new ExcelParseLimitError(`Sheet has more than ${EXCEL_PARSE_LIMITS.maxRowsPerSheet} rows`);
+    }
+    if (worksheet.columnCount > EXCEL_PARSE_LIMITS.maxColumnsPerRow) {
+      throw new ExcelParseLimitError(`Sheet has more than ${EXCEL_PARSE_LIMITS.maxColumnsPerRow} columns`);
+    }
+    const rows: string[][] = [];
+    for (let rowNumber = 1; rowNumber <= worksheet.rowCount; rowNumber += 1) {
+      const row = worksheet.getRow(rowNumber);
+      const values = rowToValues(row);
+      if (values.length > EXCEL_PARSE_LIMITS.maxColumnsPerRow) {
+        throw new ExcelParseLimitError(`Sheet has more than ${EXCEL_PARSE_LIMITS.maxColumnsPerRow} columns`);
+      }
+      rows.push(values);
+    }
+    return { name: worksheet.name, rows };
+  });
+}
+
+export async function parseExcelBuffer(buffer: Buffer, fileName?: string): Promise<ParsedExcel> {
+  const sheets = await readWorkbookRows(buffer, fileName);
   const rawRows: ParsedExcel["rawRows"] = [];
   const ignoredRows: ParsedExcel["ignoredRows"] = [];
   const guests = [];
@@ -36,9 +110,14 @@ export function parseExcelBuffer(buffer: Buffer, fileName?: string): ParsedExcel
   const property: ParsedExcel["property"] = { countryIso3: "ESP" };
   const payment: ParsedExcel["payment"] = {};
 
-  for (const sheetName of workbook.SheetNames) {
-    const worksheet = workbook.Sheets[sheetName];
-    const rows = XLSX.utils.sheet_to_json<string[]>(worksheet, { header: 1, defval: "", raw: false });
+  for (const sheet of sheets) {
+    const rows = sheet.rows;
+    if (rows.length > EXCEL_PARSE_LIMITS.maxRowsPerSheet) {
+      throw new ExcelParseLimitError(`Sheet has more than ${EXCEL_PARSE_LIMITS.maxRowsPerSheet} rows`);
+    }
+    if (rows.some((row) => row.length > EXCEL_PARSE_LIMITS.maxColumnsPerRow)) {
+      throw new ExcelParseLimitError(`Sheet has more than ${EXCEL_PARSE_LIMITS.maxColumnsPerRow} columns`);
+    }
     const headerIndex = rows.findIndex(isGuestHeader);
     const header = headerIndex >= 0 ? rows[headerIndex].map(cleanText) : [];
     rows.forEach((row, idx) => rawRows.push({ rowNumber: idx + 1, values: row.map(cleanText) }));
@@ -125,7 +204,7 @@ export function parseExcelBuffer(buffer: Buffer, fileName?: string): ParsedExcel
 
   if (!payment.paymentType) payment.paymentType = "OTRO";
   if (!reservation.guestCount) reservation.guestCount = guests.length;
-  const parsed = { fileName, sheets: workbook.SheetNames, reservation, property, payment, guests, ignoredRows, rawRows };
+  const parsed = { fileName, sheets: sheets.map((sheet) => sheet.name), reservation, property, payment, guests, ignoredRows, rawRows };
   const validated = validateParsedExcel(parsed);
   return { ...validated, duplicates: detectDuplicates(validated) };
 }

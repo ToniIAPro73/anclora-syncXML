@@ -7,8 +7,8 @@ import { buildValidationReportCsv, buildValidationReportFileName } from "@/lib/v
 describe("validation report CSV", () => {
   const workbookPath = "test-data/fixtures/registro_huespedes_synthetic.xlsx";
 
-  it("exports blocking validation issues with reservation and guest context", () => {
-    const parsed = smartValidateParsedExcel(parseExcelBuffer(readFileSync(workbookPath)));
+  it("exports blocking validation issues with reservation and guest context", async () => {
+    const parsed = smartValidateParsedExcel(await parseExcelBuffer(readFileSync(workbookPath)));
     const csv = buildValidationReportCsv(parsed);
 
     expect(csv).toContain("tipo;ambito;severidad;codigo;fila;campo;mensaje");
@@ -17,8 +17,8 @@ describe("validation report CSV", () => {
     expect(csv).toContain("5992657522");
   });
 
-  it("exports a clean corrected flow as valid guests", () => {
-    const parsed = parseExcelBuffer(readFileSync(workbookPath));
+  it("exports a clean corrected flow as valid guests", async () => {
+    const parsed = await parseExcelBuffer(readFileSync(workbookPath));
     const corrected = smartValidateParsedExcel({
       ...parsed,
       guests: parsed.guests.map((guest) => validateGuest({

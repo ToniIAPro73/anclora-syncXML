@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { requireAuth } from "@/lib/auth";
+import { logRouteError, publicErrorResponse } from "@/lib/api/errors";
+import { requireAdmin } from "@/lib/auth";
+import { requireSesProductionSendOptIn } from "@/lib/ses/access";
 import { getRateLimitKey, sensitiveRateLimiter } from "@/lib/security/rateLimit";
 import { querySesComunicacion } from "@/lib/ses/client";
 import { parseConsultaComunicacionResponse } from "@/lib/ses/parser";
@@ -9,7 +11,7 @@ export async function POST(request: Request) {
   try {
     const rateLimit = sensitiveRateLimiter.check(`ses-comunicacion:${getRateLimitKey(request)}`);
     if (!rateLimit.allowed) return NextResponse.json({ error: "Demasiadas solicitudes" }, { status: 429 });
-    const unauthorized = await requireAuth();
+    const unauthorized = await requireAdmin();
     if (unauthorized) return unauthorized;
     const body = await request.json().catch(() => ({}));
     const parsed = z.object({
@@ -18,6 +20,11 @@ export async function POST(request: Request) {
       dryRun: z.boolean().optional(),
     }).safeParse(body);
     if (!parsed.success) return NextResponse.json({ error: "Payload inválido" }, { status: 400 });
+    const productionDenied = requireSesProductionSendOptIn({
+      environment: parsed.data.environment,
+      dryRun: parsed.data.dryRun ?? true,
+    });
+    if (productionDenied) return productionDenied;
 
     const result = await querySesComunicacion(parsed.data.communicationCodes, {
       environment: parsed.data.environment,
@@ -40,6 +47,7 @@ export async function POST(request: Request) {
         : `Error SES ${parsedResponse.responseCode}: ${parsedResponse.responseDescription}`,
     });
   } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : "Error SES" }, { status: 503 });
+    logRouteError("ses-comunicacion", error);
+    return publicErrorResponse(503, "SYNCXML_SES_COMMUNICATION_QUERY_FAILED", "No se pudo consultar la comunicacion SES");
   }
 }

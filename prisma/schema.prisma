@@ -26,6 +26,7 @@ model Reservation {
   id                    String            @id @default(cuid())
   propertyId            String?
   property              Property?         @relation(fields: [propertyId], references: [id], onDelete: SetNull)
+  ownerId               String?
   reference             String?
   channel               String?
   checkIn               DateTime?
@@ -54,6 +55,7 @@ model Reservation {
   auditEvents           AuditEvent[]
 
   @@index([reference])
+  @@index([ownerId])
   @@index([checkIn])
   @@index([checkOut])
   @@index([status])
