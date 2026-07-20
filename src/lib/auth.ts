@@ -6,10 +6,13 @@ import { authDisabled, canUsePasswordAuth, getSessionSecret, isExplicitLocalDemo
 export const COOKIE_NAME = "anclora-syncxml-session";
 
 export type SessionUser = {
+  id?: string;
   email: string;
   role: "admin" | "pilot_user";
   temporaryPassword?: boolean;
 };
+
+export type SessionRole = SessionUser["role"];
 
 function signSession(payload: SessionUser) {
   const body = Buffer.from(JSON.stringify(payload)).toString("base64url");
@@ -60,10 +63,27 @@ export async function requireAuth() {
   return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 }
 
+export async function requireRole(...allowedRoles: SessionRole[]) {
+  const user = await getSessionUser();
+  if (!user) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  if (!allowedRoles.includes(user.role)) {
+    return NextResponse.json({ error: "Acceso denegado" }, { status: 403 });
+  }
+  return null;
+}
+
+export async function requireAdmin() {
+  return requireRole("admin");
+}
+
+export function getSessionOwnerId(user: SessionUser) {
+  return user.id ?? (user.role === "admin" ? "admin" : undefined);
+}
+
 export async function setSessionCookie(response: NextResponse, user?: SessionUser) {
   const sessionSecret = getSessionSecret();
   if (!sessionSecret) return response;
-  const sessionUser = user ?? { email: process.env.SYNCXML_ADMIN_EMAIL || "antonio@anclora.com", role: "admin" as const };
+  const sessionUser = user ?? { id: "admin", email: process.env.SYNCXML_ADMIN_EMAIL || "antonio@anclora.com", role: "admin" as const };
   response.cookies.set(COOKIE_NAME, signSession(sessionUser), {
     httpOnly: true,
     sameSite: "lax",

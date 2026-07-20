@@ -6,8 +6,8 @@ import { smartValidateParsedExcel } from "@/lib/validation";
 describe("smartValidateParsedExcel", () => {
   const workbookPath = "test-data/fixtures/registro_huespedes_synthetic.xlsx";
 
-  it("flags missing SES municipality codes before XML generation", () => {
-    const parsed = parseExcelBuffer(readFileSync(workbookPath), "registro_huespedes_synthetic.xlsx");
+  it("flags missing SES municipality codes before XML generation", async () => {
+    const parsed = await parseExcelBuffer(readFileSync(workbookPath), "registro_huespedes_synthetic.xlsx");
     const validated = smartValidateParsedExcel(parsed);
 
     expect(validated.validation.errors.filter((error) => error.code === "guest.municipalityCode.required")).toHaveLength(7);
@@ -15,8 +15,8 @@ describe("smartValidateParsedExcel", () => {
     expect(validated.guests.every((guest) => guest.validationStatus === "ERROR")).toBe(true);
   });
 
-  it("allows SES readiness when Spanish municipality codes are present", () => {
-    const parsed = parseExcelBuffer(readFileSync(workbookPath), "registro_huespedes_synthetic.xlsx");
+  it("allows SES readiness when Spanish municipality codes are present", async () => {
+    const parsed = await parseExcelBuffer(readFileSync(workbookPath), "registro_huespedes_synthetic.xlsx");
     const validated = smartValidateParsedExcel({
       ...parsed,
       guests: parsed.guests.map((guest) => ({ ...guest, municipalityCode: "07040", documentSupport: "123456789" })),
@@ -27,8 +27,8 @@ describe("smartValidateParsedExcel", () => {
     expect(validated.guests.every((guest) => guest.validationStatus !== "ERROR")).toBe(true);
   });
 
-  it("detects invalid Spanish document control letters", () => {
-    const parsed = parseExcelBuffer(readFileSync(workbookPath), "registro_huespedes_synthetic.xlsx");
+  it("detects invalid Spanish document control letters", async () => {
+    const parsed = await parseExcelBuffer(readFileSync(workbookPath), "registro_huespedes_synthetic.xlsx");
     const validated = smartValidateParsedExcel({
       ...parsed,
       guests: parsed.guests.map((guest, index) => index === 0 ? { ...guest, documentNumber: "12345678A" } : guest),
@@ -37,8 +37,8 @@ describe("smartValidateParsedExcel", () => {
     expect(validated.validation.errors.some((error) => error.code === "guest.document.control.invalid")).toBe(true);
   });
 
-  it("detects invalid IBAN checksums", () => {
-    const parsed = parseExcelBuffer(readFileSync(workbookPath), "registro_huespedes_synthetic.xlsx");
+  it("detects invalid IBAN checksums", async () => {
+    const parsed = await parseExcelBuffer(readFileSync(workbookPath), "registro_huespedes_synthetic.xlsx");
     const validated = smartValidateParsedExcel({
       ...parsed,
       payment: { ...parsed.payment, iban: "ES9121000418450200051333" },
@@ -47,8 +47,8 @@ describe("smartValidateParsedExcel", () => {
     expect(validated.validation.errors.some((error) => error.code === "payment.iban.invalid")).toBe(true);
   });
 
-  it("does not require Spanish municipality codes or infer IBANs for EU-only guests but blocks missing postal codes", () => {
-    const parsed = parseExcelBuffer(readFileSync("test-data/test2-eu-solo.xlsx"), "test2-eu-solo.xlsx");
+  it("does not require Spanish municipality codes or infer IBANs for EU-only guests but blocks missing postal codes", async () => {
+    const parsed = await parseExcelBuffer(readFileSync("test-data/test2-eu-solo.xlsx"), "test2-eu-solo.xlsx");
     const validated = smartValidateParsedExcel(parsed);
 
     expect(validated.validation.errors).toHaveLength(1);
