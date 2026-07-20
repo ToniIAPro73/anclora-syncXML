@@ -45,27 +45,27 @@ try {
 
   for (const lang of ["es", "en", "de"]) {
     await prepareApp(cdp, lang);
-    await capture(cdp, `${baseUrl}/app?lang=${lang}`, `syncxml-${lang}-import.png`, "main");
+    await capture(cdp, `${baseUrl}/app?lang=${lang}`, `syncxml-${lang}-import.png`, "main", "light");
 
     await clickByText(cdp, demoLabel(lang));
     await waitForSessionParsed(cdp);
-    await capture(cdp, null, `syncxml-${lang}-review.png`, "main");
+    await capture(cdp, null, `syncxml-${lang}-review.png`, "main", "light");
 
     const xmlSession = await buildXmlSession(cdp);
     const injectionId = await injectAppSession(cdp, xmlSession);
     await reload(cdp, `${baseUrl}/app?lang=${lang}`);
     await waitForSelector(cdp, ".ses-panel");
-    await capture(cdp, null, `syncxml-${lang}-xml.png`, "main");
+    await capture(cdp, null, `syncxml-${lang}-xml.png`, "main", "light");
 
     await scrollToText(cdp, precheckinPanelLabel(lang));
-    await capture(cdp, null, `syncxml-${lang}-precheckin-panel.png`, ".ses-panel");
+    await capture(cdp, null, `syncxml-${lang}-precheckin-panel.png`, ".ses-panel", "dark");
     await clickByText(cdp, createPrecheckinLabel(lang));
     const tokenPath = await waitForPrecheckinLink(cdp);
-    await capture(cdp, null, `syncxml-${lang}-precheckin-panel.png`, ".ses-panel");
-    await capture(cdp, `${baseUrl}${tokenPath}?lang=${lang}`, `syncxml-${lang}-precheckin-form.png`, "main");
+    await capture(cdp, null, `syncxml-${lang}-precheckin-panel.png`, ".ses-panel", "dark");
+    await capture(cdp, `${baseUrl}${tokenPath}?lang=${lang}`, `syncxml-${lang}-precheckin-form.png`, "main", "dark");
 
-    await capture(cdp, `${baseUrl}/dashboard?lang=${lang}`, `syncxml-${lang}-dashboard.png`, "main");
-    await capture(cdp, `${baseUrl}/dashboard?lang=${lang}`, `syncxml-${lang}-dashboard-detail.png`, "main");
+    await capture(cdp, `${baseUrl}/dashboard?lang=${lang}`, `syncxml-${lang}-dashboard.png`, "main", "dark");
+    await capture(cdp, `${baseUrl}/dashboard?lang=${lang}`, `syncxml-${lang}-dashboard-detail.png`, "main", "dark");
     await cdp.send("Page.removeScriptToEvaluateOnNewDocument", { identifier: injectionId });
   }
 
@@ -206,9 +206,10 @@ async function injectAppSession(cdp, sessionJson) {
   return result.identifier;
 }
 
-async function capture(cdp, url, fileName, selector) {
+async function capture(cdp, url, fileName, selector, theme = "light") {
   if (url) await reload(cdp, url);
   await waitForSelector(cdp, selector);
+  await setTheme(cdp, theme);
   await delay(550);
   const result = await cdp.send("Page.captureScreenshot", {
     format: "png",
@@ -217,6 +218,22 @@ async function capture(cdp, url, fileName, selector) {
   });
   writeFileSync(path.join(outDir, fileName), Buffer.from(result.data, "base64"));
   console.log(`Captured docs/manual/screenshots/${fileName}`);
+}
+
+async function setTheme(cdp, theme) {
+  await cdp.send("Runtime.evaluate", {
+    expression: `
+      (() => {
+        const theme = ${JSON.stringify(theme)};
+        localStorage.setItem("anclora-syncxml-theme", theme);
+        document.cookie = "anclora-syncxml-theme=" + theme + "; path=/; max-age=31536000; SameSite=Lax";
+        document.documentElement.dataset.theme = theme;
+        document.documentElement.classList.toggle("light", theme === "light");
+        document.documentElement.classList.toggle("dark", theme !== "light");
+      })()
+    `,
+    awaitPromise: true,
+  });
 }
 
 async function reload(cdp, url) {
